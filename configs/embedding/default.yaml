@@ -1,0 +1,143 @@
+# Embedding Configuration for DeepCritical
+
+# Embedding model configuration
+embeddings:
+  # Use VLLM for local embeddings (set to false for external services)
+  use_vllm: false
+  
+  # External service configuration (when use_vllm is false)
+  model: "text-embedding-3-small"
+  batch_size: 32
+  normalize: true
+  
+  # VLLM configuration (when use_vllm is true)
+  vllm_config:
+    model_name: "sentence-transformers/all-MiniLM-L6-v2"
+    host: "localhost"
+    port: 8001
+    dimensions: 384
+    batch_size: 32
+  
+  # OpenAI configuration
+  openai:
+    api_key: "${OPENAI_API_KEY}"
+    base_url: "https://api.openai.com/v1"
+    timeout: 60
+    max_retries: 3
+
+# Vector store configuration
+vector_store:
+  store_type: "faiss"
+  data_dir: "./data/vector_store"
+  collection_name: "default"
+  index_type: "IndexFlatIP"  # IndexFlatIP, IndexFlatL2, IndexHNSWFlat
+  embedding_dimension: 1536  # Will be set automatically based on model
+  distance_metric: "cosine"
+
+# Document processing configuration
+document_processing:
+  chunk_size: 1000
+  chunk_overlap: 200
+  max_chunks_per_document: 100
+  preprocessing:
+    remove_whitespace: true
+    normalize_unicode: true
+    remove_special_chars: false
+
+# Workflow configuration
+workflow:
+  # Default workflow settings
+  default_batch_size: 100
+  max_concurrent_operations: 5
+  retry_attempts: 3
+  retry_delay: 1.0
+  
+  # Workflow types
+  document_ingestion:
+    enabled: true
+    chunk_size: 1000
+    chunk_overlap: 200
+    create_new: true
+  
+  batch_processing:
+    enabled: true
+    batch_size: 100
+    parallel_processing: true
+  
+  sync:
+    enabled: false
+    auto_sync: false
+    sync_interval: 3600  # seconds
+
+# HuggingFace Hub configuration
+huggingface:
+  enabled: false
+  token: "${HF_TOKEN}"
+  endpoint: "https://huggingface.co"
+  default_repository_prefix: "deepcritical"
+  auto_upload: false
+  private_repositories: false
+
+# Performance configuration
+performance:
+  # Memory management
+  max_memory_usage: 0.8  # 80% of available memory
+  cache_size: 1000
+  
+  # Processing optimization
+  use_multiprocessing: true
+  max_workers: 4
+  prefetch_factor: 2
+  
+  # Index optimization
+  index_optimization:
+    enabled: true
+    rebuild_threshold: 0.1  # Rebuild when 10% of documents are deleted
+    compression: false
+
+# Logging configuration
+logging:
+  level: "INFO"
+  log_embeddings: false  # Don't log actual embedding vectors
+  log_performance: true
+  log_errors: true
+
+# Security configuration
+security:
+  # API key management
+  encrypt_api_keys: false
+  key_rotation_interval: 86400  # 24 hours
+  
+  # Data privacy
+  anonymize_metadata: false
+  remove_sensitive_data: false
+  
+  # Access control
+  require_authentication: false
+  allowed_origins: ["*"]
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  metrics_collection: true
+  health_checks: true
+  
+  # Metrics to collect
+  metrics:
+    - "embedding_generation_time"
+    - "vector_search_time"
+    - "document_processing_time"
+    - "memory_usage"
+    - "error_rate"
+  
+  # Health check settings
+  health_check_interval: 300  # 5 minutes
+  health_check_timeout: 30  # 30 seconds
+
+# Development configuration
+development:
+  debug_mode: false
+  verbose_logging: false
+  mock_embeddings: false  # Use mock embeddings for testing
+  test_mode: false
+

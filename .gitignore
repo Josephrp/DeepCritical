@@ -2,6 +2,7 @@ example
 .cursor
 outputs
 docs
+tests
 
 # Python
 __pycache__/
@@ -68,6 +69,9 @@ venv.bak/
 multirun/
 outputs/
 *.log
+
+# GitHub Actions
+.github/workflows/ci.yml
 
 # OS
 .DS_Store

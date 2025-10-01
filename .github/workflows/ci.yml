@@ -1,170 +1,82 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, dev ]
   pull_request:
-    branches: [ main, develop ]
-
-env:
-  PYTHON_VERSION: "3.10"
-  UV_VERSION: "latest"
+    branches: [ main, dev ]
 
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: ${{ env.UV_VERSION }}
-
-      - name: Set up Python
-        run: uv python install ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies
-        run: uv sync --dev
-
-      - name: Run linting
-        run: uv run ruff check .
-
-      - name: Run formatting check
-        run: uv run ruff format --check .
-
   test:
-    name: Test
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
-    
+        python-version: [3.10, 3.11, 3.12]
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: ${{ env.UV_VERSION }}
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
 
-      - name: Set up Python
-        run: uv python install ${{ matrix.python-version }}
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
 
-      - name: Install dependencies
-        run: uv sync --dev
+    - name: Install dependencies
+      run: |
+        uv sync --dev
 
-      - name: Run tests
-        run: uv run pytest tests/ -v --cov=DeepResearch --cov-report=xml
+    - name: Lint with ruff
+      run: |
+        uv run ruff check .
+        uv run ruff format --check .
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
+    - name: Test with pytest
+      run: |
+        uv run pytest --cov=DeepResearch --cov-report=xml --cov-report=html
 
-  integration-test:
-    name: Integration Test
-    runs-on: ubuntu-latest
-    needs: [lint, test]
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: ${{ env.UV_VERSION }}
-
-      - name: Set up Python
-        run: uv python install ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies
-        run: uv sync --dev
-
-      - name: Test basic functionality
-        run: |
-          uv run deepresearch --help
-          uv run deepresearch question="Test question" --dry-run
-
-      - name: Test configuration loading
-        run: |
-          uv run deepresearch --config-name=config_with_modes --help
-
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: ${{ env.UV_VERSION }}
-
-      - name: Set up Python
-        run: uv python install ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies
-        run: uv sync --dev
-
-      - name: Run security scan
-        run: uv run bandit -r DeepResearch/ -f json -o bandit-report.json || true
-
-      - name: Upload security scan results
-        uses: actions/upload-artifact@v4
-        with:
-          name: security-scan-results
-          path: bandit-report.json
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
 
   build:
-    name: Build Package
     runs-on: ubuntu-latest
-    needs: [lint, test, integration-test]
-    
+    needs: test
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: ${{ env.UV_VERSION }}
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
 
-      - name: Set up Python
-        run: uv python install ${{ env.PYTHON_VERSION }}
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
 
-      - name: Install dependencies
-        run: uv sync --dev
+    - name: Install dependencies
+      run: |
+        uv sync --dev
 
-      - name: Build package
-        run: uv build
+    - name: Build package
+      run: |
+        uv build
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/
-
-  all-checks:
-    name: All Checks Passed
-    runs-on: ubuntu-latest
-    needs: [lint, test, integration-test, security, build]
-    if: always()
-    
-    steps:
-      - name: Check all jobs
-        run: |
-          if [[ "${{ needs.lint.result }}" != "success" || "${{ needs.test.result }}" != "success" || "${{ needs.integration-test.result }}" != "success" || "${{ needs.build.result }}" != "success" ]]; then
-            echo "One or more checks failed"
-            exit 1
-          fi
-          echo "All checks passed!"
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/

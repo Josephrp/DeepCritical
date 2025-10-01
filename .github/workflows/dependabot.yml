@@ -33,3 +33,5 @@ jobs:
           target: minor
           merge-method: squash
           merge-commit-message: 'chore(deps): ${{ github.event.pull_request.title }}'
+
+
