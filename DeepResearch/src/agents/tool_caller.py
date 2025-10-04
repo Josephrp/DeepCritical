@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List
 
-from ...tools.base import registry, ExecutionResult
+from ..tools.base import registry, ExecutionResult
 
 
 @dataclass
@@ -23,6 +23,7 @@ class ToolCaller:
 
     def execute(self, plan: List[Dict[str, Any]]) -> Dict[str, Any]:
         bag: Dict[str, Any] = {}
+
         def materialize(p: Dict[str, Any]) -> Dict[str, Any]:
             out: Dict[str, Any] = {}
             for k, v in p.items():
@@ -43,8 +44,3 @@ class ToolCaller:
                 bag[f"{tool}.{k}"] = v
                 bag[k] = v
         return bag
-
-
-
-
-

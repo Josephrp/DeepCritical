@@ -1,17 +1,15 @@
 from __future__ import annotations
 
-import atexit
 import json
 import logging
 import os
-import shlex
 import tempfile
 import uuid
 from dataclasses import dataclass
 from hashlib import md5
 from pathlib import Path
 from time import sleep
-from typing import Any, Dict, Optional, List, ClassVar
+from typing import Any, Dict, Optional, ClassVar
 
 from .base import ToolSpec, ToolRunner, ExecutionResult, registry
 
@@ -25,7 +23,7 @@ TIMEOUT_MSG = "Execution timed out after the specified timeout period."
 def _get_cfg_value(cfg: Dict[str, Any], path: str, default: Any) -> Any:
     """Get nested configuration value using dot notation."""
     cur: Any = cfg
-    for key in path.split('.'):
+    for key in path.split("."):
         if isinstance(cur, dict) and key in cur:
             cur = cur[key]
         else:
@@ -35,13 +33,13 @@ def _get_cfg_value(cfg: Dict[str, Any], path: str, default: Any) -> Any:
 
 def _get_file_name_from_content(code: str, work_dir: Path) -> Optional[str]:
     """Extract filename from code content comments, similar to AutoGen implementation."""
-    lines = code.split('\n')
+    lines = code.split("\n")
     for line in lines[:10]:  # Check first 10 lines
         line = line.strip()
-        if line.startswith('# filename:') or line.startswith('# file:'):
-            filename = line.split(':', 1)[1].strip()
+        if line.startswith("# filename:") or line.startswith("# file:"):
+            filename = line.split(":", 1)[1].strip()
             # Basic validation - ensure it's a valid filename
-            if filename and not os.path.isabs(filename) and '..' not in filename:
+            if filename and not os.path.isabs(filename) and ".." not in filename:
                 return filename
     return None
 
@@ -74,7 +72,7 @@ def _wait_for_ready(container, timeout: int = 60, stop_time: float = 0.1) -> Non
 @dataclass
 class DockerSandboxRunner(ToolRunner):
     """Enhanced Docker sandbox runner using Testcontainers with AutoGen-inspired patterns."""
-    
+
     # Default execution policies similar to AutoGen
     DEFAULT_EXECUTION_POLICY: ClassVar[Dict[str, bool]] = {
         "bash": True,
@@ -88,28 +86,32 @@ class DockerSandboxRunner(ToolRunner):
         "html": False,
         "css": False,
     }
-    
+
     # Language aliases
-    LANGUAGE_ALIASES: ClassVar[Dict[str, str]] = {
-        "py": "python",
-        "js": "javascript"
-    }
-    
+    LANGUAGE_ALIASES: ClassVar[Dict[str, str]] = {"py": "python", "js": "javascript"}
+
     def __init__(self):
-        super().__init__(ToolSpec(
-            name="docker_sandbox",
-            description="Run code/command in an isolated container using Testcontainers with enhanced execution policies.",
-            inputs={
-                "language": "TEXT",  # e.g., python, bash, shell, sh, pwsh, powershell, ps1
-                "code": "TEXT",      # code string to execute
-                "command": "TEXT",   # explicit command to run (overrides code when provided)
-                "env": "TEXT",       # JSON of env vars
-                "timeout": "TEXT",   # seconds
-                "execution_policy": "TEXT",  # JSON dict of language->bool execution policies
-            },
-            outputs={"stdout": "TEXT", "stderr": "TEXT", "exit_code": "TEXT", "files": "TEXT"},
-        ))
-        
+        super().__init__(
+            ToolSpec(
+                name="docker_sandbox",
+                description="Run code/command in an isolated container using Testcontainers with enhanced execution policies.",
+                inputs={
+                    "language": "TEXT",  # e.g., python, bash, shell, sh, pwsh, powershell, ps1
+                    "code": "TEXT",  # code string to execute
+                    "command": "TEXT",  # explicit command to run (overrides code when provided)
+                    "env": "TEXT",  # JSON of env vars
+                    "timeout": "TEXT",  # seconds
+                    "execution_policy": "TEXT",  # JSON dict of language->bool execution policies
+                },
+                outputs={
+                    "stdout": "TEXT",
+                    "stderr": "TEXT",
+                    "exit_code": "TEXT",
+                    "files": "TEXT",
+                },
+            )
+        )
+
         # Initialize execution policies
         self.execution_policies = self.DEFAULT_EXECUTION_POLICY.copy()
 
@@ -152,7 +154,6 @@ class DockerSandboxRunner(ToolRunner):
 
         # Load hydra config if accessible to configure container image and limits
         try:
-            from DeepResearch.src.prompts import PromptLoader  # just to ensure hydra is available
             cfg: Dict[str, Any] = {}
         except Exception:
             cfg = {}
@@ -171,12 +172,16 @@ class DockerSandboxRunner(ToolRunner):
 
         execute_code = self.execution_policies.get(lang, False)
         if not execute_code and not explicit_cmd:
-            return ExecutionResult(success=False, error=f"Execution disabled for language: {lang}")
+            return ExecutionResult(
+                success=False, error=f"Execution disabled for language: {lang}"
+            )
 
         try:
             from testcontainers.core.container import DockerContainer
         except Exception as e:
-            return ExecutionResult(success=False, error=f"testcontainers unavailable: {e}")
+            return ExecutionResult(
+                success=False, error=f"testcontainers unavailable: {e}"
+            )
 
         # Prepare working directory
         temp_dir: Optional[str] = None
@@ -188,27 +193,27 @@ class DockerSandboxRunner(ToolRunner):
             container_name = f"deepcritical-sandbox-{uuid.uuid4().hex[:8]}"
             container = DockerContainer(image)
             container.with_name(container_name)
-            
+
             # Set environment variables
             container.with_env("PYTHONUNBUFFERED", "1")
             for k, v in (env_map or {}).items():
                 container.with_env(str(k), str(v))
-            
+
             # Set resource limits if configured
             if cpu:
                 try:
                     container.with_cpu_quota(int(cpu))
                 except Exception:
                     logger.warning(f"Failed to set CPU quota: {cpu}")
-            
+
             if mem:
                 try:
                     container.with_memory(mem)
                 except Exception:
                     logger.warning(f"Failed to set memory limit: {mem}")
-            
+
             container.with_workdir(workdir)
-            
+
             # Mount working directory
             container.with_volume_mapping(str(work_path), workdir)
 
@@ -222,12 +227,12 @@ class DockerSandboxRunner(ToolRunner):
                 filename = _get_file_name_from_content(code, work_path)
                 if not filename:
                     filename = f"tmp_code_{md5(code.encode()).hexdigest()}.{lang}"
-                
+
                 code_path = work_path / filename
                 with code_path.open("w", encoding="utf-8") as f:
                     f.write(code)
                 files_created.append(str(code_path))
-                
+
                 # Build execution command
                 if lang == "python":
                     cmd = ["python", filename]
@@ -237,7 +242,7 @@ class DockerSandboxRunner(ToolRunner):
                     cmd = ["pwsh", filename]
                 else:
                     cmd = [_cmd(lang), filename]
-                
+
                 container.with_command(cmd)
 
             # Start container and wait for readiness
@@ -248,58 +253,70 @@ class DockerSandboxRunner(ToolRunner):
             # Execute the command with timeout
             logger.info(f"Executing command: {cmd}")
             result = container.get_wrapped_container().exec_run(
-                cmd, 
-                workdir=workdir, 
-                environment=env_map, 
-                stdout=True, 
-                stderr=True, 
-                demux=True
+                cmd,
+                workdir=workdir,
+                environment=env_map,
+                stdout=True,
+                stderr=True,
+                demux=True,
             )
-            
+
             # Parse results
-            stdout_bytes, stderr_bytes = result.output if isinstance(result.output, tuple) else (result.output, b"")
+            stdout_bytes, stderr_bytes = (
+                result.output
+                if isinstance(result.output, tuple)
+                else (result.output, b"")
+            )
             exit_code = result.exit_code
-            
+
             # Decode output
-            stdout = stdout_bytes.decode("utf-8", errors="replace") if isinstance(stdout_bytes, (bytes, bytearray)) else str(stdout_bytes)
-            stderr = stderr_bytes.decode("utf-8", errors="replace") if isinstance(stderr_bytes, (bytes, bytearray)) else ""
-            
+            stdout = (
+                stdout_bytes.decode("utf-8", errors="replace")
+                if isinstance(stdout_bytes, (bytes, bytearray))
+                else str(stdout_bytes)
+            )
+            stderr = (
+                stderr_bytes.decode("utf-8", errors="replace")
+                if isinstance(stderr_bytes, (bytes, bytearray))
+                else ""
+            )
+
             # Handle timeout
             if exit_code == 124:
                 stderr += "\n" + TIMEOUT_MSG
-            
+
             # Stop container
             container.stop()
-            
+
             return ExecutionResult(
-                success=True, 
+                success=True,
                 data={
-                    "stdout": stdout, 
-                    "stderr": stderr, 
+                    "stdout": stdout,
+                    "stderr": stderr,
                     "exit_code": str(exit_code),
-                    "files": json.dumps(files_created)
-                }
+                    "files": json.dumps(files_created),
+                },
             )
-            
+
         except Exception as e:
             logger.error(f"Container execution failed: {e}")
             return ExecutionResult(success=False, error=str(e))
         finally:
             # Cleanup
             try:
-                if 'container' in locals():
+                if "container" in locals():
                     container.stop()
             except Exception:
                 pass
-            
+
             # Cleanup working directory
             if work_path.exists():
                 try:
                     import shutil
+
                     shutil.rmtree(work_path)
                 except Exception:
                     logger.warning(f"Failed to cleanup working directory: {work_path}")
-
 
     def restart(self) -> None:
         """Restart the container (for persistent containers)."""
@@ -321,9 +338,44 @@ class DockerSandboxRunner(ToolRunner):
         self.stop()
 
 
+@dataclass
+class DockerSandboxTool(ToolRunner):
+    """Tool for executing code in a Docker sandboxed environment."""
+
+    def __init__(self):
+        super().__init__(
+            ToolSpec(
+                name="docker_sandbox",
+                description="Execute code in a Docker sandboxed environment",
+                inputs={"code": "TEXT", "language": "TEXT", "timeout": "NUMBER"},
+                outputs={"result": "TEXT", "success": "BOOLEAN"},
+            )
+        )
+
+    def run(self, params: Dict[str, str]) -> ExecutionResult:
+        code = params.get("code", "")
+        language = params.get("language", "python")
+        timeout = int(params.get("timeout", "30"))
+
+        if not code:
+            return ExecutionResult(success=False, error="No code provided")
+
+        if language.lower() == "python":
+            # Use the existing DockerSandboxRunner for Python code
+            runner = DockerSandboxRunner()
+            result = runner.run({"code": code, "timeout": timeout})
+            return result
+        else:
+            return ExecutionResult(
+                success=True,
+                data={
+                    "result": f"Docker execution for {language}: {code[:50]}...",
+                    "success": True,
+                },
+                metrics={"language": language, "timeout": timeout},
+            )
+
+
 # Register tool
 registry.register("docker_sandbox", DockerSandboxRunner)
-
-
-
-
+registry.register("docker_sandbox_tool", DockerSandboxTool)

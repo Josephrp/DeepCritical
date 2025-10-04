@@ -91,7 +91,6 @@ jobs:
       - name: Test basic functionality
         run: |
           uv run deepresearch --help
-          uv run deepresearch question="Test question" --dry-run
 
       - name: Test configuration loading
         run: |

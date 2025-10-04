@@ -7,13 +7,14 @@ using Pydantic AI patterns that align with DeepCritical's architecture.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional
 from pydantic import BaseModel, Field, validator
 from enum import Enum
 
 
 class PromptType(str, Enum):
     """Types of prompts."""
+
     SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
@@ -23,37 +24,38 @@ class PromptType(str, Enum):
 
 class PromptTemplate(BaseModel):
     """Template for prompts with variable substitution."""
+
     name: str = Field(..., description="Prompt template name")
     template: str = Field(..., description="Prompt template string")
     variables: List[str] = Field(default_factory=list, description="Required variables")
     prompt_type: PromptType = Field(PromptType.SYSTEM, description="Type of prompt")
-    
-    @validator('name')
+
+    @validator("name")
     def validate_name(cls, v):
         if not v or not v.strip():
             raise ValueError("Prompt template name cannot be empty")
         return v.strip()
-    
-    @validator('template')
+
+    @validator("template")
     def validate_template(cls, v):
         if not v or not v.strip():
             raise ValueError("Prompt template cannot be empty")
         return v.strip()
-    
+
     def format(self, **kwargs) -> str:
         """Format the template with provided variables."""
         try:
             return self.template.format(**kwargs)
         except KeyError as e:
             raise ValueError(f"Missing required variable: {e}")
-    
+
     class Config:
         json_schema_extra = {
             "example": {
                 "name": "write_todos_system",
                 "template": "You have access to the write_todos tool...",
                 "variables": ["other_agents"],
-                "prompt_type": "system"
+                "prompt_type": "system",
             }
         }
 
@@ -328,45 +330,45 @@ WRITE_TODOS_SYSTEM_TEMPLATE = PromptTemplate(
     name="write_todos_system",
     template=WRITE_TODOS_SYSTEM_PROMPT,
     variables=[],
-    prompt_type=PromptType.SYSTEM
+    prompt_type=PromptType.SYSTEM,
 )
 
 TASK_SYSTEM_TEMPLATE = PromptTemplate(
     name="task_system",
     template=TASK_SYSTEM_PROMPT,
     variables=[],
-    prompt_type=PromptType.SYSTEM
+    prompt_type=PromptType.SYSTEM,
 )
 
 FILESYSTEM_SYSTEM_TEMPLATE = PromptTemplate(
     name="filesystem_system",
     template=FILESYSTEM_SYSTEM_PROMPT,
     variables=[],
-    prompt_type=PromptType.SYSTEM
+    prompt_type=PromptType.SYSTEM,
 )
 
 BASE_AGENT_TEMPLATE = PromptTemplate(
     name="base_agent",
     template=BASE_AGENT_PROMPT,
     variables=[],
-    prompt_type=PromptType.SYSTEM
+    prompt_type=PromptType.SYSTEM,
 )
 
 TASK_TOOL_DESCRIPTION_TEMPLATE = PromptTemplate(
     name="task_tool_description",
     template=TASK_TOOL_DESCRIPTION,
     variables=["other_agents"],
-    prompt_type=PromptType.TOOL
+    prompt_type=PromptType.TOOL,
 )
 
 
 class PromptManager:
     """Manager for prompt templates and system messages."""
-    
+
     def __init__(self):
         self.templates: Dict[str, PromptTemplate] = {}
         self._register_default_templates()
-    
+
     def _register_default_templates(self) -> None:
         """Register default prompt templates."""
         default_templates = [
@@ -374,41 +376,41 @@ class PromptManager:
             TASK_SYSTEM_TEMPLATE,
             FILESYSTEM_SYSTEM_TEMPLATE,
             BASE_AGENT_TEMPLATE,
-            TASK_TOOL_DESCRIPTION_TEMPLATE
+            TASK_TOOL_DESCRIPTION_TEMPLATE,
         ]
-        
+
         for template in default_templates:
             self.register_template(template)
-    
+
     def register_template(self, template: PromptTemplate) -> None:
         """Register a prompt template."""
         self.templates[template.name] = template
-    
+
     def get_template(self, name: str) -> Optional[PromptTemplate]:
         """Get a prompt template by name."""
         return self.templates.get(name)
-    
+
     def format_template(self, name: str, **kwargs) -> str:
         """Format a prompt template with variables."""
         template = self.get_template(name)
         if not template:
             raise ValueError(f"Template '{name}' not found")
         return template.format(**kwargs)
-    
+
     def get_system_prompt(self, components: List[str] = None) -> str:
         """Get a system prompt combining multiple components."""
         if not components:
             components = ["base_agent"]
-        
+
         prompt_parts = []
         for component in components:
             if component in self.templates:
                 template = self.templates[component]
                 if template.prompt_type == PromptType.SYSTEM:
                     prompt_parts.append(template.template)
-        
+
         return "\n\n".join(prompt_parts)
-    
+
     def get_tool_description(self, tool_name: str, **kwargs) -> str:
         """Get a tool description with variable substitution."""
         if tool_name == "write_todos":
@@ -436,14 +438,11 @@ def create_prompt_template(
     name: str,
     template: str,
     variables: List[str] = None,
-    prompt_type: PromptType = PromptType.SYSTEM
+    prompt_type: PromptType = PromptType.SYSTEM,
 ) -> PromptTemplate:
     """Create a prompt template."""
     return PromptTemplate(
-        name=name,
-        template=template,
-        variables=variables or [],
-        prompt_type=prompt_type
+        name=name, template=template, variables=variables or [], prompt_type=prompt_type
     )
 
 
@@ -466,11 +465,9 @@ def format_template(name: str, **kwargs) -> str:
 __all__ = [
     # Enums
     "PromptType",
-    
     # Models
     "PromptTemplate",
     "PromptManager",
-    
     # Tool descriptions
     "WRITE_TODOS_TOOL_DESCRIPTION",
     "TASK_TOOL_DESCRIPTION",
@@ -478,29 +475,39 @@ __all__ = [
     "READ_FILE_TOOL_DESCRIPTION",
     "EDIT_FILE_TOOL_DESCRIPTION",
     "WRITE_FILE_TOOL_DESCRIPTION",
-    
     # System prompts
     "WRITE_TODOS_SYSTEM_PROMPT",
     "TASK_SYSTEM_PROMPT",
     "FILESYSTEM_SYSTEM_PROMPT",
     "BASE_AGENT_PROMPT",
-    
     # Templates
     "WRITE_TODOS_SYSTEM_TEMPLATE",
     "TASK_SYSTEM_TEMPLATE",
     "FILESYSTEM_SYSTEM_TEMPLATE",
     "BASE_AGENT_TEMPLATE",
     "TASK_TOOL_DESCRIPTION_TEMPLATE",
-    
     # Global instance
     "prompt_manager",
-    
     # Factory functions
     "create_prompt_template",
     "get_system_prompt",
     "get_tool_description",
-    "format_template"
+    "format_template",
+    # Prompt constants and classes
+    "DEEP_AGENT_PROMPTS",
+    "DeepAgentPrompts",
 ]
 
 
+# Prompt constants for DeepAgent operations
+DEEP_AGENT_PROMPTS = {
+    "system": "You are a DeepAgent for complex reasoning and task execution.",
+    "task_execution": "Execute the following task: {task_description}",
+    "reasoning": "Reason step by step about: {query}",
+}
 
+
+class DeepAgentPrompts:
+    """Prompt templates for DeepAgent operations."""
+
+    PROMPTS = DEEP_AGENT_PROMPTS

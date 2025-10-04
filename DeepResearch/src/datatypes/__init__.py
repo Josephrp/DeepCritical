@@ -19,7 +19,7 @@ from .bioinformatics import (
     ProteinInteraction,
     FusedDataset,
     ReasoningTask,
-    DataFusionRequest
+    DataFusionRequest,
 )
 
 from .rag import (
@@ -39,7 +39,7 @@ from .rag import (
     VectorStore,
     LLMProvider,
     RAGSystem,
-    RAGWorkflowState
+    RAGWorkflowState,
 )
 
 from .vllm_integration import (
@@ -48,13 +48,13 @@ from .vllm_integration import (
     VLLMServerConfig,
     VLLMEmbeddingServerConfig,
     VLLMDeployment,
-    VLLMRAGSystem
+    VLLMRAGSystem,
 )
 
 __all__ = [
     # Bioinformatics types
     "EvidenceCode",
-    "GOTerm", 
+    "GOTerm",
     "GOAnnotation",
     "PubMedPaper",
     "GEOPlatform",
@@ -67,11 +67,10 @@ __all__ = [
     "FusedDataset",
     "ReasoningTask",
     "DataFusionRequest",
-    
     # RAG types
     "SearchType",
     "EmbeddingModelType",
-    "LLMModelType", 
+    "LLMModelType",
     "VectorStoreType",
     "Document",
     "SearchResult",
@@ -86,17 +85,11 @@ __all__ = [
     "LLMProvider",
     "RAGSystem",
     "RAGWorkflowState",
-    
     # VLLM integration types
     "VLLMEmbeddings",
     "VLLMLLMProvider",
     "VLLMServerConfig",
     "VLLMEmbeddingServerConfig",
     "VLLMDeployment",
-    "VLLMRAGSystem"
+    "VLLMRAGSystem",
 ]
-
-
-
-
-

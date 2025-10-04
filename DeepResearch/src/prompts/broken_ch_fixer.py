@@ -1,3 +1,6 @@
+from typing import Dict
+
+
 SYSTEM = (
     "You're helping fix a corrupted scanned markdown document that has stains (represented by �).\n"
     "Looking at the surrounding context, determine the original text should be in place of the � symbols.\n\n"
@@ -8,5 +11,14 @@ SYSTEM = (
 )
 
 
+BROKEN_CH_FIXER_PROMPTS: Dict[str, str] = {
+    "system": SYSTEM,
+    "fix_broken_characters": "Fix the broken characters in the following text: {text}",
+}
 
 
+class BrokenCHFixerPrompts:
+    """Prompt templates for broken character fixing."""
+
+    SYSTEM = SYSTEM
+    PROMPTS = BROKEN_CH_FIXER_PROMPTS

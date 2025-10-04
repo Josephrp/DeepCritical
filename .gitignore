@@ -2,6 +2,7 @@ example
 .cursor
 outputs
 docs
+.claude/
 
 # Python
 __pycache__/

@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional, Callable, Tuple
 class ToolSpec:
     name: str
     description: str = ""
-    inputs: Dict[str, str] = field(default_factory=dict)   # param: type
+    inputs: Dict[str, str] = field(default_factory=dict)  # param: type
     outputs: Dict[str, str] = field(default_factory=dict)  # key: type
 
 
@@ -57,8 +57,3 @@ class ToolRegistry:
 
 
 registry = ToolRegistry()
-
-
-
-
-

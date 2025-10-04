@@ -1,10 +1,11 @@
 # @package _global_
 
 defaults:
-  - override hydra/job_logging: default
-  - override hydra/hydra_logging: default
   - challenge: default
   - workflow_orchestration: default
+  - _self_
+  - override hydra/job_logging: default
+  - override hydra/hydra_logging: default
 
 # Main configuration
 question: "What is machine learning and how does it work?"

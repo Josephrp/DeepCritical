@@ -7,60 +7,62 @@ workflow with the existing tool registry system.
 
 from __future__ import annotations
 
-import asyncio
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from .base import ToolSpec, ToolRunner, ExecutionResult, registry
-from ..src.statemachines.deepsearch_workflow import run_deepsearch_workflow
-from ..src.utils.deepsearch_schemas import DeepSearchSchemas
+from ..statemachines.deepsearch_workflow import run_deepsearch_workflow
+from ..utils.deepsearch_schemas import DeepSearchSchemas
 
 
 @dataclass
 class DeepSearchWorkflowTool(ToolRunner):
     """Tool for running complete deep search workflows."""
-    
+
     def __init__(self):
-        super().__init__(ToolSpec(
-            name="deepsearch_workflow",
-            description="Run complete deep search workflow with iterative search, reflection, and synthesis",
-            inputs={
-                "question": "TEXT",
-                "max_steps": "INTEGER",
-                "token_budget": "INTEGER",
-                "search_engines": "TEXT",
-                "evaluation_criteria": "TEXT"
-            },
-            outputs={
-                "final_answer": "TEXT",
-                "confidence_score": "FLOAT",
-                "quality_metrics": "JSON",
-                "processing_steps": "JSON",
-                "search_summary": "JSON"
-            }
-        ))
+        super().__init__(
+            ToolSpec(
+                name="deepsearch_workflow",
+                description="Run complete deep search workflow with iterative search, reflection, and synthesis",
+                inputs={
+                    "question": "TEXT",
+                    "max_steps": "INTEGER",
+                    "token_budget": "INTEGER",
+                    "search_engines": "TEXT",
+                    "evaluation_criteria": "TEXT",
+                },
+                outputs={
+                    "final_answer": "TEXT",
+                    "confidence_score": "FLOAT",
+                    "quality_metrics": "JSON",
+                    "processing_steps": "JSON",
+                    "search_summary": "JSON",
+                },
+            )
+        )
         self.schemas = DeepSearchSchemas()
-    
+
     def run(self, params: Dict[str, Any]) -> ExecutionResult:
         """Execute complete deep search workflow."""
         ok, err = self.validate(params)
         if not ok:
             return ExecutionResult(success=False, error=err)
-        
+
         try:
             # Extract parameters
             question = str(params.get("question", "")).strip()
             max_steps = int(params.get("max_steps", 20))
             token_budget = int(params.get("token_budget", 10000))
             search_engines = str(params.get("search_engines", "google")).strip()
-            evaluation_criteria = str(params.get("evaluation_criteria", "definitive,completeness,freshness")).strip()
-            
+            evaluation_criteria = str(
+                params.get("evaluation_criteria", "definitive,completeness,freshness")
+            ).strip()
+
             if not question:
                 return ExecutionResult(
-                    success=False,
-                    error="No question provided for deep search workflow"
+                    success=False, error="No question provided for deep search workflow"
                 )
-            
+
             # Create configuration
             config = {
                 "max_steps": max_steps,
@@ -72,16 +74,16 @@ class DeepSearchWorkflowTool(ToolRunner):
                     "max_urls_per_step": 5,
                     "max_queries_per_step": 5,
                     "max_reflect_per_step": 2,
-                    "timeout": 30
-                }
+                    "timeout": 30,
+                },
             }
-            
+
             # Run the deep search workflow
             final_output = run_deepsearch_workflow(question, config)
-            
+
             # Parse the output to extract structured information
             parsed_results = self._parse_workflow_output(final_output)
-            
+
             return ExecutionResult(
                 success=True,
                 data={
@@ -89,34 +91,32 @@ class DeepSearchWorkflowTool(ToolRunner):
                     "confidence_score": parsed_results.get("confidence_score", 0.8),
                     "quality_metrics": parsed_results.get("quality_metrics", {}),
                     "processing_steps": parsed_results.get("processing_steps", []),
-                    "search_summary": parsed_results.get("search_summary", {})
-                }
+                    "search_summary": parsed_results.get("search_summary", {}),
+                },
             )
-            
+
         except Exception as e:
             return ExecutionResult(
-                success=False,
-                data={},
-                error=f"Deep search workflow failed: {str(e)}"
+                success=False, data={}, error=f"Deep search workflow failed: {str(e)}"
             )
-    
+
     def _parse_workflow_output(self, output: str) -> Dict[str, Any]:
         """Parse the workflow output to extract structured information."""
-        lines = output.split('\n')
+        lines = output.split("\n")
         parsed = {
             "answer": "",
             "confidence_score": 0.8,
             "quality_metrics": {},
             "processing_steps": [],
-            "search_summary": {}
+            "search_summary": {},
         }
-        
+
         current_section = None
         answer_lines = []
-        
+
         for line in lines:
             line = line.strip()
-            
+
             if line.startswith("Answer:"):
                 current_section = "answer"
                 answer_lines.append(line[7:].strip())  # Remove "Answer:" prefix
@@ -159,92 +159,92 @@ class DeepSearchWorkflowTool(ToolRunner):
                 # Parse processing steps
                 step = line[2:]  # Remove "- " prefix
                 parsed["processing_steps"].append(step)
-        
+
         # Join answer lines if we have them
         if answer_lines and not parsed["answer"]:
             parsed["answer"] = "\n".join(answer_lines)
-        
+
         return parsed
 
 
 @dataclass
 class DeepSearchAgentTool(ToolRunner):
     """Tool for running deep search with agent-like behavior."""
-    
+
     def __init__(self):
-        super().__init__(ToolSpec(
-            name="deepsearch_agent",
-            description="Run deep search with intelligent agent behavior and adaptive planning",
-            inputs={
-                "question": "TEXT",
-                "agent_personality": "TEXT",
-                "research_depth": "TEXT",
-                "output_format": "TEXT"
-            },
-            outputs={
-                "agent_response": "TEXT",
-                "research_notes": "JSON",
-                "sources_used": "JSON",
-                "reasoning_chain": "JSON"
-            }
-        ))
+        super().__init__(
+            ToolSpec(
+                name="deepsearch_agent",
+                description="Run deep search with intelligent agent behavior and adaptive planning",
+                inputs={
+                    "question": "TEXT",
+                    "agent_personality": "TEXT",
+                    "research_depth": "TEXT",
+                    "output_format": "TEXT",
+                },
+                outputs={
+                    "agent_response": "TEXT",
+                    "research_notes": "JSON",
+                    "sources_used": "JSON",
+                    "reasoning_chain": "JSON",
+                },
+            )
+        )
         self.schemas = DeepSearchSchemas()
-    
+
     def run(self, params: Dict[str, Any]) -> ExecutionResult:
         """Execute deep search with agent behavior."""
         ok, err = self.validate(params)
         if not ok:
             return ExecutionResult(success=False, error=err)
-        
+
         try:
             # Extract parameters
             question = str(params.get("question", "")).strip()
-            agent_personality = str(params.get("agent_personality", "analytical")).strip()
+            agent_personality = str(
+                params.get("agent_personality", "analytical")
+            ).strip()
             research_depth = str(params.get("research_depth", "comprehensive")).strip()
             output_format = str(params.get("output_format", "detailed")).strip()
-            
+
             if not question:
                 return ExecutionResult(
-                    success=False,
-                    error="No question provided for deep search agent"
+                    success=False, error="No question provided for deep search agent"
                 )
-            
+
             # Create agent-specific configuration
-            config = self._create_agent_config(agent_personality, research_depth, output_format)
-            
+            config = self._create_agent_config(
+                agent_personality, research_depth, output_format
+            )
+
             # Run the deep search workflow
             final_output = run_deepsearch_workflow(question, config)
-            
+
             # Enhance output with agent personality
             enhanced_response = self._enhance_with_agent_personality(
                 final_output, agent_personality, output_format
             )
-            
+
             # Extract structured information
             parsed_results = self._parse_agent_output(enhanced_response)
-            
+
             return ExecutionResult(
                 success=True,
                 data={
                     "agent_response": enhanced_response,
                     "research_notes": parsed_results.get("research_notes", []),
                     "sources_used": parsed_results.get("sources_used", []),
-                    "reasoning_chain": parsed_results.get("reasoning_chain", [])
-                }
+                    "reasoning_chain": parsed_results.get("reasoning_chain", []),
+                },
             )
-            
+
         except Exception as e:
             return ExecutionResult(
-                success=False,
-                data={},
-                error=f"Deep search agent failed: {str(e)}"
+                success=False, data={}, error=f"Deep search agent failed: {str(e)}"
             )
-    
+
     def _create_agent_config(
-        self, 
-        personality: str, 
-        depth: str, 
-        format_type: str
+        self, personality: str, depth: str, format_type: str
     ) -> Dict[str, Any]:
         """Create configuration based on agent parameters."""
         config = {
@@ -252,10 +252,10 @@ class DeepSearchAgentTool(ToolRunner):
                 "enabled": True,
                 "agent_personality": personality,
                 "research_depth": depth,
-                "output_format": format_type
+                "output_format": format_type,
             }
         }
-        
+
         # Adjust parameters based on personality
         if personality == "thorough":
             config["max_steps"] = 30
@@ -266,7 +266,7 @@ class DeepSearchAgentTool(ToolRunner):
         else:  # analytical (default)
             config["max_steps"] = 20
             config["token_budget"] = 10000
-        
+
         # Adjust based on research depth
         if depth == "surface":
             config["deepsearch"]["max_urls_per_step"] = 3
@@ -277,72 +277,77 @@ class DeepSearchAgentTool(ToolRunner):
         else:  # comprehensive (default)
             config["deepsearch"]["max_urls_per_step"] = 5
             config["deepsearch"]["max_queries_per_step"] = 5
-        
+
         return config
-    
+
     def _enhance_with_agent_personality(
-        self, 
-        output: str, 
-        personality: str, 
-        format_type: str
+        self, output: str, personality: str, format_type: str
     ) -> str:
         """Enhance output with agent personality."""
         enhanced_lines = []
-        
+
         # Add personality-based introduction
         if personality == "thorough":
             enhanced_lines.append("🔍 THOROUGH RESEARCH ANALYSIS")
-            enhanced_lines.append("I've conducted an exhaustive investigation to provide you with the most comprehensive answer possible.")
+            enhanced_lines.append(
+                "I've conducted an exhaustive investigation to provide you with the most comprehensive answer possible."
+            )
         elif personality == "quick":
             enhanced_lines.append("⚡ QUICK RESEARCH SUMMARY")
-            enhanced_lines.append("Here's a concise analysis based on the most relevant information I found.")
+            enhanced_lines.append(
+                "Here's a concise analysis based on the most relevant information I found."
+            )
         else:  # analytical
             enhanced_lines.append("🧠 ANALYTICAL RESEARCH REPORT")
-            enhanced_lines.append("I've systematically analyzed the available information to provide you with a well-reasoned response.")
-        
+            enhanced_lines.append(
+                "I've systematically analyzed the available information to provide you with a well-reasoned response."
+            )
+
         enhanced_lines.append("")
-        
+
         # Add the original output
         enhanced_lines.append(output)
-        
+
         # Add personality-based conclusion
         enhanced_lines.append("")
         if personality == "thorough":
-            enhanced_lines.append("This analysis represents a comprehensive examination of the topic. If you need additional details on any specific aspect, I can conduct further research.")
+            enhanced_lines.append(
+                "This analysis represents a comprehensive examination of the topic. If you need additional details on any specific aspect, I can conduct further research."
+            )
         elif personality == "quick":
-            enhanced_lines.append("This summary covers the key points efficiently. Let me know if you'd like me to explore any specific aspect in more detail.")
+            enhanced_lines.append(
+                "This summary covers the key points efficiently. Let me know if you'd like me to explore any specific aspect in more detail."
+            )
         else:  # analytical
-            enhanced_lines.append("This analysis provides a structured examination of the topic. I'm ready to dive deeper into any particular aspect that interests you.")
-        
+            enhanced_lines.append(
+                "This analysis provides a structured examination of the topic. I'm ready to dive deeper into any particular aspect that interests you."
+            )
+
         return "\n".join(enhanced_lines)
-    
+
     def _parse_agent_output(self, output: str) -> Dict[str, Any]:
         """Parse agent output to extract structured information."""
         return {
             "research_notes": [
                 "Conducted comprehensive web search",
                 "Analyzed multiple sources",
-                "Synthesized findings into coherent response"
+                "Synthesized findings into coherent response",
             ],
             "sources_used": [
                 {"type": "web_search", "count": "multiple"},
                 {"type": "url_visits", "count": "several"},
-                {"type": "knowledge_synthesis", "count": "integrated"}
+                {"type": "knowledge_synthesis", "count": "integrated"},
             ],
             "reasoning_chain": [
                 "1. Analyzed the question to identify key information needs",
                 "2. Conducted targeted searches to gather relevant information",
                 "3. Visited authoritative sources to verify and expand knowledge",
                 "4. Synthesized findings into a comprehensive answer",
-                "5. Evaluated the quality and completeness of the response"
-            ]
+                "5. Evaluated the quality and completeness of the response",
+            ],
         }
 
 
 # Register the deep search workflow tools
 registry.register("deepsearch_workflow", DeepSearchWorkflowTool)
 registry.register("deepsearch_agent", DeepSearchAgentTool)
-
-
-
-

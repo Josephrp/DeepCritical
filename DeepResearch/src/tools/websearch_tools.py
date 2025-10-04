@@ -7,42 +7,43 @@ integrating with the existing tool registry and datatypes.
 
 import asyncio
 import json
-from typing import Dict, Any, List, Optional, Union
+from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, Field
-from pydantic_ai import Agent, RunContext
+from pydantic_ai import RunContext
 
 from .base import ToolSpec, ToolRunner, ExecutionResult
-from ..src.datatypes.rag import Document, Chunk
-from ..src.datatypes.chunk_dataclass import Chunk as ChunkDataclass
-from ..src.datatypes.document_dataclass import Document as DocumentDataclass
 from .websearch_cleaned import search_web, search_and_chunk
 
 
 class WebSearchRequest(BaseModel):
     """Request model for web search operations."""
+
     query: str = Field(..., description="Search query")
     search_type: str = Field("search", description="Type of search: 'search' or 'news'")
-    num_results: Optional[int] = Field(4, description="Number of results to fetch (1-20)")
-    
+    num_results: Optional[int] = Field(
+        4, description="Number of results to fetch (1-20)"
+    )
+
     class Config:
         json_schema_extra = {
             "example": {
                 "query": "artificial intelligence developments 2024",
                 "search_type": "news",
-                "num_results": 5
+                "num_results": 5,
             }
         }
 
 
 class WebSearchResponse(BaseModel):
     """Response model for web search operations."""
+
     query: str = Field(..., description="Original search query")
     search_type: str = Field(..., description="Type of search performed")
     num_results: int = Field(..., description="Number of results requested")
     content: str = Field(..., description="Extracted content from search results")
     success: bool = Field(..., description="Whether the search was successful")
     error: Optional[str] = Field(None, description="Error message if search failed")
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -51,24 +52,31 @@ class WebSearchResponse(BaseModel):
                 "num_results": 5,
                 "content": "## AI Breakthrough in 2024\n**Source:** TechCrunch   **Date:** 2024-01-15\n...",
                 "success": True,
-                "error": None
+                "error": None,
             }
         }
 
 
 class ChunkedSearchRequest(BaseModel):
     """Request model for chunked search operations."""
+
     query: str = Field(..., description="Search query")
     search_type: str = Field("search", description="Type of search: 'search' or 'news'")
-    num_results: Optional[int] = Field(4, description="Number of results to fetch (1-20)")
+    num_results: Optional[int] = Field(
+        4, description="Number of results to fetch (1-20)"
+    )
     tokenizer_or_token_counter: str = Field("character", description="Tokenizer type")
     chunk_size: int = Field(1000, description="Chunk size for processing")
     chunk_overlap: int = Field(0, description="Overlap between chunks")
     heading_level: int = Field(3, description="Heading level for chunking")
-    min_characters_per_chunk: int = Field(50, description="Minimum characters per chunk")
-    max_characters_per_section: int = Field(4000, description="Maximum characters per section")
+    min_characters_per_chunk: int = Field(
+        50, description="Minimum characters per chunk"
+    )
+    max_characters_per_section: int = Field(
+        4000, description="Maximum characters per section"
+    )
     clean_text: bool = Field(True, description="Whether to clean text")
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -80,18 +88,19 @@ class ChunkedSearchRequest(BaseModel):
                 "heading_level": 3,
                 "min_characters_per_chunk": 50,
                 "max_characters_per_section": 4000,
-                "clean_text": True
+                "clean_text": True,
             }
         }
 
 
 class ChunkedSearchResponse(BaseModel):
     """Response model for chunked search operations."""
+
     query: str = Field(..., description="Original search query")
     chunks: List[Dict[str, Any]] = Field(..., description="List of processed chunks")
     success: bool = Field(..., description="Whether the search was successful")
     error: Optional[str] = Field(None, description="Error message if search failed")
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -101,35 +110,27 @@ class ChunkedSearchResponse(BaseModel):
                         "text": "Machine learning algorithms are...",
                         "source_title": "ML Guide",
                         "url": "https://example.com/ml-guide",
-                        "token_count": 150
+                        "token_count": 150,
                     }
                 ],
                 "success": True,
-                "error": None
+                "error": None,
             }
         }
 
 
 class WebSearchTool(ToolRunner):
     """Tool runner for web search operations."""
-    
+
     def __init__(self):
         spec = ToolSpec(
             name="web_search",
             description="Search the web for information or fresh news, returning extracted content",
-            inputs={
-                "query": "TEXT",
-                "search_type": "TEXT", 
-                "num_results": "INTEGER"
-            },
-            outputs={
-                "content": "TEXT",
-                "success": "BOOLEAN",
-                "error": "TEXT"
-            }
+            inputs={"query": "TEXT", "search_type": "TEXT", "num_results": "INTEGER"},
+            outputs={"content": "TEXT", "success": "BOOLEAN", "error": "TEXT"},
         )
         super().__init__(spec)
-    
+
     def run(self, params: Dict[str, Any]) -> ExecutionResult:
         """Execute web search operation."""
         try:
@@ -137,13 +138,12 @@ class WebSearchTool(ToolRunner):
             query = params.get("query", "")
             search_type = params.get("search_type", "search")
             num_results = params.get("num_results", 4)
-            
+
             if not query:
                 return ExecutionResult(
-                    success=False,
-                    error="Query parameter is required"
+                    success=False, error="Query parameter is required"
                 )
-            
+
             # Run async search
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
@@ -153,11 +153,11 @@ class WebSearchTool(ToolRunner):
                 )
             finally:
                 loop.close()
-            
+
             # Check if search was successful
             success = not content.startswith("Error:")
             error = None if success else content
-            
+
             return ExecutionResult(
                 success=success,
                 data={
@@ -166,20 +166,17 @@ class WebSearchTool(ToolRunner):
                     "error": error,
                     "query": query,
                     "search_type": search_type,
-                    "num_results": num_results
-                }
+                    "num_results": num_results,
+                },
             )
-            
+
         except Exception as e:
-            return ExecutionResult(
-                success=False,
-                error=f"Web search failed: {str(e)}"
-            )
+            return ExecutionResult(success=False, error=f"Web search failed: {str(e)}")
 
 
 class ChunkedSearchTool(ToolRunner):
     """Tool runner for chunked search operations."""
-    
+
     def __init__(self):
         spec = ToolSpec(
             name="chunked_search",
@@ -193,16 +190,12 @@ class ChunkedSearchTool(ToolRunner):
                 "heading_level": "INTEGER",
                 "min_characters_per_chunk": "INTEGER",
                 "max_characters_per_section": "INTEGER",
-                "clean_text": "BOOLEAN"
+                "clean_text": "BOOLEAN",
             },
-            outputs={
-                "chunks": "JSON",
-                "success": "BOOLEAN",
-                "error": "TEXT"
-            }
+            outputs={"chunks": "JSON", "success": "BOOLEAN", "error": "TEXT"},
         )
         super().__init__(spec)
-    
+
     def run(self, params: Dict[str, Any]) -> ExecutionResult:
         """Execute chunked search operation."""
         try:
@@ -216,13 +209,12 @@ class ChunkedSearchTool(ToolRunner):
             min_characters_per_chunk = params.get("min_characters_per_chunk", 50)
             max_characters_per_section = params.get("max_characters_per_section", 4000)
             clean_text = params.get("clean_text", True)
-            
+
             if not query:
                 return ExecutionResult(
-                    success=False,
-                    error="Query parameter is required"
+                    success=False, error="Query parameter is required"
                 )
-            
+
             # Run async chunked search
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
@@ -238,36 +230,39 @@ class ChunkedSearchTool(ToolRunner):
                         heading_level=heading_level,
                         min_characters_per_chunk=min_characters_per_chunk,
                         max_characters_per_section=max_characters_per_section,
-                        clean_text=clean_text
+                        clean_text=clean_text,
                     )
                 )
             finally:
                 loop.close()
-            
+
             # Parse chunks
             try:
                 chunks = json.loads(chunks_json)
-                success = not (isinstance(chunks, list) and len(chunks) > 0 and "error" in chunks[0])
+                success = not (
+                    isinstance(chunks, list)
+                    and len(chunks) > 0
+                    and "error" in chunks[0]
+                )
                 error = None if success else chunks[0].get("error", "Unknown error")
             except json.JSONDecodeError:
                 chunks = []
                 success = False
                 error = "Failed to parse chunks JSON"
-            
+
             return ExecutionResult(
                 success=success,
                 data={
                     "chunks": chunks,
                     "success": success,
                     "error": error,
-                    "query": query
-                }
+                    "query": query,
+                },
             )
-            
+
         except Exception as e:
             return ExecutionResult(
-                success=False,
-                error=f"Chunked search failed: {str(e)}"
+                success=False, error=f"Chunked search failed: {str(e)}"
             )
 
 
@@ -275,26 +270,26 @@ class ChunkedSearchTool(ToolRunner):
 def web_search_tool(ctx: RunContext[Any]) -> str:
     """
     Search the web for information or fresh news, returning extracted content.
-    
+
     This tool can perform two types of searches:
     - "search" (default): General web search for diverse, relevant content from various sources
     - "news": Specifically searches for fresh news articles and breaking stories
-    
+
     Args:
         query: The search query (required)
         search_type: Type of search - "search" or "news" (optional, default: "search")
         num_results: Number of results to fetch, 1-20 (optional, default: 4)
-    
+
     Returns:
         Formatted text containing extracted content with metadata for each result
     """
     # Extract parameters from context
     params = ctx.deps if isinstance(ctx.deps, dict) else {}
-    
+
     # Create and run tool
     tool = WebSearchTool()
     result = tool.run(params)
-    
+
     if result.success:
         return result.data.get("content", "No content returned")
     else:
@@ -304,10 +299,10 @@ def web_search_tool(ctx: RunContext[Any]) -> str:
 def chunked_search_tool(ctx: RunContext[Any]) -> str:
     """
     Search the web and return chunked content optimized for RAG processing.
-    
+
     This tool performs web search and processes the results into chunks suitable
     for vector storage and retrieval-augmented generation.
-    
+
     Args:
         query: The search query (required)
         search_type: Type of search - "search" or "news" (optional, default: "search")
@@ -318,17 +313,17 @@ def chunked_search_tool(ctx: RunContext[Any]) -> str:
         min_characters_per_chunk: Minimum characters per chunk (optional, default: 50)
         max_characters_per_section: Maximum characters per section (optional, default: 4000)
         clean_text: Whether to clean text (optional, default: true)
-    
+
     Returns:
         JSON string containing processed chunks with metadata
     """
     # Extract parameters from context
     params = ctx.deps if isinstance(ctx.deps, dict) else {}
-    
+
     # Create and run tool
     tool = ChunkedSearchTool()
     result = tool.run(params)
-    
+
     if result.success:
         return json.dumps(result.data.get("chunks", []))
     else:
@@ -339,14 +334,10 @@ def chunked_search_tool(ctx: RunContext[Any]) -> str:
 def register_websearch_tools():
     """Register websearch tools with the global registry."""
     from .base import registry
-    
+
     registry.register("web_search", WebSearchTool)
     registry.register("chunked_search", ChunkedSearchTool)
 
 
 # Auto-register when module is imported
 register_websearch_tools()
-
-
-
-

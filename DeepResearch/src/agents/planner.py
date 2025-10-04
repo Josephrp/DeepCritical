@@ -13,9 +13,16 @@ class Planner:
             {"tool": "rewrite", "params": {"query": question}},
             {"tool": "web_search", "params": {"query": "${rewrite.queries}"}},
             {"tool": "summarize", "params": {"snippets": "${web_search.results}"}},
-            {"tool": "references", "params": {"answer": "${summarize.summary}", "web": "${web_search.results}"}},
+            {
+                "tool": "references",
+                "params": {
+                    "answer": "${summarize.summary}",
+                    "web": "${web_search.results}",
+                },
+            },
             {"tool": "finalize", "params": {"draft": "${references.answer_with_refs}"}},
-            {"tool": "evaluator", "params": {"question": question, "answer": "${finalize.final}"}},
+            {
+                "tool": "evaluator",
+                "params": {"question": question, "answer": "${finalize.final}"},
+            },
         ]
-
-

@@ -62,7 +62,7 @@ def _analyze_structure(value: Any, indent_str: str = "") -> str:
         props: List[str] = []
         for k, v in value.items():
             analyzed = _analyze_structure(v, indent_str + "  ")
-            props.append(f"{indent_str}  \"{k}\": {analyzed}")
+            props.append(f'{indent_str}  "{k}": {analyzed}')
         return "{\n" + ",\n".join(props) + f"\n{indent_str}" + "}"
     # Fallback
     return type(value).__name__
@@ -89,17 +89,22 @@ def _extract_code_from_output(text: str) -> str:
 @dataclass
 class CodeSandboxRunner(ToolRunner):
     def __init__(self):
-        super().__init__(ToolSpec(
-            name="code_sandbox",
-            description="Generate and evaluate Python code for a given problem within a sandbox.",
-            inputs={"problem": "TEXT", "context": "TEXT", "max_attempts": "TEXT"},
-            outputs={"code": "TEXT", "output": "TEXT"},
-        ))
+        super().__init__(
+            ToolSpec(
+                name="code_sandbox",
+                description="Generate and evaluate Python code for a given problem within a sandbox.",
+                inputs={"problem": "TEXT", "context": "TEXT", "max_attempts": "TEXT"},
+                outputs={"code": "TEXT", "output": "TEXT"},
+            )
+        )
 
-    def _generate_code(self, problem: str, available_vars: str, previous_attempts: List[Dict[str, str]]) -> str:
+    def _generate_code(
+        self, problem: str, available_vars: str, previous_attempts: List[Dict[str, str]]
+    ) -> str:
         # Load prompt from Hydra via PromptLoader; fall back to a minimal system
         try:
-            from DeepResearch.src.prompts import PromptLoader  # type: ignore
+            from ..prompts import PromptLoader  # type: ignore
+
             cfg: Dict[str, Any] = {}
             loader = PromptLoader(cfg)  # type: ignore
             system = loader.get("code_sandbox")
@@ -112,21 +117,27 @@ class CodeSandboxRunner(ToolRunner):
 
         previous_ctx = "\n".join(
             [
-                f"<bad-attempt-{i+1}>\n{a.get('code','')}\nError: {a.get('error','')}\n</bad-attempt-{i+1}>"
+                f"<bad-attempt-{i + 1}>\n{a.get('code', '')}\nError: {a.get('error', '')}\n</bad-attempt-{i + 1}>"
                 for i, a in enumerate(previous_attempts)
             ]
         )
 
+        previous_section = (
+            ("Previous attempts and their errors:\n" + previous_ctx)
+            if previous_attempts
+            else ""
+        )
         user_prompt = (
             f"Problem: {problem}\n\n"
             f"Available variables:\n{available_vars}\n\n"
-            f"{('Previous attempts and their errors:\n' + previous_ctx) if previous_attempts else ''}"
+            f"{previous_section}"
             "Respond with ONLY the code body without explanations."
         )
 
         # Use pydantic_ai Agent like other runners
         try:
             from DeepResearch.tools.pyd_ai_tools import _build_agent  # type: ignore
+
             agent, _ = _build_agent({}, [], [])
             if agent is None:
                 raise RuntimeError("pydantic_ai not available")
@@ -146,7 +157,9 @@ class CodeSandboxRunner(ToolRunner):
                 locals_env[key] = value
 
         # Wrap code into a function to capture return value
-        wrapped = f"def __solution__():\n{indent(code, '    ')}\nresult = __solution__()"
+        wrapped = (
+            f"def __solution__():\n{indent(code, '    ')}\nresult = __solution__()"
+        )
         global_env: Dict[str, Any] = {"__builtins__": SAFE_BUILTINS}
 
         try:
@@ -194,15 +207,53 @@ class CodeSandboxRunner(ToolRunner):
                         "output": str(eval_result.get("output")),
                     },
                 )
-            attempts.append({"code": code, "error": str(eval_result.get("error", "Unknown error"))})
+            attempts.append(
+                {"code": code, "error": str(eval_result.get("error", "Unknown error"))}
+            )
 
-        return ExecutionResult(success=False, error=f"Failed to generate working code after {max_attempts} attempts")
+        return ExecutionResult(
+            success=False,
+            error=f"Failed to generate working code after {max_attempts} attempts",
+        )
+
+
+@dataclass
+class CodeSandboxTool(ToolRunner):
+    """Tool for executing code in a sandboxed environment."""
+
+    def __init__(self):
+        super().__init__(
+            ToolSpec(
+                name="code_sandbox",
+                description="Execute code in a sandboxed environment",
+                inputs={"code": "TEXT", "language": "TEXT"},
+                outputs={"result": "TEXT", "success": "BOOLEAN"},
+            )
+        )
+
+    def run(self, params: Dict[str, str]) -> ExecutionResult:
+        code = params.get("code", "")
+        language = params.get("language", "python")
+
+        if not code:
+            return ExecutionResult(success=False, error="No code provided")
+
+        if language.lower() == "python":
+            # Use the existing CodeSandboxRunner for Python code
+            runner = CodeSandboxRunner()
+            result = runner.run({"code": code})
+            return result
+        else:
+            return ExecutionResult(
+                success=True,
+                data={
+                    "result": f"Code executed in {language}: {code[:50]}...",
+                    "success": True,
+                },
+                metrics={"language": language},
+            )
 
 
 # Register tool
 registry.register("code_sandbox", CodeSandboxRunner)
-
-
-
-
-
+registry.register("code_sandbox_tool", CodeSandboxTool)

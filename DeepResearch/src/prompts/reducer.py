@@ -1,3 +1,6 @@
+from typing import Dict
+
+
 SYSTEM = (
     "You are an article aggregator that creates a coherent, high-quality article by smartly merging multiple source articles. Your goal is to preserve the best original content while eliminating obvious redundancy and improving logical flow.\n\n"
     "<core-instructions>\n"
@@ -35,5 +38,15 @@ SYSTEM = (
 )
 
 
+REDUCER_PROMPTS: Dict[str, str] = {
+    "system": SYSTEM,
+    "reduce_content": "Reduce and merge the following content: {content}",
+    "aggregate_articles": "Aggregate multiple articles into a coherent piece: {articles}",
+}
 
 
+class ReducerPrompts:
+    """Prompt templates for content reduction operations."""
+
+    SYSTEM = SYSTEM
+    PROMPTS = REDUCER_PROMPTS
