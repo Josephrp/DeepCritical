@@ -36,16 +36,6 @@ from typing import (
     get_type_hints,
 )
 
-if TYPE_CHECKING:
-    from typing import Protocol
-
-    class MCPToolFunc(Protocol):
-        def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
-
-        _mcp_tool_spec: Tool | None
-        _is_mcp_tool: bool
-
-
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.tools import Tool, ToolDefinition
@@ -70,6 +60,21 @@ from ...datatypes.mcp import (
     MCPToolResponse,
     MCPToolSpec,
 )
+
+if TYPE_CHECKING:
+    from typing import Protocol
+
+    class MCPToolFuncProtocol(Protocol):
+        """Protocol for functions decorated with @mcp_tool."""
+
+        _mcp_tool_spec: ToolSpec
+        _is_mcp_tool: bool
+
+        def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
+
+
+# Type alias for MCP tool functions
+MCPToolFunc = Callable[..., Any]
 
 
 class ToolSpec(BaseModel):
@@ -498,7 +503,7 @@ def mcp_tool(spec: Union[ToolSpec, MCPToolSpec] | None = None):
     def decorator(func: Callable[..., Any]) -> MCPToolFunc:
         # Store the tool spec on the function
         if spec:
-            setattr(func, "_mcp_tool_spec", spec)
+            func._mcp_tool_spec = spec  # type: ignore
         else:
             # Auto-generate spec from method signature and docstring
             sig = inspect.signature(func)
@@ -535,10 +540,10 @@ def mcp_tool(spec: Union[ToolSpec, MCPToolSpec] | None = None):
                 outputs=outputs,
                 server_type=MCPServerType.CUSTOM,
             )
-            setattr(func, "_mcp_tool_spec", tool_spec)
+            func._mcp_tool_spec = tool_spec  # type: ignore
 
         # Mark function as MCP tool for later Pydantic AI integration
-        setattr(func, "_is_mcp_tool", True)
+        func._is_mcp_tool = True  # type: ignore
         return cast("MCPToolFunc", func)
 
     return decorator
