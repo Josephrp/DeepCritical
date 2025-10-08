@@ -84,46 +84,751 @@ Response structure from tool execution.
 ### Web Search Tools
 
 ::: DeepResearch.src.tools.websearch_tools.WebSearchTool
-    handler: python
-    options:
-      docstring_style: google
-      show_category_heading: true
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
 
 ::: DeepResearch.src.tools.websearch_tools.ChunkedSearchTool
-    handler: python
-    options:
-      docstring_style: google
-      show_category_heading: true
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
 
 ### Bioinformatics Tools
 
 ::: DeepResearch.src.tools.bioinformatics_tools.GOAnnotationTool
-    handler: python
-    options:
-      docstring_style: google
-      show_category_heading: true
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
 
 ::: DeepResearch.src.tools.bioinformatics_tools.PubMedRetrievalTool
-    handler: python
-    options:
-      docstring_style: google
-      show_category_heading: true
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
 
 ### Deep Search Tools
 
 ::: DeepResearch.src.tools.deepsearch_tools.DeepSearchTool
-    handler: python
-    options:
-      docstring_style: google
-      show_category_heading: true
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
 
 ### RAG Tools
 
 ::: DeepResearch.src.tools.integrated_search_tools.RAGSearchTool
-    handler: python
-    options:
-      docstring_style: google
-      show_category_heading: true
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+### MCP Server Management Tools
+
+::: DeepResearch.src.tools.mcp_server_management.MCPServerListTool
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+::: DeepResearch.src.tools.mcp_server_management.MCPServerDeployTool
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+::: DeepResearch.src.tools.mcp_server_management.MCPServerExecuteTool
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+::: DeepResearch.src.tools.mcp_server_management.MCPServerStatusTool
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+::: DeepResearch.src.tools.mcp_server_management.MCPServerStopTool
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+## Enhanced MCP Server Framework
+
+DeepCritical implements a comprehensive MCP (Model Context Protocol) server framework that integrates Pydantic AI for enhanced tool execution and reasoning capabilities. This framework supports both patterns described in the Pydantic AI MCP documentation:
+
+1. **Agents acting as MCP clients**: Pydantic AI agents can connect to MCP servers to use their tools for research workflows
+2. **Agents embedded within MCP servers**: Pydantic AI agents are integrated within MCP servers for enhanced tool execution
+
+### Key Features
+
+- **Pydantic AI Integration**: All MCP servers include embedded Pydantic AI agents for reasoning and tool orchestration
+- **Testcontainers Deployment**: Isolated container deployment for secure, reproducible execution
+- **Session Tracking**: Tool call history and session management for debugging and optimization
+- **Type Safety**: Strongly-typed interfaces using Pydantic models
+- **Error Handling**: Comprehensive error handling with retry logic
+- **Health Monitoring**: Built-in health checks and resource management
+
+### Architecture
+
+The enhanced MCP server framework consists of:
+
+- **MCPServerBase**: Base class providing Pydantic AI integration and testcontainers deployment
+- **@mcp_tool decorator**: Custom decorator that creates Pydantic AI-compatible tools
+- **Session Management**: MCPAgentSession for tracking tool calls and responses
+- **Deployment Management**: Testcontainers-based deployment with resource limits
+- **Type System**: Comprehensive Pydantic models for MCP operations
+
+### MCP Server Base Classes
+
+#### MCPServerBase
+Enhanced base class for MCP server implementations with Pydantic AI integration.
+
+**Key Features:**
+- Pydantic AI agent integration for enhanced tool execution and reasoning
+- Testcontainers deployment support with resource management
+- Session tracking for tool call history and debugging
+- Async/await support for concurrent tool execution
+- Comprehensive error handling with retry logic
+- Health monitoring and automatic recovery
+- Type-safe interfaces using Pydantic models
+
+**Key Methods:**
+- `list_tools()`: List all available tools on the server
+- `get_tool_spec(tool_name)`: Get specification for a specific tool
+- `execute_tool(tool_name, **kwargs)`: Execute a tool with parameters
+- `execute_tool_async(request)`: Execute tool asynchronously with session tracking
+- `deploy_with_testcontainers()`: Deploy server using testcontainers
+- `stop_with_testcontainers()`: Stop server deployed with testcontainers
+- `health_check()`: Perform health check on deployed server
+- `get_pydantic_ai_agent()`: Get the embedded Pydantic AI agent
+- `get_session_info()`: Get session information and tool call history
+
+**Attributes:**
+- `name`: Server name
+- `server_type`: Server type enum
+- `config`: Server configuration (MCPServerConfig)
+- `tools`: Dictionary of Pydantic AI Tool objects
+- `pydantic_ai_agent`: Embedded Pydantic AI agent for reasoning
+- `session`: MCPAgentSession for tracking interactions
+- `container_id`: Container ID when deployed with testcontainers
+
+### Available MCP Servers
+
+DeepCritical includes 29 vendored MCP (Model Context Protocol) servers for common bioinformatics tools, deployed using testcontainers for isolated execution environments. The servers are built using Pydantic AI patterns and provide strongly-typed interfaces.
+
+#### Quality Control & Preprocessing (7 servers)
+
+##### FastQC Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.fastqc_server.FastQCServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+```python
+from DeepResearch.src.mcp_servers.vendored.fastqc_server import FastQCServer
+```
+
+FastQC is a quality control tool for high throughput sequence data. This MCP server provides strongly-typed access to FastQC functionality with Pydantic AI integration for enhanced quality control workflows.
+
+**Server Type:** FASTQC | **Capabilities:** Quality control, sequence analysis, FASTQ processing, Pydantic AI reasoning
+**Pydantic AI Integration:** Embedded agent for automated quality assessment and report generation
+
+**Available Tools:**
+- `run_fastqc`: Run FastQC quality control on FASTQ files with comprehensive parameter support
+- `check_fastqc_version`: Check the version of FastQC installed
+- `list_fastqc_outputs`: List FastQC output files in a directory
+
+##### Samtools Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.samtools_server.SamtoolsServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+```python
+from DeepResearch.src.mcp_servers.vendored.samtools_server import SamtoolsServer
+```
+
+Samtools is a suite of utilities for interacting with high-throughput sequencing data. This MCP server provides strongly-typed access to SAM/BAM processing tools.
+
+**Server Type:** SAMTOOLS | **Capabilities:** Sequence analysis, BAM/SAM processing, statistics
+
+**Available Tools:**
+- `samtools_view`: Convert between SAM and BAM formats, extract regions
+- `samtools_sort`: Sort BAM file by coordinate or read name
+- `samtools_index`: Index a BAM file for fast random access
+- `samtools_flagstat`: Generate flag statistics for a BAM file
+- `samtools_stats`: Generate comprehensive statistics for a BAM file
+
+##### Bowtie2 Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.bowtie2_server.Bowtie2Server
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+```python
+from DeepResearch.src.mcp_servers.vendored.bowtie2_server import Bowtie2Server
+```
+
+Bowtie2 is an ultrafast and memory-efficient tool for aligning sequencing reads to long reference sequences. This MCP server provides alignment and indexing capabilities.
+
+**Server Type:** BOWTIE2 | **Capabilities:** Sequence alignment, index building, alignment inspection
+
+**Available Tools:**
+- `bowtie2_align`: Align sequencing reads to a reference genome
+- `bowtie2_build`: Build a Bowtie2 index from a reference genome
+- `bowtie2_inspect`: Inspect a Bowtie2 index
+
+##### MACS3 Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.macs3_server.MACS3Server
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+```python
+from DeepResearch.src.mcp_servers.vendored.macs3_server import MACS3Server
+```
+
+MACS3 (Model-based Analysis of ChIP-Seq) is a tool for identifying transcription factor binding sites and histone modifications from ChIP-seq data.
+
+**Server Type:** MACS3 | **Capabilities:** ChIP-seq peak calling, transcription factor binding sites
+
+**Available Tools:**
+- `macs3_callpeak`: Call peaks from ChIP-seq data using MACS3
+- `macs3_bdgcmp`: Compare two bedGraph files to generate fold enrichment tracks
+- `macs3_filterdup`: Filter duplicate reads from BAM files
+
+##### HOMER Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.homer_server.HOMERServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+HOMER (Hypergeometric Optimization of Motif EnRichment) is a suite of tools for Motif Discovery and next-gen sequencing analysis.
+
+**Server Type:** HOMER | **Capabilities:** Motif discovery, ChIP-seq analysis, NGS analysis
+
+**Available Tools:**
+- `homer_findMotifs`: Find motifs in genomic regions using HOMER
+- `homer_annotatePeaks`: Annotate peaks with genomic features
+- `homer_mergePeaks`: Merge overlapping peaks
+
+##### HISAT2 Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.hisat2_server.HISAT2Server
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+HISAT2 is a fast and sensitive alignment program for mapping next-generation sequencing reads against a population of human genomes.
+
+**Server Type:** HISAT2 | **Capabilities:** RNA-seq alignment, spliced alignment
+
+**Available Tools:**
+- `hisat2_build`: Build HISAT2 index from genome FASTA file
+- `hisat2_align`: Align RNA-seq reads to reference genome
+
+##### BEDTools Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.bedtools_server.BEDToolsServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+BEDTools is a suite of utilities for comparing, summarizing, and intersecting genomic features in BED format.
+
+**Server Type:** BEDTOOLS | **Capabilities:** Genomic interval operations, BED file manipulation
+
+**Available Tools:**
+- `bedtools_intersect`: Find overlapping intervals between two BED files
+- `bedtools_merge`: Merge overlapping intervals in a BED file
+- `bedtools_closest`: Find closest intervals between two BED files
+
+##### STAR Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.star_server.STARServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+STAR (Spliced Transcripts Alignment to a Reference) is a fast RNA-seq read mapper with support for splice-junctions.
+
+**Server Type:** STAR | **Capabilities:** RNA-seq alignment, transcriptome analysis, spliced alignment
+
+**Available Tools:**
+- `star_genomeGenerate`: Generate STAR genome index from reference genome
+- `star_alignReads`: Align RNA-seq reads to reference genome using STAR
+
+##### BWA Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.bwa_server.BWAServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+BWA (Burrows-Wheeler Aligner) is a software package for mapping low-divergent sequences against a large reference genome.
+
+**Server Type:** BWA | **Capabilities:** DNA sequence alignment, short read alignment
+
+**Available Tools:**
+- `bwa_index`: Build BWA index from reference genome FASTA file
+- `bwa_mem`: Align DNA sequencing reads using BWA-MEM algorithm
+- `bwa_aln`: Align DNA sequencing reads using BWA-ALN algorithm
+
+##### MultiQC Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.multiqc_server.MultiQCServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+MultiQC is a tool to aggregate results from bioinformatics analyses across many samples into a single report.
+
+**Server Type:** MULTIQC | **Capabilities:** Report generation, quality control visualization
+
+**Available Tools:**
+- `multiqc_run`: Generate MultiQC report from bioinformatics tool outputs
+- `multiqc_modules`: List available MultiQC modules
+
+##### Salmon Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.salmon_server.SalmonServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+Salmon is a tool for quantifying the expression of transcripts using RNA-seq data.
+
+**Server Type:** SALMON | **Capabilities:** RNA-seq quantification, transcript abundance estimation
+
+**Available Tools:**
+- `salmon_index`: Build Salmon index from transcriptome FASTA
+- `salmon_quant`: Quantify RNA-seq reads using Salmon pseudo-alignment
+
+##### StringTie Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.stringtie_server.StringTieServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+StringTie is a fast and highly efficient assembler of RNA-seq alignments into potential transcripts.
+
+**Server Type:** STRINGTIE | **Capabilities:** Transcript assembly, quantification, differential expression
+
+**Available Tools:**
+- `stringtie_assemble`: Assemble transcripts from RNA-seq alignments
+- `stringtie_merge`: Merge transcript assemblies from multiple runs
+
+##### FeatureCounts Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.featurecounts_server.FeatureCountsServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+FeatureCounts is a highly efficient general-purpose read summarization program that counts mapped reads for genomic features.
+
+**Server Type:** FEATURECOUNTS | **Capabilities:** Read counting, gene expression quantification
+
+**Available Tools:**
+- `featurecounts_count`: Count reads overlapping genomic features
+
+##### TrimGalore Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.trimgalore_server.TrimGaloreServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+Trim Galore is a wrapper script to automate quality and adapter trimming as well as quality control.
+
+**Server Type:** TRIMGALORE | **Capabilities:** Adapter trimming, quality filtering, FASTQ preprocessing
+
+**Available Tools:**
+- `trimgalore_trim`: Trim adapters and low-quality bases from FASTQ files
+
+##### Kallisto Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.kallisto_server.KallistoServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+Kallisto is a program for quantifying abundances of transcripts from RNA-seq data.
+
+**Server Type:** KALLISTO | **Capabilities:** Fast RNA-seq quantification, pseudo-alignment
+
+**Available Tools:**
+- `kallisto_index`: Build Kallisto index from transcriptome
+- `kallisto_quant`: Quantify RNA-seq reads using pseudo-alignment
+
+##### HTSeq Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.htseq_server.HTSeqServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+HTSeq is a Python package for analyzing high-throughput sequencing data.
+
+**Server Type:** HTSEQ | **Capabilities:** Read counting, gene expression analysis
+
+**Available Tools:**
+- `htseq_count`: Count reads overlapping genomic features using HTSeq
+
+##### TopHat Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.tophat_server.TopHatServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+TopHat is a fast splice junction mapper for RNA-seq reads.
+
+**Server Type:** TOPHAT | **Capabilities:** RNA-seq splice-aware alignment, junction discovery
+
+**Available Tools:**
+- `tophat_align`: Align RNA-seq reads to reference genome
+
+##### Picard Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.picard_server.PicardServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+Picard is a set of command line tools for manipulating high-throughput sequencing data.
+
+**Server Type:** PICARD | **Capabilities:** SAM/BAM processing, duplicate marking, quality control
+
+**Available Tools:**
+- `picard_mark_duplicates`: Mark duplicate reads in BAM files
+- `picard_collect_alignment_summary_metrics`: Collect alignment summary metrics
+
+##### BCFtools Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.bcftools_server.BCFtoolsServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+```python
+from DeepResearch.src.mcp_servers.vendored.bcftools_server import BCFtoolsServer
+```
+
+BCFtools is a suite of programs for manipulating variant calls in the Variant Call Format (VCF) and its binary counterpart BCF. This MCP server provides strongly-typed access to BCFtools with Pydantic AI integration for variant analysis workflows.
+
+**Server Type:** BCFTOOLS | **Capabilities:** Variant analysis, VCF processing, genomics, Pydantic AI reasoning
+**Pydantic AI Integration:** Embedded agent for automated variant filtering and analysis
+
+**Available Tools:**
+- `bcftools_view`: View, subset and filter VCF/BCF files
+- `bcftools_stats`: Parse VCF/BCF files and generate statistics
+- `bcftools_filter`: Filter VCF/BCF files using arbitrary expressions
+
+##### BEDTools Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.bedtools_server.BEDToolsServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+```python
+from DeepResearch.src.mcp_servers.vendored.bedtools_server import BEDToolsServer
+```
+
+BEDtools is a suite of utilities for comparing, summarizing, and intersecting genomic features in BED format. This MCP server provides strongly-typed access to BEDtools with Pydantic AI integration for genomic interval analysis.
+
+**Server Type:** BEDTOOLS | **Capabilities:** Genomics, BED operations, interval arithmetic, Pydantic AI reasoning
+**Pydantic AI Integration:** Embedded agent for automated genomic analysis workflows
+
+**Available Tools:**
+- `bedtools_intersect`: Find overlapping intervals between genomic features
+- `bedtools_merge`: Merge overlapping/adjacent intervals
+
+##### Cutadapt Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.cutadapt_server.CutadaptServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+```python
+from DeepResearch.src.mcp_servers.vendored.cutadapt_server import CutadaptServer
+```
+
+Cutadapt is a tool for removing adapter sequences, primers, and poly-A tails from high-throughput sequencing reads. This MCP server provides strongly-typed access to Cutadapt with Pydantic AI integration for sequence preprocessing workflows.
+
+**Server Type:** CUTADAPT | **Capabilities:** Adapter trimming, sequence preprocessing, FASTQ processing, Pydantic AI reasoning
+**Pydantic AI Integration:** Embedded agent for automated adapter detection and trimming
+
+**Available Tools:**
+- `cutadapt_trim`: Remove adapters and low-quality bases from FASTQ files
+
+##### Fastp Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.fastp_server.FastpServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+```python
+from DeepResearch.src.mcp_servers.vendored.fastp_server import FastpServer
+```
+
+Fastp is an ultra-fast all-in-one FASTQ preprocessor that can perform quality control, adapter trimming, quality filtering, per-read quality pruning, and many other operations. This MCP server provides strongly-typed access to Fastp with Pydantic AI integration.
+
+**Server Type:** FASTP | **Capabilities:** FASTQ preprocessing, quality control, adapter trimming, Pydantic AI reasoning
+**Pydantic AI Integration:** Embedded agent for automated quality control workflows
+
+**Available Tools:**
+- `fastp_process`: Comprehensive FASTQ preprocessing and quality control
+
+##### BUSCO Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.busco_server.BUSCOServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+```python
+from DeepResearch.src.mcp_servers.vendored.busco_server import BUSCOServer
+```
+
+BUSCO (Benchmarking Universal Single-Copy Orthologs) assesses genome assembly and annotation completeness by searching for single-copy orthologs. This MCP server provides strongly-typed access to BUSCO with Pydantic AI integration for genome quality assessment.
+
+**Server Type:** BUSCO | **Capabilities:** Genome completeness assessment, ortholog detection, quality metrics, Pydantic AI reasoning
+**Pydantic AI Integration:** Embedded agent for automated genome quality analysis
+
+**Available Tools:**
+- `busco_run`: Assess genome assembly completeness using BUSCO
+
+##### DeepTools Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.deeptools_server.DeepToolsServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+deepTools is a suite of user-friendly tools for the exploration of deep-sequencing data.
+
+**Server Type:** DEEPTOOLS | **Capabilities:** NGS data analysis, visualization, quality control
+
+**Available Tools:**
+- `deeptools_bamCoverage`: Generate coverage tracks from BAM files
+- `deeptools_computeMatrix`: Compute matrices for heatmaps from BAM files
+
+##### FreeBayes Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.freebayes_server.FreeBayesServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+FreeBayes is a Bayesian genetic variant detector designed to find small polymorphisms.
+
+**Server Type:** FREEBAYES | **Capabilities:** Variant calling, SNP detection, indel detection
+
+**Available Tools:**
+- `freebayes_call`: Call variants from BAM files using FreeBayes
+
+##### Flye Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.flye_server.FlyeServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+Flye is a de novo assembler for single-molecule sequencing reads.
+
+**Server Type:** FLYE | **Capabilities:** Genome assembly, long-read assembly
+
+**Available Tools:**
+- `flye_assemble`: Assemble genome from long-read sequencing data
+
+##### MEME Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.meme_server.MEMEServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+MEME (Multiple EM for Motif Elicitation) is a tool for discovering motifs in a group of related DNA or protein sequences.
+
+**Server Type:** MEME | **Capabilities:** Motif discovery, sequence analysis
+
+**Available Tools:**
+- `meme_discover`: Discover motifs in DNA or protein sequences
+
+##### Minimap2 Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.minimap2_server.Minimap2Server
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+Minimap2 is a versatile pairwise aligner for nucleotide sequences.
+
+**Server Type:** MINIMAP2 | **Capabilities:** Sequence alignment, long-read alignment
+
+**Available Tools:**
+- `minimap2_align`: Align sequences using minimap2 algorithm
+
+##### Qualimap Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.qualimap_server.QualimapServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+Qualimap is a platform-independent application written in Java and R that provides both a Graphical User Interface (GUI) and a command-line interface to facilitate the quality control of alignment sequencing data.
+
+**Server Type:** QUALIMAP | **Capabilities:** Quality control, alignment analysis, RNA-seq analysis
+
+**Available Tools:**
+- `qualimap_bamqc`: Generate quality control report for BAM files
+- `qualimap_rnaseq`: Generate RNA-seq quality control report
+
+##### Seqtk Server
+
+    ::: DeepResearch.src.mcp_servers.vendored.seqtk_server.SeqtkServer
+        handler: python
+        options:
+          docstring_style: google
+          show_category_heading: true
+
+Seqtk is a fast and lightweight tool for processing sequences in the FASTA or FASTQ format.
+
+**Server Type:** SEQTK | **Capabilities:** FASTA/FASTQ processing, sequence manipulation
+
+**Available Tools:**
+- `seqtk_seq`: Convert and manipulate FASTA/FASTQ files
+- `seqtk_subseq`: Extract subsequences from FASTA/FASTQ files
+
+#### Deployment
+```python
+from DeepResearch.src.mcp_servers.vendored.fastqc_server import FastQCServer
+from DeepResearch.datatypes.mcp import MCPServerConfig
+
+config = MCPServerConfig(
+    server_name="fastqc-server",
+    server_type="fastqc",
+    container_image="python:3.11-slim",
+)
+
+server = FastQCServer(config)
+deployment = await server.deploy_with_testcontainers()
+```
+
+#### Available Servers by Category
+
+**Quality Control & Preprocessing:**
+- FastQC, TrimGalore, Cutadapt, Fastp, MultiQC, Qualimap, Seqtk
+
+**Sequence Alignment:**
+- Bowtie2, BWA, HISAT2, STAR, TopHat, Minimap2
+
+**RNA-seq Quantification & Assembly:**
+- Salmon, Kallisto, StringTie, FeatureCounts, HTSeq
+
+**Genome Analysis & Manipulation:**
+- Samtools, BEDTools, Picard, DeepTools
+
+**ChIP-seq & Epigenetics:**
+- MACS3, HOMER, MEME
+
+**Genome Assembly:**
+- Flye
+
+**Genome Assembly Assessment:**
+- BUSCO
+
+**Variant Analysis:**
+- BCFtools, FreeBayes
+
+### Enhanced MCP Server Management Tools
+
+DeepCritical provides comprehensive tools for managing MCP server deployments using testcontainers with Pydantic AI integration:
+
+#### MCPServerListTool
+Lists all available vendored MCP servers.
+
+**Features:**
+- Lists all 29 MCP servers with descriptions and capabilities
+- Shows deployment status and available tools
+- Supports filtering and detailed information
+
+#### MCPServerDeployTool
+Deploys vendored MCP servers using testcontainers.
+
+**Features:**
+- Deploys any of the 29 MCP servers in isolated containers
+- Supports custom configurations and resource limits
+- Provides detailed deployment information
+
+#### MCPServerExecuteTool
+Executes tools on deployed MCP servers.
+
+**Features:**
+- Executes specific tools on deployed MCP servers
+- Supports synchronous and asynchronous execution
+- Provides comprehensive error handling and retry logic
+- Returns detailed execution results
+
+#### MCPServerStatusTool
+Checks deployment status of MCP servers.
+
+**Features:**
+- Checks deployment status of individual servers or all servers
+- Provides container and deployment information
+- Supports health monitoring
+
+#### MCPServerStopTool
+Stops deployed MCP servers.
+
+**Features:**
+- Stops and cleans up deployed MCP server containers
+- Provides confirmation of stop operations
+- Handles resource cleanup
 
 ## Usage Examples
 

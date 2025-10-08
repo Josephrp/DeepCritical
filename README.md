@@ -477,6 +477,12 @@ python -m deepresearch.app flows.prime.params.adaptive_replanning=false
 ### Integrative Reasoning
 - **Non-Reductionist Approach**: Multi-source evidence integration beyond structural similarity
 - **Evidence Code Prioritization**: IDA (gold standard) > EXP > computational predictions
+
+### MCP Server Ecosystem
+- **18 Vendored Bioinformatics Tools**: FastQC, Samtools, Bowtie2, MACS3, HOMER, HISAT2, BEDTools, STAR, BWA, MultiQC, Salmon, StringTie, FeatureCounts, TrimGalore, Kallisto, HTSeq, TopHat, Picard
+- **Pydantic AI Integration**: Strongly-typed tool decorators with automatic agent registration
+- **Testcontainers Deployment**: Isolated execution environments for reproducible research
+- **Bioinformatics Pipeline Support**: Complete RNA-seq, ChIP-seq, and genomics analysis workflows
 - **Cross-Database Validation**: Consistency checks and temporal relevance
 - **Human Curation Integration**: Leverages existing curation expertise
 
