@@ -53,7 +53,7 @@ class HOMERServer(MCPServerBase):
                 "mask": "bool",
                 "bg": "str | None",
                 "len": "str",
-                "S": "int",
+                "s": "int",
                 "mis": "int",
                 "norevopp": "bool",
                 "nomotif": "bool",
@@ -69,7 +69,7 @@ class HOMERServer(MCPServerBase):
                 "exit_code": "int",
             },
             server_type=MCPServerType.CUSTOM,
-            command_template="findMotifs.pl {input_file} {genome} {output_dir} -size {size} {mask_flag} {bg_flag} -len {len} -S {S} -mis {mis} {norevopp_flag} {nomotif_flag} {bits_flag} {nocheck_flag} -p {p}",
+            command_template="findMotifs.pl {input_file} {genome} {output_dir} -size {size} {mask_flag} {bg_flag} -len {len} -S {s} -mis {mis} {norevopp_flag} {nomotif_flag} {bits_flag} {nocheck_flag} -p {p}",
             examples=[
                 {
                     "description": "Basic motif discovery in ChIP-seq peaks",
@@ -93,7 +93,7 @@ class HOMERServer(MCPServerBase):
         mask: bool = False,
         bg: str | None = None,
         len: str = "8,10,12",
-        S: int = 1,
+        s: int = 1,
         mis: int = 2,
         norevopp: bool = False,
         nomotif: bool = False,
@@ -115,7 +115,7 @@ class HOMERServer(MCPServerBase):
             mask: Mask repeats and low complexity regions
             bg: Background file (optional)
             len: Motif lengths to search (comma-separated)
-            S: Number of motifs to find
+            s: Number of motifs to find
             mis: Maximum mismatches allowed
             norevopp: Don't search reverse complement strand
             nomotif: Skip motif finding step
@@ -158,7 +158,7 @@ class HOMERServer(MCPServerBase):
         if bg:
             cmd.extend(["-bg", bg])
         cmd.extend(["-len", len])
-        cmd.extend(["-S", str(S)])
+        cmd.extend(["-S", str(s)])
         cmd.extend(["-mis", str(mis)])
         if norevopp:
             cmd.append("-norevopp")
@@ -180,7 +180,7 @@ class HOMERServer(MCPServerBase):
             output_files = []
             try:
                 # HOMER typically creates several output files
-                base_name = os.path.basename(input_file)
+                base_name = Path(input_file).name
                 base_name = base_name.replace(".bed", "").replace(".txt", "")
                 output_files = [
                     f"{output_dir}/homerResults.html",
@@ -238,7 +238,7 @@ class HOMERServer(MCPServerBase):
                 "bed": "bool",
                 "gtf": "str | None",
                 "go": "bool",
-                "genomeOntology": "bool",
+                "genome_ontology": "bool",
                 "len": "int",
                 "log": "bool",
             },
@@ -276,7 +276,7 @@ class HOMERServer(MCPServerBase):
         bed: bool = False,
         gtf: str | None = None,
         go: bool = False,
-        genomeOntology: bool = False,
+        genome_ontology: bool = False,
         len: int = 1000,
         log: bool = False,
     ) -> dict[str, Any]:
@@ -297,7 +297,7 @@ class HOMERServer(MCPServerBase):
             bed: Output in BED format
             gtf: Custom GTF file
             go: Include GO annotations
-            genomeOntology: Include genome ontology
+            genome_ontology: Include genome ontology
             len: Length of annotation region
             log: Use log scale for distances
 
@@ -333,7 +333,7 @@ class HOMERServer(MCPServerBase):
             cmd.extend(["-gtf", gtf])
         if go:
             cmd.append("-go")
-        if genomeOntology:
+        if genome_ontology:
             cmd.append("-genomeOntology")
         if len != 1000:
             cmd.extend(["-len", str(len)])

@@ -138,9 +138,10 @@ class SalmonServer(MCPServerBase):
             output_files = []
             try:
                 # Salmon creates index directory with various files
-                if os.path.exists(index) and os.path.isdir(index):
-                    index_files = os.listdir(index)
-                    output_files = [os.path.join(index, f) for f in index_files]
+                index_path = Path(index)
+                if index_path.exists() and index_path.is_dir():
+                    index_files = list(index_path.iterdir())
+                    output_files = [str(f) for f in index_files]
             except Exception:
                 pass
 

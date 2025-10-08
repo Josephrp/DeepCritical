@@ -371,7 +371,7 @@ class StringTieServer(MCPServerBase):
         finally:
             # Clean up temporary file
             try:
-                os.unlink(merge_list)
+                Path(merge_list).unlink()
             except Exception:
                 pass
 

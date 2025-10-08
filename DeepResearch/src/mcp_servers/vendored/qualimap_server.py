@@ -288,12 +288,8 @@ class QualimapServer(MCPServerBase):
         if paired:
             cmd.append("-pe")
 
-        if strand_specific != "non-strand-specific":
-            if (
-                strand_specific == "strand-specific-forward"
-                or strand_specific == "strand-specific-reverse"
-            ):
-                cmd.append("-s")
+        if strand_specific in ("strand-specific-forward", "strand-specific-reverse"):
+            cmd.append("-s")
 
         if sorted:
             cmd.append("--sorted")

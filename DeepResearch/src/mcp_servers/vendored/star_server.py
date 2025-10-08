@@ -397,7 +397,6 @@ class STARServer(MCPServerBase):
             output_files = []
             try:
                 # STAR creates various output files
-                base_name = os.path.basename(out_file_name_prefix.rstrip("_"))
                 possible_outputs = [
                     f"{out_file_name_prefix}Aligned.sortedByCoord.out.bam",
                     f"{out_file_name_prefix}ReadsPerGene.out.tab",

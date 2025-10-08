@@ -189,12 +189,12 @@ class BWAServer(MCPServerBase):
                 "score_threshold": "int",
                 "split_factor": "float",
                 "split_width": "int",
-                "H": "bool",
+                "h": "bool",
                 "a": "bool",
-                "C": "bool",
-                "L": "bool",
-                "U": "bool",
-                "R": "str",
+                "c": "bool",
+                "mark_secondary_splits": "bool",
+                "u": "bool",
+                "r": "str",
             },
             outputs={
                 "command_executed": "str",
@@ -240,12 +240,12 @@ class BWAServer(MCPServerBase):
         score_threshold: int = 30,
         split_factor: float = 1.5,
         split_width: int = 16,
-        H: bool = False,
+        h: bool = False,
         a: bool = False,
-        C: bool = False,
-        L: bool = False,
-        U: bool = False,
-        R: str = "",
+        c: bool = False,
+        mark_secondary_splits: bool = False,
+        u: bool = False,
+        r: str = "",
     ) -> dict[str, Any]:
         """
         Align DNA sequencing reads using BWA-MEM algorithm.
@@ -274,12 +274,12 @@ class BWAServer(MCPServerBase):
             score_threshold: Minimum score to output
             split_factor: Split factor
             split_width: Split width
-            H: Use hard clipping
+            h: Use hard clipping
             a: Output all alignments
-            C: Append FASTA/FASTQ comment to SAM output
-            L: Mark shorter split hits as secondary
-            U: Output unmapped reads
-            R: Read group header line
+            c: Append FASTA/FASTQ comment to SAM output
+            mark_secondary_splits: Mark shorter split hits as secondary
+            u: Output unmapped reads
+            r: Read group header line
 
         Returns:
             Dictionary containing command executed, stdout, stderr, output files, and exit code
@@ -351,20 +351,20 @@ class BWAServer(MCPServerBase):
             cmd.append("-S")
         if skip_pairing:
             cmd.append("-P")
-        if H:
+        if h:
             cmd.append("-H")
         if a:
             cmd.append("-a")
-        if C:
+        if c:
             cmd.append("-C")
-        if L:
+        if mark_secondary_splits:
             cmd.append("-L")
-        if U:
+        if u:
             cmd.append("-U")
 
         # Add read group
-        if R:
-            cmd.extend(["-R", R])
+        if r:
+            cmd.extend(["-R", r])
 
         # Add index and reads
         cmd.append(index)
