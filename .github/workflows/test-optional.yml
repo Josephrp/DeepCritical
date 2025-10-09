@@ -1,4 +1,6 @@
 name: Optional Containerized Tests
+permissions:
+  contents: read
 
 on:
   push:
