@@ -18,35 +18,35 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
 from ..datatypes.mcp import MCPServerConfig, MCPServerDeployment, MCPServerStatus
-from ..mcp_servers.vendored.bcftools_server import BCFtoolsServer
-from ..mcp_servers.vendored.bedtools_server import BEDToolsServer
-from ..mcp_servers.vendored.bowtie2_server import Bowtie2Server
-from ..mcp_servers.vendored.busco_server import BUSCOServer
-from ..mcp_servers.vendored.bwa_server import BWAServer
-from ..mcp_servers.vendored.cutadapt_server import CutadaptServer
-from ..mcp_servers.vendored.deeptools_server import DeeptoolsServer
-from ..mcp_servers.vendored.fastp_server import FastpServer
-from ..mcp_servers.vendored.fastqc_server import FastQCServer
-from ..mcp_servers.vendored.featurecounts_server import FeatureCountsServer
-from ..mcp_servers.vendored.flye_server import FlyeServer
-from ..mcp_servers.vendored.freebayes_server import FreeBayesServer
-from ..mcp_servers.vendored.hisat2_server import HISAT2Server
-from ..mcp_servers.vendored.homer_server import HOMERServer
-from ..mcp_servers.vendored.htseq_server import HTSeqServer
-from ..mcp_servers.vendored.kallisto_server import KallistoServer
-from ..mcp_servers.vendored.macs3_server import MACS3Server
-from ..mcp_servers.vendored.meme_server import MEMEServer
-from ..mcp_servers.vendored.minimap2_server import Minimap2Server
-from ..mcp_servers.vendored.multiqc_server import MultiQCServer
-from ..mcp_servers.vendored.picard_server import PicardServer
-from ..mcp_servers.vendored.qualimap_server import QualimapServer
-from ..mcp_servers.vendored.salmon_server import SalmonServer
-from ..mcp_servers.vendored.samtools_server import SamtoolsServer
-from ..mcp_servers.vendored.seqtk_server import SeqtkServer
-from ..mcp_servers.vendored.star_server import STARServer
-from ..mcp_servers.vendored.stringtie_server import StringTieServer
-from ..mcp_servers.vendored.tophat_server import TopHatServer
-from ..mcp_servers.vendored.trimgalore_server import TrimGaloreServer
+from ..tools.bioinformatics.bcftools_server import BCFtoolsServer
+from ..tools.bioinformatics.bedtools_server import BEDToolsServer
+from ..tools.bioinformatics.bowtie2_server import Bowtie2Server
+from ..tools.bioinformatics.busco_server import BUSCOServer
+from ..tools.bioinformatics.bwa_server import BWAServer
+from ..tools.bioinformatics.cutadapt_server import CutadaptServer
+from ..tools.bioinformatics.deeptools_server import DeeptoolsServer
+from ..tools.bioinformatics.fastp_server import FastpServer
+from ..tools.bioinformatics.fastqc_server import FastQCServer
+from ..tools.bioinformatics.featurecounts_server import FeatureCountsServer
+from ..tools.bioinformatics.flye_server import FlyeServer
+from ..tools.bioinformatics.freebayes_server import FreeBayesServer
+from ..tools.bioinformatics.hisat2_server import HISAT2Server
+from ..tools.bioinformatics.homer_server import HOMERServer
+from ..tools.bioinformatics.htseq_server import HTSeqServer
+from ..tools.bioinformatics.kallisto_server import KallistoServer
+from ..tools.bioinformatics.macs3_server import MACS3Server
+from ..tools.bioinformatics.meme_server import MEMEServer
+from ..tools.bioinformatics.minimap2_server import Minimap2Server
+from ..tools.bioinformatics.multiqc_server import MultiQCServer
+from ..tools.bioinformatics.picard_server import PicardServer
+from ..tools.bioinformatics.qualimap_server import QualimapServer
+from ..tools.bioinformatics.salmon_server import SalmonServer
+from ..tools.bioinformatics.samtools_server import SamtoolsServer
+from ..tools.bioinformatics.seqtk_server import SeqtkServer
+from ..tools.bioinformatics.star_server import STARServer
+from ..tools.bioinformatics.stringtie_server import StringTieServer
+from ..tools.bioinformatics.tophat_server import TopHatServer
+from ..tools.bioinformatics.trimgalore_server import TrimGaloreServer
 from .base import ExecutionResult, ToolRunner, ToolSpec, registry
 
 
