@@ -486,7 +486,7 @@ python -m deepresearch.app flows.prime.params.adaptive_replanning=false
 - **Cross-Database Validation**: Consistency checks and temporal relevance
 - **Human Curation Integration**: Leverages existing curation expertise
 
-### Example Data Fusion
+q### Example Data Fusion
 ```json
 {
   "pmid": "12345678",
@@ -580,6 +580,31 @@ Each flow has its own configuration file:
 - `configs/statemachines/flows/hypothesis_generation.yaml` - Hypothesis flow
 - `configs/statemachines/flows/execution.yaml` - Execution flow
 - `configs/statemachines/flows/reporting.yaml` - Reporting flow
+
+### LLM Model Configuration
+
+DeepCritical supports multiple LLM providers through OpenAI-compatible APIs:
+
+```yaml
+# configs/llm/vllm_pydantic.yaml
+provider: "vllm"
+model_name: "meta-llama/Llama-3-8B"
+base_url: "http://localhost:8000/v1"
+api_key: null
+
+generation:
+  temperature: 0.7
+  max_tokens: 512
+  top_p: 0.9
+```
+
+**Supported providers:**
+- **vLLM**: High-performance local inference
+- **llama.cpp**: Efficient GGUF model serving
+- **TGI**: Hugging Face Text Generation Inference
+- **Custom**: Any OpenAI-compatible server
+
+See [LLM Models Documentation](docs/user-guide/llm-models.md) for detailed configuration and usage examples.
 
 ### Prompt Configuration
 

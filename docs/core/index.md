@@ -16,3 +16,10 @@ This section contains documentation for the core modules of DeepCritical.
     options:
       heading_level: 1
       show_bases: true
+
+## Models
+
+::: DeepResearch.src.models
+    options:
+      heading_level: 1
+      show_bases: true

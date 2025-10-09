@@ -337,6 +337,277 @@ class TestToolsModuleImports:
         assert URLVisitResult is not None
         assert ReflectionQuestion is not None
 
+    def test_bioinformatics_tools_imports(self):
+        """Test all imports from bioinformatics_tools module."""
+
+        from DeepResearch.src.tools.bioinformatics_tools import (
+            BioinformaticsFusionTool,
+            BioinformaticsReasoningTool,
+            BioinformaticsWorkflowTool,
+            GOAnnotationTool,
+            PubMedRetrievalTool,
+        )
+
+        # Verify they are all accessible and not None
+        assert BioinformaticsFusionTool is not None
+        assert BioinformaticsReasoningTool is not None
+        assert BioinformaticsWorkflowTool is not None
+        assert GOAnnotationTool is not None
+        assert PubMedRetrievalTool is not None
+
+    def test_mcp_server_management_imports(self):
+        """Test all imports from mcp_server_management module."""
+
+        from DeepResearch.src.tools.mcp_server_management import (
+            MCPServerDeployTool,
+            MCPServerExecuteTool,
+            MCPServerListTool,
+            MCPServerStatusTool,
+            MCPServerStopTool,
+        )
+
+        # Verify they are all accessible and not None
+        assert MCPServerDeployTool is not None
+        assert MCPServerExecuteTool is not None
+        assert MCPServerListTool is not None
+        assert MCPServerStatusTool is not None
+        assert MCPServerStopTool is not None
+
+    def test_workflow_pattern_tools_imports(self):
+        """Test all imports from workflow_pattern_tools module."""
+
+        from DeepResearch.src.tools.workflow_pattern_tools import (
+            CollaborativePatternTool,
+            ConsensusTool,
+            HierarchicalPatternTool,
+            InteractionStateTool,
+            MessageRoutingTool,
+            SequentialPatternTool,
+            WorkflowOrchestrationTool,
+        )
+
+        # Verify they are all accessible and not None
+        assert CollaborativePatternTool is not None
+        assert ConsensusTool is not None
+        assert HierarchicalPatternTool is not None
+        assert MessageRoutingTool is not None
+        assert SequentialPatternTool is not None
+        assert WorkflowOrchestrationTool is not None
+        assert InteractionStateTool is not None
+
+    def test_bioinformatics_bcftools_server_imports(self):
+        """Test imports from bioinformatics/bcftools_server module."""
+        from DeepResearch.src.tools.bioinformatics.bcftools_server import BCFtoolsServer
+
+        # Verify accessible and not None
+        assert BCFtoolsServer is not None
+
+    def test_bioinformatics_bedtools_server_imports(self):
+        """Test imports from bioinformatics/bedtools_server module."""
+        from DeepResearch.src.tools.bioinformatics.bedtools_server import BEDToolsServer
+
+        # Verify accessible and not None
+        assert BEDToolsServer is not None
+
+    def test_bioinformatics_bowtie2_server_imports(self):
+        """Test imports from bioinformatics/bowtie2_server module."""
+        from DeepResearch.src.tools.bioinformatics.bowtie2_server import Bowtie2Server
+
+        # Verify accessible and not None
+        assert Bowtie2Server is not None
+
+    def test_bioinformatics_busco_server_imports(self):
+        """Test imports from bioinformatics/busco_server module."""
+        from DeepResearch.src.tools.bioinformatics.busco_server import BUSCOServer
+
+        # Verify accessible and not None
+        assert BUSCOServer is not None
+
+    def test_bioinformatics_bwa_server_imports(self):
+        """Test imports from bioinformatics/bwa_server module."""
+        from DeepResearch.src.tools.bioinformatics.bwa_server import BWAServer
+
+        # Verify accessible and not None
+        assert BWAServer is not None
+
+    def test_bioinformatics_cutadapt_server_imports(self):
+        """Test imports from bioinformatics/cutadapt_server module."""
+        from DeepResearch.src.tools.bioinformatics.cutadapt_server import CutadaptServer
+
+        # Verify accessible and not None
+        assert CutadaptServer is not None
+
+    def test_bioinformatics_deeptools_server_imports(self):
+        """Test imports from bioinformatics/deeptools_server module."""
+        from DeepResearch.src.tools.bioinformatics.deeptools_server import (
+            DeeptoolsServer,
+        )
+
+        # Verify accessible and not None
+        assert DeeptoolsServer is not None
+
+    def test_bioinformatics_fastp_server_imports(self):
+        """Test imports from bioinformatics/fastp_server module."""
+        from DeepResearch.src.tools.bioinformatics.fastp_server import FastpServer
+
+        # Verify accessible and not None
+        assert FastpServer is not None
+
+    def test_bioinformatics_fastqc_server_imports(self):
+        """Test imports from bioinformatics/fastqc_server module."""
+        from DeepResearch.src.tools.bioinformatics.fastqc_server import FastQCServer
+
+        # Verify accessible and not None
+        assert FastQCServer is not None
+
+    def test_bioinformatics_featurecounts_server_imports(self):
+        """Test imports from bioinformatics/featurecounts_server module."""
+        from DeepResearch.src.tools.bioinformatics.featurecounts_server import (
+            FeatureCountsServer,
+        )
+
+        # Verify accessible and not None
+        assert FeatureCountsServer is not None
+
+    def test_bioinformatics_flye_server_imports(self):
+        """Test imports from bioinformatics/flye_server module."""
+        from DeepResearch.src.tools.bioinformatics.flye_server import FlyeServer
+
+        # Verify accessible and not None
+        assert FlyeServer is not None
+
+    def test_bioinformatics_freebayes_server_imports(self):
+        """Test imports from bioinformatics/freebayes_server module."""
+        from DeepResearch.src.tools.bioinformatics.freebayes_server import (
+            FreeBayesServer,
+        )
+
+        # Verify accessible and not None
+        assert FreeBayesServer is not None
+
+    def test_bioinformatics_hisat2_server_imports(self):
+        """Test imports from bioinformatics/hisat2_server module."""
+        from DeepResearch.src.tools.bioinformatics.hisat2_server import HISAT2Server
+
+        # Verify accessible and not None
+        assert HISAT2Server is not None
+
+    def test_bioinformatics_homer_server_imports(self):
+        """Test imports from bioinformatics/homer_server module."""
+        from DeepResearch.src.tools.bioinformatics.homer_server import HOMERServer
+
+        # Verify accessible and not None
+        assert HOMERServer is not None
+
+    def test_bioinformatics_htseq_server_imports(self):
+        """Test imports from bioinformatics/htseq_server module."""
+        from DeepResearch.src.tools.bioinformatics.htseq_server import HTSeqServer
+
+        # Verify accessible and not None
+        assert HTSeqServer is not None
+
+    def test_bioinformatics_kallisto_server_imports(self):
+        """Test imports from bioinformatics/kallisto_server module."""
+        from DeepResearch.src.tools.bioinformatics.kallisto_server import KallistoServer
+
+        # Verify accessible and not None
+        assert KallistoServer is not None
+
+    def test_bioinformatics_macs3_server_imports(self):
+        """Test imports from bioinformatics/macs3_server module."""
+        from DeepResearch.src.tools.bioinformatics.macs3_server import MACS3Server
+
+        # Verify accessible and not None
+        assert MACS3Server is not None
+
+    def test_bioinformatics_meme_server_imports(self):
+        """Test imports from bioinformatics/meme_server module."""
+        from DeepResearch.src.tools.bioinformatics.meme_server import MEMEServer
+
+        # Verify accessible and not None
+        assert MEMEServer is not None
+
+    def test_bioinformatics_minimap2_server_imports(self):
+        """Test imports from bioinformatics/minimap2_server module."""
+        from DeepResearch.src.tools.bioinformatics.minimap2_server import Minimap2Server
+
+        # Verify accessible and not None
+        assert Minimap2Server is not None
+
+    def test_bioinformatics_multiqc_server_imports(self):
+        """Test imports from bioinformatics/multiqc_server module."""
+        from DeepResearch.src.tools.bioinformatics.multiqc_server import MultiQCServer
+
+        # Verify accessible and not None
+        assert MultiQCServer is not None
+
+    def test_bioinformatics_picard_server_imports(self):
+        """Test imports from bioinformatics/picard_server module."""
+        from DeepResearch.src.tools.bioinformatics.picard_server import PicardServer
+
+        # Verify accessible and not None
+        assert PicardServer is not None
+
+    def test_bioinformatics_qualimap_server_imports(self):
+        """Test imports from bioinformatics/qualimap_server module."""
+        from DeepResearch.src.tools.bioinformatics.qualimap_server import QualimapServer
+
+        # Verify accessible and not None
+        assert QualimapServer is not None
+
+    def test_bioinformatics_salmon_server_imports(self):
+        """Test imports from bioinformatics/salmon_server module."""
+        from DeepResearch.src.tools.bioinformatics.salmon_server import SalmonServer
+
+        # Verify accessible and not None
+        assert SalmonServer is not None
+
+    def test_bioinformatics_samtools_server_imports(self):
+        """Test imports from bioinformatics/samtools_server module."""
+        from DeepResearch.src.tools.bioinformatics.samtools_server import SamtoolsServer
+
+        # Verify accessible and not None
+        assert SamtoolsServer is not None
+
+    def test_bioinformatics_seqtk_server_imports(self):
+        """Test imports from bioinformatics/seqtk_server module."""
+        from DeepResearch.src.tools.bioinformatics.seqtk_server import SeqtkServer
+
+        # Verify accessible and not None
+        assert SeqtkServer is not None
+
+    def test_bioinformatics_star_server_imports(self):
+        """Test imports from bioinformatics/star_server module."""
+        from DeepResearch.src.tools.bioinformatics.star_server import STARServer
+
+        # Verify accessible and not None
+        assert STARServer is not None
+
+    def test_bioinformatics_stringtie_server_imports(self):
+        """Test imports from bioinformatics/stringtie_server module."""
+        from DeepResearch.src.tools.bioinformatics.stringtie_server import (
+            StringTieServer,
+        )
+
+        # Verify accessible and not None
+        assert StringTieServer is not None
+
+    def test_bioinformatics_tophat_server_imports(self):
+        """Test imports from bioinformatics/tophat_server module."""
+        from DeepResearch.src.tools.bioinformatics.tophat_server import TopHatServer
+
+        # Verify accessible and not None
+        assert TopHatServer is not None
+
+    def test_bioinformatics_trimgalore_server_imports(self):
+        """Test imports from bioinformatics/trimgalore_server module."""
+        from DeepResearch.src.tools.bioinformatics.trimgalore_server import (
+            TrimGaloreServer,
+        )
+
+        # Verify accessible and not None
+        assert TrimGaloreServer is not None
+
 
 class TestToolsCrossModuleImports:
     """Test cross-module imports and dependencies within tools."""

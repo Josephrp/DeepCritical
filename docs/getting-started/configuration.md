@@ -247,6 +247,7 @@ uv run deepresearch hydra.verbose=true question="Test"
 - `configs/statemachines/flows/` - Individual flow configurations
 - `configs/prompts/` - Prompt templates for agents
 - `configs/app_modes/` - Application mode configurations
+- `configs/llm/` - LLM model configurations (see [LLM Models Guide](../user-guide/llm-models.md))
 - `configs/db/` - Database connection configurations
 
 For more advanced configuration options, see the [Hydra Documentation](https://hydra.cc/docs/intro/).
