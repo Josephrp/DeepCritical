@@ -35,10 +35,10 @@ jobs:
         # For dev branch: exclude optional tests (docker, llm, performance, pydantic_ai)
         if [ "${{ github.ref }}" = "refs/heads/main" ]; then
           echo "Running all tests including optional tests for main branch"
-          make test-main-cov
+          pytest tests/ --cov=DeepResearch --cov-report=xml --cov-report=term-missing
         else
           echo "Running tests excluding optional tests for dev branch"
-          make test-dev-cov
+          pytest tests/ -m "not optional" --cov=DeepResearch --cov-report=xml --cov-report=term-missing
         fi
 
     - name: Upload coverage to Codecov

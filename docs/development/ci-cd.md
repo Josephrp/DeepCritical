@@ -137,23 +137,23 @@ make type-check # Type checking (ty)
 
 ### Test Execution
 ```yaml
-# Branch-specific testing
+# Branch-specific testing (using pytest directly for CI compatibility)
 - name: Run tests with coverage (branch-specific)
   run: |
     # For main branch: run all tests (including optional tests)
     # For dev branch: exclude optional tests (docker, llm, performance, pydantic_ai)
     if [ "${{ github.ref }}" = "refs/heads/main" ]; then
       echo "Running all tests including optional tests for main branch"
-      make test-main-cov
+      pytest tests/ --cov=DeepResearch --cov-report=xml --cov-report=term-missing
     else
       echo "Running tests excluding optional tests for dev branch"
-      make test-dev-cov
+      pytest tests/ -m "not optional" --cov=DeepResearch --cov-report=xml --cov-report=term-missing
     fi
 
 # Optional tests (manual trigger or on main branch changes)
 - name: Run optional tests
   if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
-  run: make test-optional-cov
+  run: pytest tests/ -m "optional" -v --cov=DeepResearch --cov-report=xml --cov-report=term
   continue-on-error: true
 ```
 

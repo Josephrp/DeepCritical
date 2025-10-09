@@ -56,23 +56,23 @@ jobs:
         case "${{ github.event.inputs.test_type || 'all' }}" in
           "docker")
             echo "Running Docker sandbox tests"
-            pytest tests/test_docker_sandbox/ -v --cov=DeepResearch --cov-report=term
+            pytest tests/test_docker_sandbox/ -v --cov=DeepResearch --cov-report=xml --cov-report=term
             ;;
           "llm")
             echo "Running LLM framework tests"
-            pytest tests/test_llm_framework/ -v --cov=DeepResearch --cov-report=term
+            pytest tests/test_llm_framework/ -v --cov=DeepResearch --cov-report=xml --cov-report=term
             ;;
           "performance")
             echo "Running performance tests"
-            pytest tests/test_performance/ -v --cov=DeepResearch --cov-report=term
+            pytest tests/test_performance/ -v --cov=DeepResearch --cov-report=xml --cov-report=term
             ;;
           "pydantic_ai")
             echo "Running Pydantic AI tests"
-            pytest tests/test_pydantic_ai/ -v --cov=DeepResearch --cov-report=term
+            pytest tests/test_pydantic_ai/ -v --cov=DeepResearch --cov-report=xml --cov-report=term
             ;;
           "all")
             echo "Running all optional tests"
-            make test-optional-cov
+            pytest tests/ -m "optional" -v --cov=DeepResearch --cov-report=xml --cov-report=term
             ;;
         esac
 

@@ -20,6 +20,7 @@ help:
 	@echo "  test-main-cov Run all tests including optional with coverage (for main branch)"
 	@echo "  test-optional Run only optional tests"
 	@echo "  test-optional-cov Run only optional tests with coverage"
+	@echo "  test-*-pytest  Alternative pytest-only versions (for CI without uv)"
 ifeq ($(OS),Windows_NT)
 	@echo "  test-unit-win       Run unit tests (Windows)"
 	@echo "  test-integration-win Run integration tests (Windows)"
@@ -99,6 +100,25 @@ test-optional:
 
 test-optional-cov:
 	uv run pytest tests/ -m "optional" --cov=DeepResearch --cov-report=html --cov-report=term
+
+# Alternative pytest-only versions (for CI environments without uv)
+test-dev-pytest:
+	pytest tests/ -m "not optional" -v
+
+test-dev-cov-pytest:
+	pytest tests/ -m "not optional" --cov=DeepResearch --cov-report=xml --cov-report=term-missing
+
+test-main-pytest:
+	pytest tests/ -v
+
+test-main-cov-pytest:
+	pytest tests/ --cov=DeepResearch --cov-report=xml --cov-report=term-missing
+
+test-optional-pytest:
+	pytest tests/ -m "optional" -v
+
+test-optional-cov-pytest:
+	pytest tests/ -m "optional" --cov=DeepResearch --cov-report=xml --cov-report=term-missing
 
 # Windows-specific testing targets (using PowerShell script)
 ifeq ($(OS),Windows_NT)
