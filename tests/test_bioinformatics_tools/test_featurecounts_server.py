@@ -50,6 +50,7 @@ class TestFeatureCountsServer(BaseBioinformaticsToolTest):
 
         return {"bam_file": bam_file, "annotation": gtf_file}
 
+    @pytest.mark.optional
     def test_featurecounts_quantification(
         self, tool_instance, sample_input_files, sample_output_dir
     ):

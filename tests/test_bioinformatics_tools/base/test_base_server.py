@@ -39,12 +39,14 @@ class BaseBioinformaticsServerTest(ABC):
         with tempfile.TemporaryDirectory() as tmpdir:
             yield Path(tmpdir)
 
+    @pytest.mark.optional
     def test_server_initialization(self, server_instance):
         """Test server initializes correctly."""
         assert server_instance is not None
         assert hasattr(server_instance, "name")
         assert hasattr(server_instance, "version")
 
+    @pytest.mark.optional
     def test_server_tools_registration(self, server_instance):
         """Test that all required tools are registered."""
         registered_tools = server_instance.get_registered_tools()
@@ -53,6 +55,7 @@ class BaseBioinformaticsServerTest(ABC):
         for required_tool in self.required_tools:
             assert required_tool in tool_names, f"Tool {required_tool} not registered"
 
+    @pytest.mark.optional
     def test_server_capabilities(self, server_instance):
         """Test server capabilities reporting."""
         capabilities = server_instance.get_capabilities()
@@ -62,12 +65,14 @@ class BaseBioinformaticsServerTest(ABC):
         assert "tools" in capabilities
         assert capabilities["name"] == self.server_name
 
+    @pytest.mark.optional
     @pytest.mark.containerized
     def test_containerized_server_deployment(self, server_instance, temp_dir):
         """Test server deployment in containerized environment."""
         # This would test deployment with testcontainers
         # Implementation depends on specific server requirements
 
+    @pytest.mark.optional
     def test_error_handling(self, server_instance):
         """Test error handling for invalid inputs."""
         # Test with invalid parameters

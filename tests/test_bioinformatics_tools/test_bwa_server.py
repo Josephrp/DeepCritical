@@ -29,6 +29,7 @@ class TestBWAServer:
         """Create sample FASTA file for testing."""
         return create_mock_fasta(tmp_path / "reference.fa", num_sequences=10)
 
+    @pytest.mark.optional
     def test_bwa_index_creation(self, bwa_server, tmp_path, sample_fasta):
         """Test BWA index creation functionality."""
         index_dir = tmp_path / "bwa_index"
@@ -48,6 +49,7 @@ class TestBWAServer:
             index_file = index_dir / f"test_index{ext}"
             assert index_file.exists()
 
+    @pytest.mark.optional
     def test_bwa_alignment(self, bwa_server, tmp_path, sample_fastq, sample_fasta):
         """Test BWA alignment functionality."""
         # Create index first
@@ -76,6 +78,7 @@ class TestBWAServer:
         assert "@SQ" in content  # Header line
         assert len(content.split("\n")) > 10  # Multiple lines
 
+    @pytest.mark.optional
     def test_error_handling(self, bwa_server):
         """Test error handling for invalid inputs."""
         result = bwa_server.bwa_index(
@@ -88,6 +91,7 @@ class TestBWAServer:
         assert "error" in result
         assert "not found" in result["error"].lower()
 
+    @pytest.mark.optional
     @pytest.mark.containerized
     @pytest.mark.asyncio
     async def test_containerized_bwa_workflow(

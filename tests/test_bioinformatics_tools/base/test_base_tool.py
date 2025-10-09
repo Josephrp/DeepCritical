@@ -56,12 +56,14 @@ class BaseBioinformaticsToolTest(ABC):
         output_dir.mkdir()
         return output_dir
 
+    @pytest.mark.optional
     def test_tool_initialization(self, tool_instance):
         """Test tool initializes correctly."""
         assert tool_instance is not None
         assert hasattr(tool_instance, "name")
         assert hasattr(tool_instance, "run")
 
+    @pytest.mark.optional
     def test_tool_specification(self, tool_instance):
         """Test tool specification is correctly defined."""
         # Mock get_spec method if it doesn't exist
@@ -84,6 +86,7 @@ class BaseBioinformaticsToolTest(ABC):
         assert "outputs" in spec
         assert spec["name"] == self.tool_name
 
+    @pytest.mark.optional
     def test_parameter_validation(self, tool_instance):
         """Test parameter validation."""
         # Mock validate_parameters method if it doesn't exist
@@ -110,6 +113,7 @@ class BaseBioinformaticsToolTest(ABC):
         assert isinstance(result, dict)
         assert result["valid"] is False
 
+    @pytest.mark.optional
     def test_tool_execution(self, tool_instance, sample_input_files, sample_output_dir):
         """Test tool execution with sample data."""
         # Mock run method if it doesn't exist
@@ -141,6 +145,7 @@ class BaseBioinformaticsToolTest(ABC):
         assert result["success"] is True
         assert "outputs" in result or "output_files" in result
 
+    @pytest.mark.optional
     def test_error_handling(self, tool_instance):
         """Test error handling for invalid inputs."""
         # Mock run method if it doesn't exist
@@ -161,6 +166,7 @@ class BaseBioinformaticsToolTest(ABC):
         assert result["success"] is False
         assert "error" in result
 
+    @pytest.mark.optional
     @pytest.mark.containerized
     def test_containerized_execution(
         self, tool_instance, sample_input_files, sample_output_dir

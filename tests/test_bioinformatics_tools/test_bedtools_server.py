@@ -46,6 +46,7 @@ class TestBEDToolsServer(BaseBioinformaticsToolTest):
 
         return {"input_file_a": bed_a, "input_file_b": bed_b}
 
+    @pytest.mark.optional
     def test_bedtools_intersect(
         self, tool_instance, sample_input_files, sample_output_dir
     ):
@@ -70,6 +71,7 @@ class TestBEDToolsServer(BaseBioinformaticsToolTest):
         content = output_file.read_text()
         assert "chr1" in content
 
+    @pytest.mark.optional
     def test_bedtools_merge(self, tool_instance, sample_input_files, sample_output_dir):
         """Test BEDTools merge functionality."""
         params = {
@@ -83,6 +85,7 @@ class TestBEDToolsServer(BaseBioinformaticsToolTest):
         assert result["success"] is True
         assert "output_files" in result
 
+    @pytest.mark.optional
     def test_bedtools_coverage(
         self, tool_instance, sample_input_files, sample_output_dir
     ):

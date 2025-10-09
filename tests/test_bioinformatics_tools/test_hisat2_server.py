@@ -51,6 +51,7 @@ class TestHISAT2Server(BaseBioinformaticsToolTest):
 
         return {"reads_1": reads1, "reads_2": reads2}
 
+    @pytest.mark.optional
     def test_hisat2_alignment(
         self, tool_instance, sample_input_files, sample_output_dir
     ):
@@ -72,6 +73,7 @@ class TestHISAT2Server(BaseBioinformaticsToolTest):
         sam_file = sample_output_dir / "hisat2_output.sam"
         assert sam_file.exists()
 
+    @pytest.mark.optional
     def test_hisat2_indexing(self, tool_instance, tmp_path):
         """Test HISAT2 genome indexing functionality."""
         fasta_file = tmp_path / "genome.fa"

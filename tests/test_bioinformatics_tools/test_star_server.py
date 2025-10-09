@@ -50,6 +50,7 @@ class TestSTARServer(BaseBioinformaticsToolTest):
 
         return {"reads_1": reads1, "reads_2": reads2}
 
+    @pytest.mark.optional
     def test_star_alignment(self, tool_instance, sample_input_files, sample_output_dir):
         """Test STAR alignment functionality."""
         params = {
@@ -68,6 +69,7 @@ class TestSTARServer(BaseBioinformaticsToolTest):
         bam_file = sample_output_dir / "star_outputAligned.out.bam"
         assert bam_file.exists()
 
+    @pytest.mark.optional
     def test_star_indexing(self, tool_instance, tmp_path):
         """Test STAR genome indexing functionality."""
         genome_dir = tmp_path / "genome_index"

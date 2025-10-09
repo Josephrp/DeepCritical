@@ -48,6 +48,7 @@ class TestFreeBayesServer(BaseBioinformaticsToolTest):
 
         return {"bam_file": bam_file, "reference": ref_file}
 
+    @pytest.mark.optional
     def test_freebayes_variant_calling(
         self, tool_instance, sample_input_files, sample_output_dir
     ):

@@ -39,6 +39,7 @@ class TestSAMtoolsServer(BaseBioinformaticsToolTest):
         create_mock_sam(sam_file, num_alignments=50)
         return {"input_file": sam_file}
 
+    @pytest.mark.optional
     def test_sam_to_bam_conversion(
         self, tool_instance, sample_input_files, sample_output_dir
     ):
@@ -58,6 +59,7 @@ class TestSAMtoolsServer(BaseBioinformaticsToolTest):
         bam_file = sample_output_dir / "sample.bam"
         assert bam_file.exists()
 
+    @pytest.mark.optional
     def test_bam_indexing(self, tool_instance, sample_output_dir):
         """Test BAM indexing functionality."""
         # Create a mock BAM file first
@@ -78,6 +80,7 @@ class TestSAMtoolsServer(BaseBioinformaticsToolTest):
         bai_file = sample_output_dir / "test.bam.bai"
         assert bai_file.exists()
 
+    @pytest.mark.optional
     def test_samtools_view(self, tool_instance, sample_input_files, sample_output_dir):
         """Test samtools view functionality."""
         params = {

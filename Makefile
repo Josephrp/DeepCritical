@@ -93,6 +93,11 @@ test-bioinformatics-unit-win:
 	@echo "Running bioinformatics unit tests..."
 	uv run pytest tests/test_bioinformatics_tools/ -m "not containerized" -v --tb=short
 
+# General bioinformatics test target (works on all platforms)
+test-bioinformatics:
+	@echo "Running bioinformatics tests..."
+	uv run pytest tests/test_bioinformatics_tools/ -v --tb=short
+
 test-llm-win:
 	@echo "Running LLM framework tests..."
 	uv run pytest tests/test_llm_framework/ -v --tb=short

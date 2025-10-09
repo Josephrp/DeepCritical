@@ -31,14 +31,29 @@ jobs:
     - name: Run tests with coverage (excluding VLLM)
       run: |
         # Run tests excluding VLLM tests by default, generate coverage xml for Codecov
-        pytest tests/ \
-          -m "not vllm and not optional" \
-          --tb=short \
-          --ignore=tests/test_prompts_*_vllm.py \
-          --ignore=tests/testcontainers_vllm.py \
-          --cov=DeepResearch \
-          --cov-report=xml \
-          --cov-report=term-missing
+        # For main branch: run all tests (including bioinformatics)
+        # For dev branch: exclude optional tests (including bioinformatics)
+        if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+          echo "Running all tests including bioinformatics tests for main branch"
+          pytest tests/ \
+            -m "not vllm" \
+            --tb=short \
+            --ignore=tests/test_prompts_*_vllm.py \
+            --ignore=tests/testcontainers_vllm.py \
+            --cov=DeepResearch \
+            --cov-report=xml \
+            --cov-report=term-missing
+        else
+          echo "Running tests excluding optional tests (including bioinformatics) for dev branch"
+          pytest tests/ \
+            -m "not vllm and not optional" \
+            --tb=short \
+            --ignore=tests/test_prompts_*_vllm.py \
+            --ignore=tests/testcontainers_vllm.py \
+            --cov=DeepResearch \
+            --cov-report=xml \
+            --cov-report=term-missing
+        fi
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
