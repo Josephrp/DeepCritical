@@ -14,6 +14,12 @@ help:
 	@echo "  test         Run all tests"
 	@echo "  test-cov     Run tests with coverage report"
 	@echo "  test-fast    Run tests quickly (skip slow tests)"
+	@echo "  test-dev     Run tests excluding optional (for dev branch)"
+	@echo "  test-dev-cov Run tests excluding optional with coverage (for dev branch)"
+	@echo "  test-main    Run all tests including optional (for main branch)"
+	@echo "  test-main-cov Run all tests including optional with coverage (for main branch)"
+	@echo "  test-optional Run only optional tests"
+	@echo "  test-optional-cov Run only optional tests with coverage"
 ifeq ($(OS),Windows_NT)
 	@echo "  test-unit-win       Run unit tests (Windows)"
 	@echo "  test-integration-win Run integration tests (Windows)"
@@ -74,6 +80,25 @@ test-cov:
 
 test-fast:
 	uv run pytest tests/ -m "not slow" -v
+
+# Branch-specific testing targets
+test-dev:
+	uv run pytest tests/ -m "not optional" -v
+
+test-dev-cov:
+	uv run pytest tests/ -m "not optional" --cov=DeepResearch --cov-report=html --cov-report=term
+
+test-main:
+	uv run pytest tests/ -v
+
+test-main-cov:
+	uv run pytest tests/ --cov=DeepResearch --cov-report=html --cov-report=term
+
+test-optional:
+	uv run pytest tests/ -m "optional" -v
+
+test-optional-cov:
+	uv run pytest tests/ -m "optional" --cov=DeepResearch --cov-report=html --cov-report=term
 
 # Windows-specific testing targets (using PowerShell script)
 ifeq ($(OS),Windows_NT)

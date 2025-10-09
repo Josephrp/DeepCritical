@@ -19,6 +19,8 @@ class TestMultiAgentOrchestration:
     """Test multi-agent workflow orchestration."""
 
     @pytest.mark.asyncio
+    @pytest.mark.optional
+    @pytest.mark.pydantic_ai
     async def test_planner_executor_evaluator_workflow(self):
         """Test complete planner -> executor -> evaluator workflow."""
         # Create mock agents for testing
@@ -47,6 +49,8 @@ class TestMultiAgentOrchestration:
         assert "evaluation" in workflow_result
 
     @pytest.mark.asyncio
+    @pytest.mark.optional
+    @pytest.mark.pydantic_ai
     async def test_workflow_error_handling(self):
         """Test error handling in multi-agent workflows."""
         # Create agents that can fail
@@ -69,6 +73,8 @@ class TestMultiAgentOrchestration:
             )
 
     @pytest.mark.asyncio
+    @pytest.mark.optional
+    @pytest.mark.pydantic_ai
     async def test_workflow_state_persistence(self):
         """Test that workflow state is properly maintained across agents."""
         # Create agents that maintain state

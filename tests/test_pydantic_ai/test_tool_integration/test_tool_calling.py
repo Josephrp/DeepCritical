@@ -16,6 +16,8 @@ class TestPydanticAIToolCalling:
     """Test Pydantic AI tool calling functionality."""
 
     @pytest.mark.asyncio
+    @pytest.mark.optional
+    @pytest.mark.pydantic_ai
     async def test_agent_tool_registration(self):
         """Test that tools are properly registered with agents."""
         # Create a mock agent with tool registration
@@ -37,6 +39,8 @@ class TestPydanticAIToolCalling:
         assert agent.tools[0] == test_tool
 
     @pytest.mark.asyncio
+    @pytest.mark.optional
+    @pytest.mark.pydantic_ai
     async def test_tool_execution_with_dependencies(self):
         """Test tool execution with dependency injection."""
         # Mock agent dependencies
@@ -59,6 +63,8 @@ class TestPydanticAIToolCalling:
         assert "test" in result
 
     @pytest.mark.asyncio
+    @pytest.mark.optional
+    @pytest.mark.pydantic_ai
     async def test_error_handling_in_tools(self):
         """Test error handling in tool functions."""
 
@@ -76,6 +82,8 @@ class TestPydanticAIToolCalling:
             failing_tool("fail")
 
     @pytest.mark.asyncio
+    @pytest.mark.optional
+    @pytest.mark.pydantic_ai
     async def test_async_tool_execution(self):
         """Test asynchronous tool execution."""
 

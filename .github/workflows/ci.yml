@@ -28,31 +28,17 @@ jobs:
         pip install -e ".[dev]"
         pip install pytest pytest-cov
 
-    - name: Run tests with coverage (excluding VLLM)
+    - name: Run tests with coverage (branch-specific)
       run: |
-        # Run tests excluding VLLM tests by default, generate coverage xml for Codecov
-        # For main branch: run all tests (including bioinformatics)
-        # For dev branch: exclude optional tests (including bioinformatics)
+        # Run tests with branch-specific marker filtering
+        # For main branch: run all tests (including optional tests)
+        # For dev branch: exclude optional tests (docker, llm, performance, pydantic_ai)
         if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-          echo "Running all tests including bioinformatics tests for main branch"
-          pytest tests/ \
-            -m "not vllm" \
-            --tb=short \
-            --ignore=tests/test_prompts_*_vllm.py \
-            --ignore=tests/testcontainers_vllm.py \
-            --cov=DeepResearch \
-            --cov-report=xml \
-            --cov-report=term-missing
+          echo "Running all tests including optional tests for main branch"
+          make test-main-cov
         else
-          echo "Running tests excluding optional tests (including bioinformatics) for dev branch"
-          pytest tests/ \
-            -m "not vllm and not optional" \
-            --tb=short \
-            --ignore=tests/test_prompts_*_vllm.py \
-            --ignore=tests/testcontainers_vllm.py \
-            --cov=DeepResearch \
-            --cov-report=xml \
-            --cov-report=term-missing
+          echo "Running tests excluding optional tests for dev branch"
+          make test-dev-cov
         fi
 
     - name: Upload coverage to Codecov

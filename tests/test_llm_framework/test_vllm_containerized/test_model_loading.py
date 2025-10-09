@@ -14,6 +14,8 @@ class TestVLLMModelLoading:
     """Test VLLM model loading in containerized environment."""
 
     @pytest.mark.containerized
+    @pytest.mark.optional
+    @pytest.mark.llm
     def test_model_loading_success(self):
         """Test successful model loading in container."""
         # Skip VLLM tests for now due to persistent device detection issues in containerized environment
@@ -47,6 +49,8 @@ class TestVLLMModelLoading:
             assert "DialoGPT" in models["data"][0]["id"]
 
     @pytest.mark.containerized
+    @pytest.mark.optional
+    @pytest.mark.llm
     def test_model_loading_failure(self):
         """Test model loading failure handling."""
         container = VLLMContainer(model="nonexistent-model", ports={"8001": "8001"})
@@ -67,6 +71,8 @@ class TestVLLMModelLoading:
                 pass
 
     @pytest.mark.containerized
+    @pytest.mark.optional
+    @pytest.mark.llm
     def test_multiple_models_loading(self):
         """Test loading multiple models in parallel."""
         # Skip VLLM tests for now due to persistent device detection issues in containerized environment

@@ -1,112 +1,86 @@
-name: Optional Containerized Tests
+name: Optional Tests
 permissions:
   contents: read
-
 on:
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of optional tests to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - docker
+        - llm
+        - performance
+        - pydantic_ai
   push:
     branches: [ main ]
     paths:
-      - 'tests/**'
-      - 'DeepResearch/src/tools/**'
-      - 'configs/test/**'
+      - 'tests/test_docker_sandbox/**'
+      - 'tests/test_llm_framework/**'
+      - 'tests/test_performance/**'
+      - 'tests/test_pydantic_ai/**'
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main ]
     paths:
-      - 'tests/**'
-      - 'DeepResearch/src/tools/**'
-      - 'configs/test/**'
-
-env:
-  DOCKER_TESTS: ${{ github.ref == 'refs/heads/main' && (secrets.DOCKER_TESTS_ENABLED || 'true') || 'false' }}
-  PERFORMANCE_TESTS: ${{ secrets.PERFORMANCE_TESTS_ENABLED || 'false' }}
+      - 'tests/test_docker_sandbox/**'
+      - 'tests/test_llm_framework/**'
+      - 'tests/test_performance/**'
+      - 'tests/test_pydantic_ai/**'
 
 jobs:
-  test-docker-sandbox:
-    name: Docker Sandbox Tests
+  test-optional:
     runs-on: ubuntu-latest
-    if: env.DOCKER_TESTS == 'true'
-
-    services:
-      docker:
-        image: docker:dind
-        options: --privileged
+    continue-on-error: true  # Optional tests are allowed to fail
 
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          uv sync --dev
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pydantic omegaconf hydra-core
+        pip install -e .
+        pip install -e ".[dev]"
+        pip install pytest pytest-cov
 
-      - name: Run Docker sandbox tests
-        run: make test-docker
+    - name: Run optional tests
+      run: |
+        case "${{ github.event.inputs.test_type || 'all' }}" in
+          "docker")
+            echo "Running Docker sandbox tests"
+            pytest tests/test_docker_sandbox/ -v --cov=DeepResearch --cov-report=term
+            ;;
+          "llm")
+            echo "Running LLM framework tests"
+            pytest tests/test_llm_framework/ -v --cov=DeepResearch --cov-report=term
+            ;;
+          "performance")
+            echo "Running performance tests"
+            pytest tests/test_performance/ -v --cov=DeepResearch --cov-report=term
+            ;;
+          "pydantic_ai")
+            echo "Running Pydantic AI tests"
+            pytest tests/test_pydantic_ai/ -v --cov=DeepResearch --cov-report=term
+            ;;
+          "all")
+            echo "Running all optional tests"
+            make test-optional-cov
+            ;;
+        esac
 
-      - name: Upload test artifacts
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: docker-test-results
-          path: test_artifacts/
-
-  test-bioinformatics:
-    name: Bioinformatics Tools Tests
-    runs-on: ubuntu-latest
-    if: env.DOCKER_TESTS == 'true' && github.ref == 'refs/heads/main'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-
-      - name: Install bioinformatics dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          uv sync --dev
-
-      - name: Run bioinformatics tests
-        run: make test-bioinformatics
-
-      - name: Upload test artifacts
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: bioinformatics-test-results
-          path: test_artifacts/
-
-  test-performance:
-    name: Performance Tests
-    runs-on: ubuntu-latest
-    if: env.PERFORMANCE_TESTS == 'true'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          uv sync --dev
-
-      - name: Run performance tests
-        run: make test-performance
-
-      - name: Upload performance results
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: performance-results
-          path: benchmark-results/
+    - name: Upload coverage to Codecov (optional tests)
+      if: always()
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml
+        fail_ci_if_error: false
+        verbose: true

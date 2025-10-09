@@ -13,6 +13,8 @@ class TestLLaMACPPModelLoading:
     """Test LLaMACPP model loading in containerized environment."""
 
     @pytest.mark.containerized
+    @pytest.mark.optional
+    @pytest.mark.llm
     def test_llamacpp_model_loading_success(self):
         """Test successful LLaMACPP model loading in container."""
         # Skip this test since LLaMACPP containers aren't available in the testcontainers fork
@@ -62,6 +64,8 @@ class TestLLaMACPPModelLoading:
             assert "DialoGPT" in models["data"][0]["id"]
 
     @pytest.mark.containerized
+    @pytest.mark.optional
+    @pytest.mark.llm
     def test_llamacpp_text_generation(self):
         """Test text generation with LLaMACPP."""
         # Skip this test since LLaMACPP containers aren't available in the testcontainers fork
@@ -108,6 +112,8 @@ class TestLLaMACPPModelLoading:
             assert "text" in result["choices"][0]
 
     @pytest.mark.containerized
+    @pytest.mark.optional
+    @pytest.mark.llm
     def test_llamacpp_error_handling(self):
         """Test error handling for invalid requests."""
         # Skip this test since LLaMACPP containers aren't available in the testcontainers fork

@@ -16,6 +16,8 @@ class TestDockerSandboxIsolation:
     """Test container isolation and security."""
 
     @pytest.mark.containerized
+    @pytest.mark.optional
+    @pytest.mark.docker
     def test_container_cannot_access_proc(self, test_config):
         """Test that container cannot access /proc filesystem."""
         if not test_config["docker_enabled"]:
@@ -42,6 +44,8 @@ class TestDockerSandboxIsolation:
         assert container.get_wrapped_container().status == "running"
 
     @pytest.mark.containerized
+    @pytest.mark.optional
+    @pytest.mark.docker
     def test_container_cannot_access_host_dirs(self, test_config):
         """Test that container cannot access unauthorized host directories."""
         if not test_config["docker_enabled"]:
@@ -67,6 +71,8 @@ class TestDockerSandboxIsolation:
         assert container.get_wrapped_container().status == "running"
 
     @pytest.mark.containerized
+    @pytest.mark.optional
+    @pytest.mark.docker
     def test_readonly_mounts_enforced(self, test_config, tmp_path):
         """Test that read-only mounts cannot be written to."""
         if not test_config["docker_enabled"]:

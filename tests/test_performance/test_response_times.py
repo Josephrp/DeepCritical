@@ -13,6 +13,7 @@ class TestResponseTimes:
     """Test response time performance."""
 
     @pytest.mark.performance
+    @pytest.mark.optional
     def test_agent_response_time(self):
         """Test that agent responses meet performance requirements."""
         # Mock agent execution
@@ -30,6 +31,7 @@ class TestResponseTimes:
         assert result["success"] is True
 
     @pytest.mark.performance
+    @pytest.mark.optional
     def test_concurrent_agent_execution(self):
         """Test performance under concurrent load."""
 
@@ -60,6 +62,7 @@ class TestResponseTimes:
         asyncio.run(run_concurrent_tests())
 
     @pytest.mark.performance
+    @pytest.mark.optional
     def test_memory_usage_monitoring(self):
         """Test memory usage doesn't grow excessively."""
         import os

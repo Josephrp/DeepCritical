@@ -137,16 +137,47 @@ make type-check # Type checking (ty)
 
 ### Test Execution
 ```yaml
-# Comprehensive testing
-- name: Run tests
+# Branch-specific testing
+- name: Run tests with coverage (branch-specific)
   run: |
-    make test
-    make test-cov
+    # For main branch: run all tests (including optional tests)
+    # For dev branch: exclude optional tests (docker, llm, performance, pydantic_ai)
+    if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+      echo "Running all tests including optional tests for main branch"
+      make test-main-cov
+    else
+      echo "Running tests excluding optional tests for dev branch"
+      make test-dev-cov
+    fi
 
-# VLLM-specific tests (optional)
-- name: VLLM tests
-  if: contains(github.event.head_commit.message, '[vllm-tests]')
-  run: make vllm-test
+# Optional tests (manual trigger or on main branch changes)
+- name: Run optional tests
+  if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+  run: make test-optional-cov
+  continue-on-error: true
+```
+
+### Test Markers and Categories
+```yaml
+# Test markers for categorization
+markers:
+  optional: marks tests as optional (disabled by default)
+  vllm: marks tests as requiring VLLM container
+  containerized: marks tests as requiring containerized environment
+  performance: marks tests as performance tests
+  docker: marks tests as requiring Docker
+  llm: marks tests as requiring LLM framework
+  pydantic_ai: marks tests as Pydantic AI framework tests
+  slow: marks tests as slow running
+  integration: marks tests as integration tests
+
+# Test execution commands
+make test-dev        # Run tests excluding optional (for dev branch)
+make test-dev-cov    # Run tests excluding optional with coverage (for dev branch)
+make test-main       # Run all tests including optional (for main branch)
+make test-main-cov   # Run all tests including optional with coverage (for main branch)
+make test-optional   # Run only optional tests
+make test-optional-cov # Run only optional tests with coverage
 ```
 
 ### Test Matrix
