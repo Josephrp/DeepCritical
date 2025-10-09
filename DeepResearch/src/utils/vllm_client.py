@@ -656,7 +656,7 @@ async def list_vllm_models(client: VLLMClient) -> list[str]:
 
 async def example_basic_usage():
     """Example of basic VLLM client usage."""
-    client = create_vllm_client("microsoft/DialoGPT-medium")
+    client = create_vllm_client("TinyLlama/TinyLlama-1.1B-Chat-v1.0")
 
     # Test connection
     if await test_vllm_connection(client):
@@ -668,7 +668,7 @@ async def example_basic_usage():
 
         # Chat completion
         chat_request = ChatCompletionRequest(
-            model="microsoft/DialoGPT-medium",
+            model="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
             messages=[{"role": "user", "content": "Hello, how are you?"}],
             max_tokens=50,
             temperature=0.7,
@@ -682,10 +682,10 @@ async def example_basic_usage():
 
 async def example_streaming():
     """Example of streaming usage."""
-    client = create_vllm_client("microsoft/DialoGPT-medium")
+    client = create_vllm_client("TinyLlama/TinyLlama-1.1B-Chat-v1.0")
 
     chat_request = ChatCompletionRequest(
-        model="microsoft/DialoGPT-medium",
+        model="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
         messages=[{"role": "user", "content": "Tell me a story"}],
         max_tokens=100,
         temperature=0.8,
@@ -718,11 +718,11 @@ async def example_embeddings():
 
 async def example_batch_processing():
     """Example of batch processing."""
-    client = create_vllm_client("microsoft/DialoGPT-medium")
+    client = create_vllm_client("TinyLlama/TinyLlama-1.1B-Chat-v1.0")
 
     requests = [
         ChatCompletionRequest(
-            model="microsoft/DialoGPT-medium",
+            model="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
             messages=[{"role": "user", "content": f"Question {i}"}],
             max_tokens=20,
         )

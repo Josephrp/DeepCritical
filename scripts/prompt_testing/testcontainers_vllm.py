@@ -24,7 +24,7 @@ try:
         def __init__(
             self,
             image: str = "vllm/vllm-openai:latest",
-            model: str = "microsoft/DialoGPT-medium",
+            model: str = "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
             host_port: int = 8000,
             container_port: int = 8000,
             **kwargs,
@@ -140,7 +140,7 @@ class VLLMPromptTester:
 
         # Apply configuration with overrides
         self.model_name = model_name or model_config.get(
-            "name", "microsoft/DialoGPT-medium"
+            "name", "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
         )
         self.container_timeout = container_timeout or performance_config.get(
             "max_container_startup_time", 120
@@ -223,7 +223,7 @@ class VLLMPromptTester:
                 },
             },
             "model": {
-                "name": "microsoft/DialoGPT-medium",
+                "name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                 "generation": {
                     "max_tokens": 256,
                     "temperature": 0.7,

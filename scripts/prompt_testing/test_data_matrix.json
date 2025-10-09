@@ -97,8 +97,8 @@
     "presence_penalty_variants": [0.0, 0.1, 0.2]
   },
   "model_variants": {
-    "small": "microsoft/DialoGPT-small",
-    "medium": "microsoft/DialoGPT-medium",
+    "small": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    "medium": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
     "large": "microsoft/DialoGPT-large"
   },
   "test_modules_priority": {

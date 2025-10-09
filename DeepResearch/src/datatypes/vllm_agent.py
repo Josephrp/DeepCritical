@@ -19,7 +19,7 @@ class VLLMAgentDependencies(BaseModel):
 
     vllm_client: VLLMClient = Field(..., description="VLLM client instance")
     default_model: str = Field(
-        "microsoft/DialoGPT-medium", description="Default model name"
+        "TinyLlama/TinyLlama-1.1B-Chat-v1.0", description="Default model name"
     )
     embedding_model: str | None = Field(None, description="Embedding model name")
 
@@ -33,7 +33,9 @@ class VLLMAgentConfig(BaseModel):
     client_config: dict[str, Any] = Field(
         default_factory=dict, description="VLLM client configuration"
     )
-    default_model: str = Field("microsoft/DialoGPT-medium", description="Default model")
+    default_model: str = Field(
+        "TinyLlama/TinyLlama-1.1B-Chat-v1.0", description="Default model"
+    )
     embedding_model: str | None = Field(None, description="Embedding model")
     system_prompt: str = Field(
         "You are a helpful AI assistant powered by VLLM. You can perform various tasks including text generation, conversation, and analysis.",

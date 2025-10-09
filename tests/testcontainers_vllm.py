@@ -83,13 +83,13 @@ class VLLMPromptTester:
 
         # Apply configuration with overrides
         self.model_name = model_name or model_config.get(
-            "name", "microsoft/DialoGPT-medium"
+            "name", "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
         )
         self.container_timeout = container_timeout or performance_config.get(
             "max_container_startup_time", 120
         )
         self.max_tokens = max_tokens or model_config.get("generation", {}).get(
-            "max_tokens", 256
+            "max_tokens", 56
         )
         self.temperature = temperature or model_config.get("generation", {}).get(
             "temperature", 0.7
@@ -152,9 +152,9 @@ class VLLMPromptTester:
                 },
             },
             "model": {
-                "name": "microsoft/DialoGPT-medium",
+                "name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                 "generation": {
-                    "max_tokens": 256,
+                    "max_tokens": 56,
                     "temperature": 0.7,
                 },
             },

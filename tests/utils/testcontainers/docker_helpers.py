@@ -49,7 +49,7 @@ class TestContainerManager:
 
         # Add isolation-specific configuration
         container.with_env("TEST_ISOLATION", "true")
-        container.with_volume_mapping("/tmp", "/tmp", mode="ro")
+        # Note: Volume mapping may need to be handled differently based on testcontainers version
 
         return container
 
@@ -79,7 +79,7 @@ def create_isolated_container(image: str, **kwargs) -> DockerContainer:
 
 
 def create_vllm_container(
-    model: str = "microsoft/DialoGPT-medium", **kwargs
+    model: str = "TinyLlama/TinyLlama-1.1B-Chat-v1.0", **kwargs
 ) -> DockerContainer:
     """Create VLLM container for testing."""
     container = test_container_manager.create_container(

@@ -26,7 +26,7 @@ def vllm_container():
             "-m",
             "vllm.entrypoints.openai.api_server",
             "--model",
-            "microsoft/DialoGPT-small",
+            "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
         ],
         ports={"8000": "8000"},
     )

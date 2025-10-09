@@ -284,7 +284,7 @@ class VLLMConfig(BaseModel):
         json_schema_extra = {
             "example": {
                 "model_type": "huggingface",
-                "model_name": "microsoft/DialoGPT-medium",
+                "model_name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                 "host": "localhost",
                 "port": 8000,
                 "max_tokens": 2048,
@@ -471,7 +471,7 @@ class RAGConfig(BaseModel):
                 },
                 "llm": {
                     "model_type": "huggingface",
-                    "model_name": "microsoft/DialoGPT-medium",
+                    "model_name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                     "host": "localhost",
                     "port": 8000,
                 },

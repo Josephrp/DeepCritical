@@ -266,7 +266,7 @@ class VLLMServerConfig(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "model_name": "microsoft/DialoGPT-medium",
+                "model_name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                 "host": "0.0.0.0",
                 "port": 8000,
                 "gpu_memory_utilization": 0.9,
@@ -322,7 +322,10 @@ class VLLMDeployment(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "llm_config": {"model_name": "microsoft/DialoGPT-medium", "port": 8000},
+                "llm_config": {
+                    "model_name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+                    "port": 8000,
+                },
                 "embedding_config": {
                     "model_name": "sentence-transformers/all-MiniLM-L6-v2",
                     "port": 8001,

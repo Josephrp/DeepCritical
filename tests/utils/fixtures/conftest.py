@@ -63,7 +63,7 @@ def mock_agent_dependencies():
     return {
         "model_name": "anthropic:claude-sonnet-4-0",
         "temperature": 0.7,
-        "max_tokens": 1000,
+        "max_tokens": 100,
         "timeout": 30,
         "api_key": "mock-api-key",
     }

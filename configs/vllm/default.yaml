@@ -14,7 +14,7 @@ vllm:
 
   # Model configuration
   model:
-    name: "microsoft/DialoGPT-medium"
+    name: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
     embedding_model: null
     trust_remote_code: false
     max_model_len: null

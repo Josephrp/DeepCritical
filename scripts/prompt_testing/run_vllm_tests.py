@@ -96,7 +96,7 @@ def create_default_test_config() -> DictConfig:
             },
         },
         "model": {
-            "name": "microsoft/DialoGPT-medium",
+            "name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
             "generation": {
                 "max_tokens": 256,
                 "temperature": 0.7,

@@ -230,7 +230,7 @@ class VLLMAgent:
 
 
 def create_vllm_agent(
-    model_name: str = "microsoft/DialoGPT-medium",
+    model_name: str = "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
     base_url: str = "http://localhost:8000",
     api_key: str | None = None,
     embedding_model: str | None = None,
@@ -248,7 +248,7 @@ def create_vllm_agent(
 
 
 def create_advanced_vllm_agent(
-    model_name: str = "microsoft/DialoGPT-medium",
+    model_name: str = "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
     base_url: str = "http://localhost:8000",
     quantization: QuantizationMethod | None = None,
     tensor_parallel_size: int = 1,
@@ -308,7 +308,7 @@ async def example_vllm_agent():
 
     # Create agent
     agent = create_vllm_agent(
-        model_name="microsoft/DialoGPT-medium",
+        model_name="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
         base_url="http://localhost:8000",
         temperature=0.8,
         max_tokens=100,
@@ -345,7 +345,8 @@ async def example_pydantic_ai_integration():
 
     # Create agent
     agent = create_vllm_agent(
-        model_name="microsoft/DialoGPT-medium", base_url="http://localhost:8000"
+        model_name="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+        base_url="http://localhost:8000",
     )
 
     await agent.initialize()

@@ -157,7 +157,7 @@ class ModelConfig(BaseModel):
     class Config:
         json_schema_extra = {
             "example": {
-                "model": "microsoft/DialoGPT-medium",
+                "model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                 "tokenizer_mode": "auto",
                 "trust_remote_code": False,
                 "load_format": "auto",
@@ -667,7 +667,7 @@ class VllmConfig(BaseModel):
         json_schema_extra = {
             "example": {
                 "model": {
-                    "model": "microsoft/DialoGPT-medium",
+                    "model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                     "tokenizer_mode": "auto",
                 },
                 "cache": {"block_size": 16, "gpu_memory_utilization": 0.9},
@@ -1792,7 +1792,7 @@ class VLLMBuilder(BaseModel):
 def create_example_llm() -> LLM:
     """Create an example LLM instance."""
     config = create_vllm_config(
-        model="microsoft/DialoGPT-medium",
+        model="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
         gpu_memory_utilization=0.8,
         max_model_len=1024,
     )
@@ -1829,7 +1829,7 @@ class SupportedModels(str, Enum):
     GPT2 = "gpt2"
     GPT_NEO = "EleutherAI/gpt-neo-2.7B"
     GPT_J = "EleutherAI/gpt-j-6B"
-    DIALOGPT = "microsoft/DialoGPT-medium"
+    DIALOGPT = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
     BLOOM = "bigscience/bloom-560m"
     LLAMA = "meta-llama/Llama-2-7b-hf"
     MISTRAL = "mistralai/Mistral-7B-v0.1"
@@ -1853,7 +1853,7 @@ from vllm_comprehensive import LLM, SamplingParams, create_vllm_config
 
 # Create configuration
 config = create_vllm_config(
-    model="microsoft/DialoGPT-medium",
+    model="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
     gpu_memory_utilization=0.8,
     max_model_len=1024
 )

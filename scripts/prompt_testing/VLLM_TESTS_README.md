@@ -252,7 +252,7 @@ vllm_tests:
 #### Model Configuration (`configs/vllm_tests/model/local_model.yaml`)
 ```yaml
 model:
-  name: "microsoft/DialoGPT-medium"
+  name: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
   generation:
     max_tokens: 256
     temperature: 0.7
@@ -378,7 +378,7 @@ from omegaconf import OmegaConf
 
 # Test container manually with Hydra configuration
 config = OmegaConf.create({
-    "model": {"name": "microsoft/DialoGPT-medium"},
+    "model": {"name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0"},
     "performance": {"max_container_startup_time": 120},
     "vllm_tests": {"enabled": True}
 })

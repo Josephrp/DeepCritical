@@ -58,16 +58,34 @@ class ContainerManager:
 class VLLMContainer(DockerContainer):
     """Specialized container for VLLM testing."""
 
-    def __init__(self, model: str = "microsoft/DialoGPT-medium", **kwargs):
+    def __init__(self, model: str = "TinyLlama/TinyLlama-1.1B-Chat-v1.0", **kwargs):
         super().__init__("vllm/vllm-openai:latest", **kwargs)
         self.model = model
         self._configure_vllm()
 
     def _configure_vllm(self) -> None:
         """Configure VLLM-specific settings."""
+        # Use CPU-only mode for testing to avoid CUDA issues
         self.with_env("VLLM_MODEL", self.model)
         self.with_env("VLLM_HOST", "0.0.0.0")
         self.with_env("VLLM_PORT", "8000")
+        # Force CPU-only mode to avoid CUDA/GPU detection issues in containers
+        self.with_env("VLLM_DEVICE", "cpu")
+        self.with_env("VLLM_LOGGING_LEVEL", "ERROR")  # Reduce log noise
+        # Additional environment variables to ensure CPU-only operation
+        self.with_env("CUDA_VISIBLE_DEVICES", "")
+        self.with_env("VLLM_SKIP_CUDA_CHECK", "1")
+        # Disable platform plugins to avoid platform detection issues
+        self.with_env("VLLM_PLUGINS", "")
+        # Force CPU platform explicitly
+        self.with_env("VLLM_PLATFORM", "cpu")
+        # Disable device auto-detection
+        self.with_env("VLLM_DISABLE_DEVICE_AUTO_DETECTION", "1")
+        # Additional environment variables to force CPU mode
+        self.with_env("VLLM_DEVICE_TYPE", "cpu")
+        self.with_env("VLLM_FORCE_CPU", "1")
+        # Set logging level to reduce noise
+        self.with_env("VLLM_LOGGING_LEVEL", "ERROR")
 
     def get_connection_url(self) -> str:
         """Get the connection URL for the VLLM server."""

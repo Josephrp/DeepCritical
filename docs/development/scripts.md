@@ -260,7 +260,7 @@ python scripts/run_vllm_tests.py --cfg job
 ```bash
 # Use smaller models
 model:
-  name: "microsoft/DialoGPT-medium"
+  name: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 
 # Reduce resource limits
 container:

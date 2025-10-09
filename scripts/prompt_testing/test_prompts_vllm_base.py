@@ -47,7 +47,7 @@ class VLLMPromptTestBase:
 
         with VLLMPromptTester(
             config=config,
-            model_name=model_config.get("name", "microsoft/DialoGPT-medium"),
+            model_name=model_config.get("name", "TinyLlama/TinyLlama-1.1B-Chat-v1.0"),
             container_timeout=performance_config.get("max_container_startup_time", 120),
             max_tokens=model_config.get("generation", {}).get("max_tokens", 256),
             temperature=model_config.get("generation", {}).get("temperature", 0.7),
@@ -124,7 +124,7 @@ class VLLMPromptTestBase:
                 },
             },
             "model": {
-                "name": "microsoft/DialoGPT-medium",
+                "name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                 "generation": {
                     "max_tokens": 256,
                     "temperature": 0.7,
