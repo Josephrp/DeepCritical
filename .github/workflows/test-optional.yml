@@ -1,0 +1,110 @@
+name: Optional Containerized Tests
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'tests/**'
+      - 'DeepResearch/src/tools/**'
+      - 'configs/test/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'tests/**'
+      - 'DeepResearch/src/tools/**'
+      - 'configs/test/**'
+
+env:
+  DOCKER_TESTS: ${{ github.ref == 'refs/heads/main' && (secrets.DOCKER_TESTS_ENABLED || 'true') || 'false' }}
+  PERFORMANCE_TESTS: ${{ secrets.PERFORMANCE_TESTS_ENABLED || 'false' }}
+
+jobs:
+  test-docker-sandbox:
+    name: Docker Sandbox Tests
+    runs-on: ubuntu-latest
+    if: env.DOCKER_TESTS == 'true'
+
+    services:
+      docker:
+        image: docker:dind
+        options: --privileged
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          uv sync --dev
+
+      - name: Run Docker sandbox tests
+        run: make test-docker
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: docker-test-results
+          path: test_artifacts/
+
+  test-bioinformatics:
+    name: Bioinformatics Tools Tests
+    runs-on: ubuntu-latest
+    if: env.DOCKER_TESTS == 'true' && github.ref == 'refs/heads/main'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+
+      - name: Install bioinformatics dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          uv sync --dev
+
+      - name: Run bioinformatics tests
+        run: make test-bioinformatics
+
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: bioinformatics-test-results
+          path: test_artifacts/
+
+  test-performance:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    if: env.PERFORMANCE_TESTS == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          uv sync --dev
+
+      - name: Run performance tests
+        run: make test-performance
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: performance-results
+          path: benchmark-results/

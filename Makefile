@@ -14,6 +14,17 @@ help:
 	@echo "  test         Run all tests"
 	@echo "  test-cov     Run tests with coverage report"
 	@echo "  test-fast    Run tests quickly (skip slow tests)"
+ifeq ($(OS),Windows_NT)
+	@echo "  test-unit-win       Run unit tests (Windows)"
+	@echo "  test-integration-win Run integration tests (Windows)"
+	@echo "  test-docker-win     Run Docker tests (Windows, requires Docker)"
+	@echo "  test-bioinformatics-win Run bioinformatics tests (Windows, requires Docker)"
+	@echo "  test-llm-win        Run LLM framework tests (Windows)"
+	@echo "  test-pydantic-ai-win Run Pydantic AI tests (Windows)"
+	@echo "  test-containerized-win Run all containerized tests (Windows, requires Docker)"
+	@echo "  test-performance-win Run performance tests (Windows)"
+	@echo "  test-optional-win   Run all optional tests (Windows)"
+endif
 	@echo "  lint         Run linting (ruff)"
 	@echo "  format       Run formatting (ruff + black)"
 	@echo "  type-check   Run type checking (ty)"
@@ -63,6 +74,42 @@ test-cov:
 
 test-fast:
 	uv run pytest tests/ -m "not slow" -v
+
+# Windows-specific testing targets (using PowerShell script)
+ifeq ($(OS),Windows_NT)
+test-unit-win:
+	@powershell -ExecutionPolicy Bypass -File scripts/test/run_tests.ps1 -TestType unit
+
+test-integration-win:
+	@powershell -ExecutionPolicy Bypass -File scripts/test/run_tests.ps1 -TestType integration
+
+test-docker-win:
+	@powershell -ExecutionPolicy Bypass -File scripts/test/run_tests.ps1 -TestType docker
+
+test-bioinformatics-win:
+	@powershell -ExecutionPolicy Bypass -File scripts/test/run_tests.ps1 -TestType bioinformatics
+
+test-bioinformatics-unit-win:
+	@echo "Running bioinformatics unit tests..."
+	uv run pytest tests/test_bioinformatics_tools/ -m "not containerized" -v --tb=short
+
+test-llm-win:
+	@echo "Running LLM framework tests..."
+	uv run pytest tests/test_llm_framework/ -v --tb=short
+
+test-pydantic-ai-win:
+	@echo "Running Pydantic AI tests..."
+	uv run pytest tests/test_pydantic_ai/ -v --tb=short
+
+test-containerized-win:
+	@powershell -ExecutionPolicy Bypass -File scripts/test/run_tests.ps1 -TestType containerized
+
+test-performance-win:
+	@powershell -ExecutionPolicy Bypass -File scripts/test/run_tests.ps1 -TestType performance
+
+test-optional-win: test-containerized-win test-performance-win
+	@echo "Optional tests completed"
+endif
 
 # Code quality targets
 lint:
@@ -209,6 +256,17 @@ examples:
 	@echo "🛠️  Development:"
 	@echo "  make quality    # Run all quality checks"
 	@echo "  make test       # Run all tests"
+ifeq ($(OS),Windows_NT)
+	@echo "  make test-unit-win       # Run unit tests (Windows)"
+	@echo "  make test-integration-win # Run integration tests (Windows)"
+	@echo "  make test-docker-win     # Run Docker tests (Windows, requires Docker)"
+	@echo "  make test-bioinformatics-win # Run bioinformatics tests (Windows, requires Docker)"
+	@echo "  make test-llm-win        # Run LLM framework tests (Windows)"
+	@echo "  make test-pydantic-ai-win # Run Pydantic AI tests (Windows)"
+	@echo "  make test-containerized-win # Run all containerized tests (Windows, requires Docker)"
+	@echo "  make test-performance-win # Run performance tests (Windows)"
+	@echo "  make test-optional-win   # Run all optional tests (Windows)"
+endif
 	@echo "  make prompt-test # Test prompt functionality"
 	@echo "  make vllm-test  # Test with VLLM containers"
 
