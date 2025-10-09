@@ -39,7 +39,7 @@ help:
 	@echo "  vllm-test    Run VLLM-based tests"
 	@echo "  clean        Remove build artifacts and cache"
 	@echo "  build        Build the package"
-	@echo "  docs         Build documentation"
+	@echo "  docs         Build documentation (full validation)"
 	@echo ""
 	@echo "📊 Examples & Demos:"
 	@echo "  examples     Show example usage patterns"
@@ -101,7 +101,23 @@ build:
 	uv build
 
 docs:
-	@echo "Documentation build not configured yet"
+	@echo "📚 Building DeepCritical Documentation"
+	@echo "======================================"
+	@echo "Building documentation (like pre-commit and CI)..."
+	uv run mkdocs build --clean
+	@echo ""
+	@echo "✅ Documentation built successfully!"
+	@echo "📁 Site files generated in: ./site/"
+	@echo ""
+	@echo "🔍 Running strict validation..."
+	uv run mkdocs build --strict --quiet
+	@echo ""
+	@echo "✅ Documentation validation passed!"
+	@echo ""
+	@echo "🚀 Next steps:"
+	@echo "  • Serve locally: make docs-serve"
+	@echo "  • Deploy to GitHub Pages: make docs-deploy"
+	@echo "  • Check links: make docs-check"
 
 # Pre-commit targets
 pre-commit:
@@ -241,5 +257,5 @@ docs-deploy:
 	uv run mkdocs gh-deploy
 
 docs-check:
-	@echo "🔍 Checking documentation links..."
+	@echo "🔍 Running strict documentation validation (warnings = errors)..."
 	uv run mkdocs build --strict
