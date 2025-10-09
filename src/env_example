@@ -1,0 +1,116 @@
+# .env.example - Plantilla de Configuración para Bibliometric Intelligence Suite
+# INSTRUCCIONES: Copia este archivo como .env y completa con tus credenciales reales
+#   cp .env.example .env
+#   nano .env  (o usa tu editor favorito)
+
+# ============================================================
+# NEO4J DATABASE CONFIGURATION (REQUERIDO)
+# ============================================================
+NEO4J_URI=neo4j://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=your_password_here
+NEO4J_DATABASE=neo4j
+
+# ============================================================
+# OPENALEX API (REQUERIDO - Gratuito)
+# ============================================================
+# Obtén acceso gratuito en: https://openalex.org/
+OPENALEX_EMAIL=your_email@domain.com
+
+# OpenAlex Processing
+MAX_PAPERS_IMPORT=-1
+BATCH_SIZE=25
+BACKOFF_BASE=1.0
+BACKOFF_MAX=30.0
+
+# ============================================================
+# SCOPUS API (OPCIONAL - Requiere acceso institucional)
+# ============================================================
+# Obtén tu API Key en: https://dev.elsevier.com/
+SCOPUS_API_KEY=your_scopus_api_key_here
+
+# ============================================================
+# CROSSREF API (OPCIONAL - Gratuito)
+# ============================================================
+# API gratuita, solo requiere email válido
+CROSSREF_EMAIL=your_email@domain.com
+
+# ============================================================
+# EPO PATENT API (OPCIONAL - Gratuito tras registro)
+# ============================================================
+# Regístrate en: https://developers.epo.org/
+EPO_CONSUMER_KEY=your_epo_consumer_key_here
+EPO_CONSUMER_SECRET=your_epo_consumer_secret_here
+
+# ============================================================
+# OPENAI API (OPCIONAL - Para análisis avanzado)
+# ============================================================
+# Obtén tu API Key en: https://platform.openai.com/api-keys
+OPENAI_API_KEY=your_openai_api_key_here
+
+# ============================================================
+# DATA DIRECTORIES
+# ============================================================
+DATA_DIR=./data_checkpoints
+EXPORT_BATCH_SIZE=300
+MMR_MAX_ROWS=3000
+MODEL_CACHE_DIR=./cache
+
+# ============================================================
+# PROCESSING LIMITS (0 = unlimited)
+# ============================================================
+MAX_PAPERS_ENRICH=0
+MAX_PAPERS_CITATIONS=0
+MAX_PAPERS_AUTHORS=0
+
+# ============================================================
+# BATCH SIZES FOR PROCESSING
+# ============================================================
+BATCH_SIZE_IMPORT=50
+BATCH_SIZE_CITATIONS=5
+BATCH_SIZE_AUTHORS=100
+
+# ============================================================
+# PARALLEL PROCESSING
+# ============================================================
+ENABLE_PARALLEL_PROCESSING=true
+
+# ============================================================
+# SEMANTIC ANALYSIS CONFIGURATION
+# ============================================================
+# Minimum abstract length (words)
+MIN_ABS_WORDS=20
+
+# Embedding model for SBERT backend
+# Options: sentence-transformers/all-MiniLM-L6-v2 (default, fast)
+#          allenai/specter2_base (scientific papers)
+#          DeepChem/ChemBERTa-77M-MTR (chemistry)
+EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+SPECTER2_MODEL=allenai/specter2_base
+CHEMBERT_MODEL=DeepChem/ChemBERTa-77M-MTR
+
+# ============================================================
+# NEO4J LABELS (OPCIONAL - Personalización)
+# ============================================================
+PAPER_LABEL=Paper
+AUTHOR_LABEL=Author
+JOURNAL_LABEL=Journal
+CONCEPT_LABEL=Concept
+
+# Relaciones alternativas (separadas por ;)
+AUTHORED_RELS=AUTHORED;AUTHORED_BY
+PUBLISHED_IN_RELS=PUBLISHED_IN;APPEARS_IN
+HAS_CONCEPT_RELS=HAS_CONCEPT;HAS_FIELD_OF_STUDY
+
+# ============================================================
+# TECHNOLOGY TRENDS CONFIGURATION (OPCIONAL)
+# ============================================================
+MIN_PAPERS_PER_TECHNOLOGY=3
+CONFIDENCE_THRESHOLD=0.3
+GROWTH_RATE_THRESHOLD=0.05
+
+# ============================================================
+# DASHBOARD CONFIGURATION (OPCIONAL)
+# ============================================================
+DASHBOARD_PORT=8501
+DASHBOARD_HOST=localhost

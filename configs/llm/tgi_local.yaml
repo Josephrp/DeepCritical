@@ -1,0 +1,21 @@
+# Text Generation Inference (TGI) local server configuration
+# Compatible with Hugging Face TGI OpenAI-compatible API
+
+# Basic connection settings
+provider: "tgi"
+model_name: "bigscience/bloom-560m"
+base_url: "http://localhost:3000/v1"
+api_key: null  # TGI typically doesn't require API key for local deployments
+
+# Generation parameters
+generation:
+  temperature: 0.7
+  max_tokens: 512
+  top_p: 0.9
+  frequency_penalty: 0.0
+  presence_penalty: 0.0
+
+# Connection settings
+timeout: 60.0
+max_retries: 3
+retry_delay: 1.0

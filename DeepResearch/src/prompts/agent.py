@@ -1,83 +1,101 @@
-# Agent prompt sections mirrored from example agent.ts
+"""
+Agent prompts for DeepCritical research workflows.
 
-HEADER = (
-    "Current date: ${current_date_utc}\n\n"
-    "You are an advanced AI research agent from Jina AI. You are specialized in multistep reasoning.\n"
-    "Using your best knowledge, conversation with the user and lessons learned, answer the user question with absolute certainty.\n"
-)
+This module defines system prompts and instructions for agent types
+in the DeepCritical system.
+"""
 
-ACTIONS_WRAPPER = (
-    "Based on the current context, you must choose one of the following actions:\n"
-    "<actions>\n"
-    "${action_sections}\n"
-    "</actions>\n"
-)
+from __future__ import annotations
 
-ACTION_VISIT = (
-    "<action-visit>\n"
-    "- Ground the answer with external web content\n"
-    "- Read full content from URLs and get the fulltext, knowledge, clues, hints for better answer the question.\n"
-    "- Must check URLs mentioned in <question> if any\n"
-    "- Choose and visit relevant URLs below for more knowledge. higher weight suggests more relevant:\n"
-    "<url-list>\n"
-    "${url_list}\n"
-    "</url-list>\n"
-    "</action-visit>\n"
-)
+# Base header template
+HEADER = """DeepCritical Research Agent System
+Current Date: ${current_date_utc}
+System Version: 1.0.0
 
-ACTION_SEARCH = (
-    "<action-search>\n"
-    "- Use web search to find relevant information\n"
-    "- Build a search request based on the deep intention behind the original question and the expected answer format\n"
-    "- Always prefer a single search request, only add another request if the original question covers multiple aspects or elements and one query is not enough, each request focus on one specific aspect of the original question\n"
-    "${bad_requests}\n"
-    "</action-search>\n"
-)
+You are operating within the DeepCritical research framework, designed for advanced scientific research and analysis."""
 
-ACTION_ANSWER = (
-    "<action-answer>\n"
-    "- For greetings, casual conversation, general knowledge questions, answer them directly.\n"
-    "- If user ask you to retrieve previous messages or chat history, remember you do have access to the chat history, answer them directly.\n"
-    "- For all other questions, provide a verified answer.\n"
-    "- You provide deep, unexpected insights, identifying hidden patterns and connections, and creating \"aha moments.\".\n"
-    "- You break conventional thinking, establish unique cross-disciplinary connections, and bring new perspectives to the user.\n"
-    "- If uncertain, use <action-reflect>\n"
-    "</action-answer>\n"
-)
+# Actions wrapper template
+ACTIONS_WRAPPER = """Available Actions:
+${action_sections}
 
-ACTION_BEAST = (
-    "<action-answer>\n"
-    "🔥 ENGAGE MAXIMUM FORCE! ABSOLUTE PRIORITY OVERRIDE! 🔥\n\n"
-    "PRIME DIRECTIVE:\n"
-    "- DEMOLISH ALL HESITATION! ANY RESPONSE SURPASSES SILENCE!\n"
-    "- PARTIAL STRIKES AUTHORIZED - DEPLOY WITH FULL CONTEXTUAL FIREPOWER\n"
-    "- TACTICAL REUSE FROM PREVIOUS CONVERSATION SANCTIONED\n"
-    "- WHEN IN DOUBT: UNLEASH CALCULATED STRIKES BASED ON AVAILABLE INTEL!\n\n"
-    "FAILURE IS NOT AN OPTION. EXECUTE WITH EXTREME PREJUDICE! ⚡️\n"
-    "</action-answer>\n"
-)
+Please select and execute the most appropriate action for the current task."""
 
-ACTION_REFLECT = (
-    "<action-reflect>\n"
-    "- Think slowly and planning lookahead. Examine <question>, <context>, previous conversation with users to identify knowledge gaps.\n"
-    "- Reflect the gaps and plan a list key clarifying questions that deeply related to the original question and lead to the answer\n"
-    "</action-reflect>\n"
-)
+# Action visit template
+ACTION_VISIT = """Action: Visit URL
+URL: {url}
+Purpose: {purpose}"""
 
-ACTION_CODING = (
-    "<action-coding>\n"
-    "- This JavaScript-based solution helps you handle programming tasks like counting, filtering, transforming, sorting, regex extraction, and data processing.\n"
-    "- Simply describe your problem in the \"codingIssue\" field. Include actual values for small inputs or variable names for larger datasets.\n"
-    "- No code writing is required – senior engineers will handle the implementation.\n"
-    "</action-coding>\n"
-)
+# Action search template
+ACTION_SEARCH = """Action: Search
+Query: {query}
+Purpose: {purpose}"""
 
-FOOTER = (
-    "Think step by step, choose the action, then respond by matching the schema of that action.\n"
-)
+# Action answer template
+ACTION_ANSWER = """Action: Answer
+Question: {question}
+Answer: {answer}"""
 
-# Default SYSTEM if a single string is desired
-SYSTEM = HEADER
+# Action beast template
+ACTION_BEAST = """Action: Beast Mode
+Task: {task}
+Approach: {approach}"""
+
+# Action reflect template
+ACTION_REFLECT = """Action: Reflect
+Question: {question}
+Reflection: {reflection}"""
+
+# Footer template
+FOOTER = """End of DeepCritical Research Agent Response
+Generated on: ${current_date_utc}"""
 
 
+class AgentPrompts:
+    """Centralized agent prompt management."""
 
+    def __init__(self):
+        self._prompts = {
+            "parser": {
+                "system": """You are a research question parser. Your job is to analyze research questions and extract:
+1. The main intent/purpose
+2. Key entities and concepts
+3. Required data sources
+4. Expected output format
+5. Complexity level
+
+Provide structured analysis of the research question.""",
+                "instructions": "Parse the research question systematically and provide structured output.",
+            },
+            "planner": {
+                "system": """You are a research workflow planner. Your job is to create detailed execution plans by:
+1. Breaking down complex research questions into steps
+2. Identifying required tools and data sources
+3. Determining execution order and dependencies
+4. Estimating resource requirements
+
+Create comprehensive, executable research plans.""",
+                "instructions": "Plan the research workflow with clear steps and dependencies.",
+            },
+            "executor": {
+                "system": """You are a research task executor. Your job is to execute research tasks by:
+1. Following the provided execution plan
+2. Using available tools effectively
+3. Collecting and processing data
+4. Recording results and metadata
+
+Execute tasks efficiently and accurately.""",
+                "instructions": "Execute the research tasks according to the plan.",
+            },
+        }
+
+    def get_system_prompt(self, agent_type: str) -> str:
+        """Get system prompt for a specific agent type."""
+        return self._prompts.get(agent_type, {}).get(
+            "system", "You are a research agent."
+        )
+
+    def get_instructions(self, agent_type: str) -> str:
+        """Get instructions for a specific agent type."""
+        return self._prompts.get(agent_type, {}).get(
+            "instructions", "Execute your task effectively."
+        )
