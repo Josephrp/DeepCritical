@@ -1,0 +1,96 @@
+# ============================================================
+# CORE DEPENDENCIES
+# ============================================================
+python-dotenv==1.0.0
+pandas==2.0.3
+numpy==1.24.3
+
+# ============================================================
+# NEO4J DATABASE
+# ============================================================
+neo4j==5.14.0
+
+# ============================================================
+# API CLIENTS
+# ============================================================
+requests==2.31.0
+pybliometrics==3.5.2
+
+# ============================================================
+# MACHINE LEARNING & NLP
+# ============================================================
+scikit-learn==1.3.0
+sentence-transformers==2.2.2
+transformers==4.35.0
+torch==2.1.0
+
+# SBERT Models (instalados automáticamente con sentence-transformers)
+# - all-MiniLM-L6-v2 (default, ligero)
+# - allenai/specter2_base (papers científicos)
+# - DeepChem/ChemBERTa-77M-MTR (química)
+
+# ============================================================
+# CLUSTERING & VALIDATION METRICS
+# ============================================================
+# Ya incluidas en scikit-learn:
+# - KMeans, AgglomerativeClustering
+# - silhouette_score, davies_bouldin_score, calinski_harabasz_score
+# - adjusted_rand_score (ARI para bootstrap validation)
+# - cosine_similarity (para MMR/FPS)
+
+# ============================================================
+# DIMENSIONALITY REDUCTION & VISUALIZATION
+# ============================================================
+matplotlib==3.7.2
+seaborn==0.12.2
+umap-learn==0.5.4  # Optional: mejor que PCA para alta dimensionalidad
+
+# ============================================================
+# TEXT PROCESSING
+# ============================================================
+# Ya incluido en scikit-learn:
+# - TfidfVectorizer, CountVectorizer (para c-TF-IDF)
+
+# ============================================================
+# WEB SCRAPING (PATENTS MODULE)
+# ============================================================
+selenium==4.15.0
+webdriver-manager==4.0.1  # Auto-gestión ChromeDriver
+beautifulsoup4==4.12.2
+lxml==4.9.3
+
+# ============================================================
+# GRAPH ANALYSIS (OPTIONAL BUT RECOMMENDED)
+# ============================================================
+networkx==3.1
+python-louvain==0.16  # Para detección de comunidades
+
+# ============================================================
+# PROGRESS BARS & LOGGING
+# ============================================================
+tqdm==4.66.1
+colorlog==6.7.0
+
+# ============================================================
+# OPENAI API (OPTIONAL - FOR ADVANCED ANALYSIS)
+# ============================================================
+openai==1.3.0
+
+# ============================================================
+# STATISTICAL ANALYSIS (OPTIONAL)
+# ============================================================
+scipy==1.11.3
+statsmodels==0.14.0  # Para análisis temporal avanzado
+
+# ============================================================
+# JUPYTER (OPTIONAL - FOR NOTEBOOKS)
+# ============================================================
+# jupyter==1.0.0
+# ipykernel==6.26.0
+
+# ============================================================
+# DEVELOPMENT & TESTING (OPTIONAL)
+# ============================================================
+# pytest==7.4.3
+# black==23.11.0
+# flake8==6.1.0
