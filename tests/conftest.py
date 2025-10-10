@@ -3,8 +3,8 @@ Global pytest configuration for DeepCritical testing framework.
 """
 
 import os
-from pathlib import Path
 from contextlib import ExitStack
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -12,6 +12,7 @@ import pytest
 RATELIMITER_TARGETS = [
     "DeepResearch.src.tools.bioinformatics_tools.limiter.hit",
 ]
+
 
 def pytest_configure(config):
     """Configure pytest with custom markers and settings."""
@@ -46,6 +47,7 @@ def test_config():
         "test_data_dir": Path(__file__).parent / "test_data",
         "artifacts_dir": Path(__file__).parent.parent / "test_artifacts",
     }
+
 
 @pytest.fixture
 def disable_ratelimiter():
