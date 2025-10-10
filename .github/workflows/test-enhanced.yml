@@ -62,7 +62,7 @@ jobs:
           fail_ci_if_error: false
 
       - name: Upload test artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results-${{ matrix.python-version }}
@@ -101,7 +101,7 @@ jobs:
         run: make test-core
 
       - name: Upload test artifacts (${{ matrix.os }})
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results-${{ matrix.os }}
