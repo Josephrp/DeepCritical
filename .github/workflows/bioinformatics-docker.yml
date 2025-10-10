@@ -11,11 +11,6 @@ on:
       - 'docker/bioinformatics/**'
       - 'scripts/publish_docker_images.py'
       - '.github/workflows/bioinformatics-docker.yml'
-  pull_request:
-    branches: [ main, dev ]
-    paths:
-      - 'docker/bioinformatics/**'
-      - 'scripts/publish_docker_images.py'
   workflow_dispatch:
     inputs:
       publish_images:
