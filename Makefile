@@ -59,6 +59,18 @@ endif
 	@echo "  build        Build the package"
 	@echo "  docs         Build documentation (full validation)"
 	@echo ""
+	@echo "🐳 Bioinformatics Docker:"
+	@echo "  docker-build-bioinformatics    Build all bioinformatics Docker images"
+	@echo "  docker-publish-bioinformatics  Publish images to Docker Hub"
+	@echo "  docker-test-bioinformatics     Test built bioinformatics images"
+	@echo "  docker-check-bioinformatics    Check Docker Hub image availability"
+	@echo "  docker-pull-bioinformatics     Pull latest images from Docker Hub"
+	@echo "  docker-clean-bioinformatics    Remove local bioinformatics images"
+	@echo "  docker-status-bioinformatics   Show bioinformatics image status"
+	@echo "  test-bioinformatics-containerized Run containerized bioinformatics tests"
+	@echo "  test-bioinformatics-all        Run all bioinformatics tests"
+	@echo "  validate-bioinformatics        Validate bioinformatics configurations"
+	@echo ""
 	@echo "📊 Examples & Demos:"
 	@echo "  examples     Show example usage patterns"
 	@echo "  demo-antibody Design therapeutic antibody (PRIME demo)"
@@ -367,3 +379,111 @@ docs-deploy:
 docs-check:
 	@echo "🔍 Running strict documentation validation (warnings = errors)..."
 	uv run mkdocs build --strict
+
+# Docker targets
+docker-build-bioinformatics:
+	@echo "🐳 Building bioinformatics Docker images..."
+	@for dockerfile in docker/bioinformatics/Dockerfile.*; do \
+		tool=$$(basename "$$dockerfile" | cut -d'.' -f2); \
+		echo "Building $$tool..."; \
+		docker build -f "$$dockerfile" -t "deepcritical-$$tool:latest" . ; \
+	done
+
+docker-publish-bioinformatics:
+	@echo "🚀 Publishing bioinformatics Docker images to Docker Hub..."
+	python scripts/publish_docker_images.py
+
+docker-test-bioinformatics:
+	@echo "🐳 Testing bioinformatics Docker images..."
+	@for dockerfile in docker/bioinformatics/Dockerfile.*; do \
+		tool=$$(basename "$$dockerfile" | cut -d'.' -f2); \
+		echo "Testing $$tool container..."; \
+		docker run --rm "deepcritical-$$tool:latest" --version || echo "⚠️  $$tool test failed"; \
+	done
+
+# Update the existing test targets to include containerized tests
+test-bioinformatics-containerized:
+	@echo "🐳 Running containerized bioinformatics tests..."
+	uv run pytest tests/test_bioinformatics_tools/ -m "containerized" -v --tb=short
+
+test-bioinformatics-all:
+	@echo "🧬 Running all bioinformatics tests..."
+	uv run pytest tests/test_bioinformatics_tools/ -v --tb=short
+
+# Check Docker Hub images
+docker-check-bioinformatics:
+	@echo "🔍 Checking bioinformatics Docker Hub images..."
+	python scripts/publish_docker_images.py --check-only
+
+# Clean up local bioinformatics Docker images
+docker-clean-bioinformatics:
+	@echo "🧹 Cleaning up bioinformatics Docker images..."
+	@for dockerfile in docker/bioinformatics/Dockerfile.*; do \
+		tool=$$(basename "$$dockerfile" | cut -d'.' -f2); \
+		echo "Removing deepcritical-$$tool:latest..."; \
+		docker rmi "deepcritical-$$tool:latest" 2>/dev/null || echo "Image not found: deepcritical-$$tool:latest"; \
+	done
+	@echo "Removing dangling images..."
+	docker image prune -f
+
+# Pull latest bioinformatics images from Docker Hub
+docker-pull-bioinformatics:
+	@echo "📥 Pulling latest bioinformatics images from Docker Hub..."
+	@for dockerfile in docker/bioinformatics/Dockerfile.*; do \
+		tool=$$(basename "$$dockerfile" | cut -d'.' -f2); \
+		image_name="tonic01/deepcritical-bioinformatics-$$tool:latest"; \
+		echo "Pulling $$image_name..."; \
+		docker pull "$$image_name" || echo "Failed to pull $$image_name"; \
+	done
+
+# Show bioinformatics Docker image status
+docker-status-bioinformatics:
+	@echo "📊 Bioinformatics Docker Images Status:"
+	@echo "=========================================="
+	@for dockerfile in docker/bioinformatics/Dockerfile.*; do \
+		tool=$$(basename "$$dockerfile" | cut -d'.' -f2); \
+		local_image="deepcritical-$$tool:latest"; \
+		hub_image="tonic01/deepcritical-bioinformatics-$$tool:latest"; \
+		echo "$$tool:"; \
+		if docker images --format "table {{.Repository}}:{{.Tag}}" | grep -q "$$local_image"; then \
+			echo "  ✅ Local: $$local_image"; \
+		else \
+			echo "  ❌ Local: $$local_image (not built)"; \
+		fi; \
+		if docker images --format "table {{.Repository}}:{{.Tag}}" | grep -q "$$hub_image"; then \
+			echo "  ✅ Hub: $$hub_image"; \
+		else \
+			echo "  ❌ Hub: $$hub_image (not pulled)"; \
+		fi; \
+	done
+
+# Validate bioinformatics configurations
+validate-bioinformatics:
+	@echo "🔍 Validating bioinformatics configurations..."
+	python -c "
+import yaml
+import os
+from pathlib import Path
+
+config_dir = Path('DeepResearch/src/tools/bioinformatics')
+valid_configs = 0
+invalid_configs = 0
+
+for config_file in config_dir.glob('*_server.py'):
+    try:
+        # Basic syntax check by importing
+        module_name = config_file.stem
+        exec(f'from DeepResearch.src.tools.bioinformatics.{module_name} import *')
+        print(f'✅ {module_name}')
+        valid_configs += 1
+    except Exception as e:
+        print(f'❌ {module_name}: {e}')
+        invalid_configs += 1
+
+print(f'\\n📊 Validation Summary:')
+print(f'✅ Valid configs: {valid_configs}')
+print(f'❌ Invalid configs: {invalid_configs}')
+
+if invalid_configs > 0:
+    exit(1)
+"

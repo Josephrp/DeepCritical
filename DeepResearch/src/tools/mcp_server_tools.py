@@ -203,7 +203,7 @@ class MCPServerDeploymentTool(ToolRunner):
                     "container_id": deployment.container_id or "",
                     "status": deployment.status,
                     "success": deployment.status == "running",
-                    "error": deployment.error or "",
+                    "error": deployment.error_message or "",
                 },
             )
 

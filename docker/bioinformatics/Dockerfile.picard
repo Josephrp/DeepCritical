@@ -1,0 +1,26 @@
+# Picard Docker container for SAM/BAM processing
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    default-jre \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and install Picard
+RUN wget -q https://github.com/broadinstitute/picard/releases/download/3.0.0/picard.jar -O /usr/local/bin/picard.jar && \
+    echo '#!/bin/bash\njava -jar /usr/local/bin/picard.jar "$@"' > /usr/local/bin/picard && \
+    chmod +x /usr/local/bin/picard
+
+# Create working directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV PICARD_VERSION=3.0.0
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD java -jar /usr/local/bin/picard.jar MarkDuplicates --help | head -1 || exit 1
+
+# Default command
+CMD ["picard", "MarkDuplicates", "--help"]

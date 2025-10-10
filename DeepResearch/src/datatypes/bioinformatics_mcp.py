@@ -378,10 +378,17 @@ class MCPServerBase(ABC):
                 result=result_data,
                 execution_time=execution_time,
                 error_message=error,
-                output_files=result_data.get("output_files", []),
-                stdout=result_data.get("stdout", ""),
-                stderr=result_data.get("stderr", ""),
-                exit_code=result_data.get("exit_code", 0 if success else 1),
+                output_files=[
+                    str(f)
+                    for f in (
+                        cast("list", result_data.get("output_files"))
+                        if isinstance(result_data.get("output_files"), list)
+                        else []
+                    )
+                ],
+                stdout=str(result_data.get("stdout", "")),
+                stderr=str(result_data.get("stderr", "")),
+                exit_code=int(result_data.get("exit_code", 0 if success else 1)),
             )
 
         except Exception as e:

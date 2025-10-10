@@ -1,0 +1,30 @@
+# BCFtools Docker container for variant analysis
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    bcftools \
+    libhts-dev \
+    zlib1g-dev \
+    libbz2-dev \
+    liblzma-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    numpy \
+    pandas \
+    matplotlib
+
+# Create working directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV BCFTOOLS_VERSION=1.17
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD bcftools --version || exit 1
+
+# Default command
+CMD ["bcftools", "--help"]

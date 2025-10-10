@@ -563,4 +563,4 @@ def run_rag_workflow(question: str, config: DictConfig) -> str:
     """Run the complete RAG workflow."""
     state = RAGState(question=question, config=config)
     result = asyncio.run(rag_workflow_graph.run(InitializeRAG(), state=state))  # type: ignore
-    return result.output
+    return result.output or ""

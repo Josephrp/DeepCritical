@@ -47,17 +47,18 @@ configs/
 ```
 tests/
 ├── testcontainers_vllm.py          # VLLM container management (Hydra-configurable)
-├── test_prompts_vllm_base.py       # Base test class (Hydra-configurable)
-├── test_prompts_agents_vllm.py     # Tests for agents.py prompts
-├── test_prompts_bioinformatics_agents_vllm.py  # Tests for bioinformatics prompts
-├── test_prompts_broken_ch_fixer_vllm.py       # Tests for broken character fixer
-├── test_prompts_code_exec_vllm.py             # Tests for code execution prompts
-├── test_prompts_code_sandbox_vllm.py          # Tests for code sandbox prompts
-├── test_prompts_deep_agent_prompts_vllm.py    # Tests for deep agent prompts
-├── test_prompts_error_analyzer_vllm.py        # Tests for error analyzer prompts
-├── test_prompts_evaluator_vllm.py             # Tests for evaluator prompts
-├── test_prompts_finalizer_vllm.py              # Tests for finalizer prompts
-└── ... (more test files for each prompt module)
+├── test_prompts_vllm/
+│   └── test_prompts_vllm_base.py   # Base test class (Hydra-configurable)
+│   ├── test_prompts_agents_vllm.py     # Tests for agents.py prompts
+│   ├── test_prompts_bioinformatics_agents_vllm.py  # Tests for bioinformatics prompts
+│   ├── test_prompts_broken_ch_fixer_vllm.py       # Tests for broken character fixer
+│   ├── test_prompts_code_exec_vllm.py             # Tests for code execution prompts
+│   ├── test_prompts_code_sandbox_vllm.py          # Tests for code sandbox prompts
+│   ├── test_prompts_deep_agent_prompts_vllm.py    # Tests for deep agent prompts
+│   ├── test_prompts_error_analyzer_vllm.py        # Tests for error analyzer prompts
+│   ├── test_prompts_evaluator_vllm.py             # Tests for evaluator prompts
+│   ├── test_prompts_finalizer_vllm.py              # Tests for finalizer prompts
+│   └── ... (more test files for each prompt module)
 ```
 
 ## Usage
@@ -72,7 +73,7 @@ python scripts/run_vllm_tests.py
 python scripts/run_vllm_tests.py --no-hydra
 
 # Using pytest directly
-pytest tests/test_prompts_*_vllm.py -m vllm
+pytest tests/test_prompts_vllm/ -m vllm
 
 # Using tox with Hydra configuration
 tox -e vllm-tests-config
@@ -91,7 +92,7 @@ python scripts/run_vllm_tests.py agents bioinformatics_agents
 python scripts/run_vllm_tests.py --no-hydra agents bioinformatics_agents
 
 # Using pytest for specific modules
-pytest tests/test_prompts_agents_vllm.py tests/test_prompts_bioinformatics_agents_vllm.py -m vllm
+pytest tests/test_prompts_vllm/test_prompts_agents_vllm.py tests/test_prompts_vllm/test_prompts_bioinformatics_agents_vllm.py -m vllm
 ```
 
 ### Running with Coverage
@@ -104,7 +105,7 @@ python scripts/run_vllm_tests.py --coverage
 python scripts/run_vllm_tests.py --no-hydra --coverage
 
 # Or using pytest
-pytest tests/test_prompts_*_vllm.py -m vllm --cov=DeepResearch --cov-report=html
+pytest tests/test_prompts_vllm/ -m vllm --cov=DeepResearch --cov-report=html
 ```
 
 ### Advanced Usage Options
@@ -162,7 +163,7 @@ python scripts/run_vllm_tests.py --no-hydra
 python scripts/run_vllm_tests.py agents bioinformatics_agents
 
 # Run VLLM tests explicitly with pytest
-pytest tests/test_prompts_*_vllm.py -m vllm
+pytest tests/test_prompts_vllm/ -m vllm
 
 # Run all tests including VLLM (not recommended for CI)
 pytest tests/ -m "vllm or not optional"

@@ -286,7 +286,9 @@ class MultiAgentCoordinator:
                     agent_states[agent_id].status = WorkflowStatus.FAILED
                     agent_states[agent_id].error_message = str(result)
                 else:
-                    agent_states[agent_id].output_data = result
+                    agent_states[agent_id].output_data = (
+                        result if isinstance(result, dict) else {"result": result}
+                    )
                     agent_states[agent_id].status = WorkflowStatus.COMPLETED
 
             # Check for consensus
@@ -351,7 +353,9 @@ class MultiAgentCoordinator:
                             agent_states[agent_id],
                             round_num,
                         )
-                        agent_states[agent_id].output_data = result
+                        agent_states[agent_id].output_data = (
+                            result if isinstance(result, dict) else {"result": result}
+                        )
                         agent_states[agent_id].status = WorkflowStatus.COMPLETED
                     except Exception as e:
                         agent_states[agent_id].status = WorkflowStatus.FAILED
@@ -431,7 +435,9 @@ class MultiAgentCoordinator:
                     result = await self._execute_agent_round(
                         agent_id, agent, agent_task, agent_states[agent_id], 1
                     )
-                    agent_states[agent_id].output_data = result
+                    agent_states[agent_id].output_data = (
+                        result if isinstance(result, dict) else {"result": result}
+                    )
                     agent_states[agent_id].status = WorkflowStatus.COMPLETED
                 except Exception as e:
                     agent_states[agent_id].status = WorkflowStatus.FAILED
@@ -505,7 +511,9 @@ class MultiAgentCoordinator:
                         agent_states[agent_id],
                         0,
                     )
-                    agent_states[agent_id].output_data = result
+                    agent_states[agent_id].output_data = (
+                        result if isinstance(result, dict) else {"result": result}
+                    )
                     agent_states[agent_id].status = WorkflowStatus.COMPLETED
                     current_data = result  # Pass output to next agent
                 except Exception as e:
@@ -573,7 +581,9 @@ class MultiAgentCoordinator:
                             round_num,
                         )
                         opinions[agent_id] = result
-                        agent_states[agent_id].output_data = result
+                        agent_states[agent_id].output_data = (
+                            result if isinstance(result, dict) else {"result": result}
+                        )
                     except Exception as e:
                         agent_states[agent_id].status = WorkflowStatus.FAILED
                         agent_states[agent_id].error_message = str(e)
@@ -784,7 +794,9 @@ class MultiAgentCoordinator:
                         agent_states[agent_id].status = WorkflowStatus.FAILED
                         agent_states[agent_id].error_message = str(result)
                     else:
-                        agent_states[agent_id].output_data = result
+                        agent_states[agent_id].output_data = (
+                            result if isinstance(result, dict) else {"result": result}
+                        )
                         agent_states[agent_id].status = WorkflowStatus.COMPLETED
 
             # Check for natural conversation end
@@ -851,7 +863,11 @@ class MultiAgentCoordinator:
                                 task_description,
                                 agent_states[agent_id],
                             )
-                            agent_states[agent_id].output_data = result
+                            agent_states[agent_id].output_data = (
+                                result
+                                if isinstance(result, dict)
+                                else {"result": result}
+                            )
                             agent_states[agent_id].status = WorkflowStatus.COMPLETED
                         except Exception as e:
                             agent_states[agent_id].status = WorkflowStatus.FAILED
@@ -914,7 +930,11 @@ class MultiAgentCoordinator:
                     # Update agent states with subgraph results
                     for agent_id, result in subgraph_result.items():
                         if agent_id in agent_states:
-                            agent_states[agent_id].output_data = result
+                            agent_states[agent_id].output_data = (
+                                result
+                                if isinstance(result, dict)
+                                else {"result": result}
+                            )
                             agent_states[agent_id].status = WorkflowStatus.COMPLETED
 
                 except Exception as e:

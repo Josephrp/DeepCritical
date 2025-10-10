@@ -35,7 +35,7 @@ class MultiQCServer(MCPServerBase):
             config = MCPServerConfig(
                 server_name="multiqc-server",
                 server_type=MCPServerType.CUSTOM,
-                container_image="python:3.11-slim",
+                container_image="tonic01/deepcritical-bioinformatics-multiqc:latest",  # Updated Docker Hub URL
                 environment_variables={"MULTIQC_VERSION": "1.14"},
                 capabilities=["report_generation", "quality_control", "visualization"],
             )

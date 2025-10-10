@@ -95,7 +95,7 @@ Base class for VLLM prompt testing with common functionality.
 
 **Usage:**
 ```python
-from scripts.prompt_testing.test_prompts_vllm_base import VLLMPromptTestBase
+from .test_prompts_vllm_base import VLLMPromptTestBase
 
 class MyPromptTests(VLLMPromptTestBase):
     def test_my_prompt(self):

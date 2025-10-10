@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypedDict, Union
 
 from pydantic import BaseModel, Field, HttpUrl, model_validator
 
@@ -712,7 +712,7 @@ class BioinformaticsRAGSystem(RAGSystem):
 
         # Build context from retrieved documents
         context_parts = []
-        bioinformatics_summary = {
+        bioinformatics_summary: BioinformaticsSummary = {
             "total_documents": len(search_results),
             "bioinformatics_types": set(),
             "source_databases": set(),
@@ -752,9 +752,10 @@ class BioinformaticsRAGSystem(RAGSystem):
                     cross_references[ref_type].update(refs)
 
         # Convert sets to lists for JSON serialization
-        for key, value in bioinformatics_summary.items():
+        summary_dict = dict(bioinformatics_summary)
+        for key, value in summary_dict.items():
             if isinstance(value, set):
-                bioinformatics_summary[key] = list(value)
+                summary_dict[key] = list(value)
 
         for key, value in cross_references.items():
             cross_references[key] = list(value)
@@ -777,8 +778,8 @@ class BioinformaticsRAGSystem(RAGSystem):
                 else 0.0
             ),
             "high_quality_docs": sum(1 for r in search_results if r.score > 0.8),
-            "evidence_diversity": len(bioinformatics_summary["evidence_codes"]),
-            "source_diversity": len(bioinformatics_summary["source_databases"]),
+            "evidence_diversity": len(bioinformatics_summary["evidence_codes"]),  # type: ignore
+            "source_diversity": len(bioinformatics_summary["source_databases"]),  # type: ignore
         }
 
         return BioinformaticsRAGResponse(
@@ -901,6 +902,29 @@ class BioinformaticsRAGQuery(BaseModel):
         }
 
 
+class BioinformaticsSummary(TypedDict):
+    """Type definition for bioinformatics summary data."""
+
+    total_documents: int
+    bioinformatics_types: set[str]
+    source_databases: set[str]
+    evidence_codes: set[str]
+    organisms: set[str]
+    gene_symbols: set[str]
+
+
+def _default_bioinformatics_summary() -> BioinformaticsSummary:
+    """Default factory for bioinformatics summary."""
+    return {
+        "total_documents": 0,
+        "bioinformatics_types": set(),
+        "source_databases": set(),
+        "evidence_codes": set(),
+        "organisms": set(),
+        "gene_symbols": set(),
+    }
+
+
 class BioinformaticsRAGResponse(BaseModel):
     """Enhanced RAG response for bioinformatics data."""
 
@@ -916,8 +940,9 @@ class BioinformaticsRAGResponse(BaseModel):
     processing_time: float = Field(..., description="Total processing time in seconds")
 
     # Bioinformatics-specific response data
-    bioinformatics_summary: dict[str, Any] = Field(
-        default_factory=dict, description="Summary of bioinformatics data"
+    bioinformatics_summary: BioinformaticsSummary = Field(
+        default_factory=_default_bioinformatics_summary,
+        description="Summary of bioinformatics data",
     )
     cross_references: dict[str, list[str]] = Field(
         default_factory=dict, description="Cross-references found"

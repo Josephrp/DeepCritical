@@ -36,7 +36,7 @@ class SamtoolsServer(MCPServerBase):
             config = MCPServerConfig(
                 server_name="samtools-server",
                 server_type=MCPServerType.CUSTOM,
-                container_image="python:3.11-slim",
+                container_image="tonic01/deepcritical-bioinformatics-samtools:latest",  # Updated Docker Hub URL
                 environment_variables={"SAMTOOLS_VERSION": "1.17"},
                 capabilities=[
                     "sequence_analysis",

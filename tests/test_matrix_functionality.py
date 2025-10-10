@@ -41,16 +41,16 @@ def test_test_files_exist():
     """Test that test files exist."""
     test_files = [
         "tests/testcontainers_vllm.py",
-        "tests/test_prompts_vllm_base.py",
-        "tests/test_prompts_agents_vllm.py",
-        "tests/test_prompts_bioinformatics_agents_vllm.py",
-        "tests/test_prompts_broken_ch_fixer_vllm.py",
-        "tests/test_prompts_code_exec_vllm.py",
-        "tests/test_prompts_code_sandbox_vllm.py",
-        "tests/test_prompts_deep_agent_prompts_vllm.py",
-        "tests/test_prompts_error_analyzer_vllm.py",
-        "tests/test_prompts_evaluator_vllm.py",
-        "tests/test_prompts_finalizer_vllm.py",
+        "tests/test_prompts_vllm/test_prompts_vllm_base.py",
+        "tests/test_prompts_vllm/test_prompts_agents_vllm.py",
+        "tests/test_prompts_vllm/test_prompts_bioinformatics_agents_vllm.py",
+        "tests/test_prompts_vllm/test_prompts_broken_ch_fixer_vllm.py",
+        "tests/test_prompts_vllm/test_prompts_code_exec_vllm.py",
+        "tests/test_prompts_vllm/test_prompts_code_sandbox_vllm.py",
+        "tests/test_prompts_vllm/test_prompts_deep_agent_prompts_vllm.py",
+        "tests/test_prompts_vllm/test_prompts_error_analyzer_vllm.py",
+        "tests/test_prompts_vllm/test_prompts_evaluator_vllm.py",
+        "tests/test_prompts_vllm/test_prompts_finalizer_vllm.py",
     ]
 
     for test_file in test_files:

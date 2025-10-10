@@ -34,7 +34,7 @@ class BCFtoolsServer(MCPServerBase):
             config = MCPServerConfig(
                 server_name="bcftools-server",
                 server_type=MCPServerType.CUSTOM,
-                container_image="python:3.11-slim",
+                container_image="tonic01/deepcritical-bioinformatics-bcftools:latest",  # Updated Docker Hub URL
                 environment_variables={"BCFTOOLS_VERSION": "1.17"},
                 capabilities=["variant_analysis", "vcf_processing", "genomics"],
             )

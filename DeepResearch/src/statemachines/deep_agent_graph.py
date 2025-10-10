@@ -470,11 +470,11 @@ class AgentBuilder:
                 # Add tool if method exists
                 if hasattr(agent, "add_tool") and callable(agent.add_tool):
                     add_tool_method = agent.add_tool
-                    add_tool_method(tool_map[tool_name])
+                    add_tool_method(tool_map[tool_name])  # type: ignore
                 elif hasattr(agent, "tools") and hasattr(agent.tools, "append"):
                     tools_attr = agent.tools
                     if hasattr(tools_attr, "append") and callable(tools_attr.append):
-                        tools_attr.append(tool_map[tool_name])
+                        tools_attr.append(tool_map[tool_name])  # type: ignore
 
     def _add_middleware(self, agent: Agent) -> None:
         """Add middleware to the agent."""

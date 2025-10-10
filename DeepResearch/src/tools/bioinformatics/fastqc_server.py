@@ -35,7 +35,7 @@ class FastQCServer(MCPServerBase):
             config = MCPServerConfig(
                 server_name="fastqc-server",
                 server_type=MCPServerType.FASTQC,
-                container_image="python:3.11-slim",
+                container_image="tonic01/deepcritical-bioinformatics-fastqc:latest",  # Updated Docker Hub URL
                 environment_variables={"FASTQC_VERSION": "0.11.9"},
                 capabilities=["quality_control", "sequence_analysis", "fastq"],
             )

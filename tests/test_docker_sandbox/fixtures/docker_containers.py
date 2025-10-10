@@ -36,7 +36,5 @@ def vllm_container():
 @pytest.fixture
 def bioinformatics_container():
     """Fixture for bioinformatics tools container."""
-    container = create_isolated_container(
-        image="biocontainers/bwa:latest", command=["bwa", "--version"]
-    )
+    container = create_isolated_container(image=" ", command=["bwa", "--version"])
     return container

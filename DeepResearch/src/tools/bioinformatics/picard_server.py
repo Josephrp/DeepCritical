@@ -35,7 +35,7 @@ class PicardServer(MCPServerBase):
             config = MCPServerConfig(
                 server_name="picard-server",
                 server_type=MCPServerType.CUSTOM,
-                container_image="python:3.11-slim",
+                container_image="tonic01/deepcritical-bioinformatics-picard:latest",  # Updated Docker Hub URL
                 environment_variables={"PICARD_VERSION": "3.0.0"},
                 capabilities=["sam_processing", "bam_processing", "quality_control"],
             )
