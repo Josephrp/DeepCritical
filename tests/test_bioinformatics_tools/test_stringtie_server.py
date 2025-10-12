@@ -17,7 +17,7 @@ class TestStringTieServer(BaseBioinformaticsToolTest):
 
     @property
     def tool_name(self) -> str:
-        return "stringtie"
+        return "stringtie-server"
 
     @property
     def tool_class(self):
@@ -48,6 +48,7 @@ class TestStringTieServer(BaseBioinformaticsToolTest):
     ):
         """Test StringTie assemble functionality."""
         params = {
+            "operation": "assemble",
             "input_bam": str(sample_input_files["input_bam"]),
             "output_gtf": str(sample_output_dir / "transcripts.gtf"),
         }
@@ -56,3 +57,7 @@ class TestStringTieServer(BaseBioinformaticsToolTest):
 
         assert result["success"] is True
         assert "output_files" in result
+
+        # Skip file checks for mock results
+        if result.get("mock"):
+            return

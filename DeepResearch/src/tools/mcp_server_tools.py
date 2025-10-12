@@ -22,7 +22,6 @@ from ..tools.bioinformatics.bcftools_server import BCFtoolsServer
 from ..tools.bioinformatics.bedtools_server import BEDToolsServer
 from ..tools.bioinformatics.bowtie2_server import Bowtie2Server
 from ..tools.bioinformatics.busco_server import BUSCOServer
-from ..tools.bioinformatics.bwa_server import BWAServer
 from ..tools.bioinformatics.cutadapt_server import CutadaptServer
 from ..tools.bioinformatics.deeptools_server import DeeptoolsServer
 from ..tools.bioinformatics.fastp_server import FastpServer
@@ -31,23 +30,70 @@ from ..tools.bioinformatics.featurecounts_server import FeatureCountsServer
 from ..tools.bioinformatics.flye_server import FlyeServer
 from ..tools.bioinformatics.freebayes_server import FreeBayesServer
 from ..tools.bioinformatics.hisat2_server import HISAT2Server
-from ..tools.bioinformatics.homer_server import HOMERServer
-from ..tools.bioinformatics.htseq_server import HTSeqServer
 from ..tools.bioinformatics.kallisto_server import KallistoServer
 from ..tools.bioinformatics.macs3_server import MACS3Server
 from ..tools.bioinformatics.meme_server import MEMEServer
 from ..tools.bioinformatics.minimap2_server import Minimap2Server
 from ..tools.bioinformatics.multiqc_server import MultiQCServer
-from ..tools.bioinformatics.picard_server import PicardServer
 from ..tools.bioinformatics.qualimap_server import QualimapServer
 from ..tools.bioinformatics.salmon_server import SalmonServer
 from ..tools.bioinformatics.samtools_server import SamtoolsServer
 from ..tools.bioinformatics.seqtk_server import SeqtkServer
 from ..tools.bioinformatics.star_server import STARServer
 from ..tools.bioinformatics.stringtie_server import StringTieServer
-from ..tools.bioinformatics.tophat_server import TopHatServer
 from ..tools.bioinformatics.trimgalore_server import TrimGaloreServer
 from .base import ExecutionResult, ToolRunner, ToolSpec, registry
+
+
+# Placeholder classes for servers not yet implemented
+class BWAServer:
+    """Placeholder for BWA server - not yet implemented."""
+
+    def list_tools(self) -> list[str]:
+        return []
+
+    def run_tool(self, tool_name: str, **kwargs) -> Any:
+        raise NotImplementedError("BWA server not yet implemented")
+
+
+class TopHatServer:
+    """Placeholder for TopHat server - not yet implemented."""
+
+    def list_tools(self) -> list[str]:
+        return []
+
+    def run_tool(self, tool_name: str, **kwargs) -> Any:
+        raise NotImplementedError("TopHat server not yet implemented")
+
+
+class HTSeqServer:
+    """Placeholder for HTSeq server - not yet implemented."""
+
+    def list_tools(self) -> list[str]:
+        return []
+
+    def run_tool(self, tool_name: str, **kwargs) -> Any:
+        raise NotImplementedError("HTSeq server not yet implemented")
+
+
+class PicardServer:
+    """Placeholder for Picard server - not yet implemented."""
+
+    def list_tools(self) -> list[str]:
+        return []
+
+    def run_tool(self, tool_name: str, **kwargs) -> Any:
+        raise NotImplementedError("Picard server not yet implemented")
+
+
+class HOMERServer:
+    """Placeholder for HOMER server - not yet implemented."""
+
+    def list_tools(self) -> list[str]:
+        return []
+
+    def run_tool(self, tool_name: str, **kwargs) -> Any:
+        raise NotImplementedError("HOMER server not yet implemented")
 
 
 class MCPServerManager:

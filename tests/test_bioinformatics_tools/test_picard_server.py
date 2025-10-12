@@ -17,7 +17,7 @@ class TestPicardServer(BaseBioinformaticsToolTest):
 
     @property
     def tool_name(self) -> str:
-        return "picard"
+        return "picard-server"
 
     @property
     def tool_class(self):
@@ -49,6 +49,7 @@ class TestPicardServer(BaseBioinformaticsToolTest):
     ):
         """Test Picard MarkDuplicates functionality."""
         params = {
+            "operation": "mark_duplicates",
             "input_bam": str(sample_input_files["input_bam"]),
             "output_bam": str(sample_output_dir / "marked.bam"),
             "metrics_file": str(sample_output_dir / "metrics.txt"),
@@ -58,3 +59,7 @@ class TestPicardServer(BaseBioinformaticsToolTest):
 
         assert result["success"] is True
         assert "output_files" in result
+
+        # Skip file checks for mock results
+        if result.get("mock"):
+            return

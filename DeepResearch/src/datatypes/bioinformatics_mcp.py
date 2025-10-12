@@ -137,7 +137,12 @@ class MCPServerBase(ABC):
                 # Convert to Pydantic AI Tool
                 tool = self._convert_to_pydantic_ai_tool(method)
                 if tool:
-                    self.tools[name] = tool
+                    # Store both the method and tool spec for later retrieval
+                    self.tools[name] = {
+                        "method": method,
+                        "tool": tool,
+                        "spec": method._mcp_tool_spec,
+                    }
                     self.pydantic_ai_tools.append(tool)
 
     def _convert_to_pydantic_ai_tool(self, method: Callable) -> Tool | None:
@@ -301,9 +306,9 @@ class MCPServerBase(ABC):
     def get_tool_spec(self, tool_name: str) -> ToolSpec | None:
         """Get the specification for a tool."""
         if tool_name in self.tools:
-            method = self.tools[tool_name]
-            if hasattr(method, "_mcp_tool_spec"):
-                return method._mcp_tool_spec
+            tool_info = self.tools[tool_name]
+            if isinstance(tool_info, dict) and "spec" in tool_info:
+                return tool_info["spec"]
         return None
 
     def list_tools(self) -> list[str]:
@@ -315,8 +320,11 @@ class MCPServerBase(ABC):
         if tool_name not in self.tools:
             raise ValueError(f"Tool '{tool_name}' not found")
 
-        method = self.tools[tool_name]
-        return method(**kwargs)
+        tool_info = self.tools[tool_name]
+        if isinstance(tool_info, dict) and "method" in tool_info:
+            method = tool_info["method"]
+            return method(**kwargs)
+        raise ValueError(f"Tool '{tool_name}' is not properly registered")
 
     async def execute_tool_async(
         self, request: MCPToolExecutionRequest, ctx: MCPExecutionContext | None = None

@@ -17,13 +17,14 @@ class TestBUSCOServer(BaseBioinformaticsToolTest):
 
     @property
     def tool_name(self) -> str:
-        return "busco"
+        return "busco-server"
 
     @property
     def tool_class(self):
-        from unittest.mock import Mock
+        # Import the actual BUSCO server class
+        from DeepResearch.src.tools.bioinformatics.busco_server import BUSCOServer
 
-        return Mock
+        return BUSCOServer
 
     @property
     def required_parameters(self) -> dict:
@@ -53,6 +54,7 @@ class TestBUSCOServer(BaseBioinformaticsToolTest):
     def test_busco_run(self, tool_instance, sample_input_files, sample_output_dir):
         """Test BUSCO run functionality."""
         params = {
+            "operation": "run",
             "input_file": str(sample_input_files["input_file"]),
             "output_dir": str(sample_output_dir),
             "mode": "genome",
@@ -65,10 +67,15 @@ class TestBUSCOServer(BaseBioinformaticsToolTest):
         assert result["success"] is True
         assert "output_files" in result
 
+        # Skip file checks for mock results
+        if result.get("mock"):
+            return
+
     @pytest.mark.optional
     def test_busco_download(self, tool_instance, sample_output_dir):
         """Test BUSCO download functionality."""
         params = {
+            "operation": "download",
             "lineage_dataset": "bacteria_odb10",
             "download_path": str(sample_output_dir),
         }

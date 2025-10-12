@@ -16,7 +16,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..datatypes.bioinformatics_mcp import MCPServerBase
 from ..datatypes.mcp import MCPServerConfig, MCPServerDeployment, MCPServerStatus
@@ -45,16 +45,7 @@ class TestcontainersConfig(BaseModel):
     command: str | None = Field(None, description="Command to run in container")
     entrypoint: str | None = Field(None, description="Container entrypoint")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "image": "python:3.11-slim",
-                "working_directory": "/workspace",
-                "auto_remove": True,
-                "environment_variables": {"PYTHONUNBUFFERED": "1"},
-                "volumes": {"/host/data": "/workspace/data"},
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class TestcontainersDeployer:

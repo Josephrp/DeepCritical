@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class DockerSandboxPolicies(BaseModel):
@@ -39,16 +39,7 @@ class DockerSandboxPolicies(BaseModel):
                 allowed.append(field_name)
         return allowed
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "bash": True,
-                "shell": True,
-                "python": True,
-                "javascript": False,
-                "html": False,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class DockerSandboxEnvironment(BaseModel):
@@ -78,14 +69,7 @@ class DockerSandboxEnvironment(BaseModel):
         """Get an environment variable value."""
         return self.variables.get(key, default)
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "variables": {"PYTHONUNBUFFERED": "1", "PATH": "/usr/local/bin"},
-                "working_directory": "/workspace",
-                "user": "sandbox",
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class DockerSandboxConfig(BaseModel):
@@ -119,17 +103,7 @@ class DockerSandboxConfig(BaseModel):
             return True
         return False
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "image": "python:3.11-slim",
-                "working_directory": "/workspace",
-                "cpu_limit": 1.0,
-                "memory_limit": "512m",
-                "auto_remove": True,
-                "volumes": {"/host/data": "/workspace/data"},
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class DockerExecutionRequest(BaseModel):
@@ -169,16 +143,7 @@ class DockerExecutionRequest(BaseModel):
             raise ValueError("Language cannot be empty")
         return v.strip()
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "language": "python",
-                "code": "print('Hello, World!')",
-                "timeout": 30,
-                "environment": {"PYTHONUNBUFFERED": "1"},
-                "execution_policy": {"python": True, "bash": True},
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class DockerExecutionResult(BaseModel):
@@ -209,17 +174,7 @@ class DockerExecutionResult(BaseModel):
         """Check if execution had an error."""
         return not self.success or self.exit_code != 0
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "success": True,
-                "stdout": "Hello, World!",
-                "stderr": "",
-                "exit_code": 0,
-                "files_created": ["/workspace/script.py"],
-                "execution_time": 0.5,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class DockerSandboxContainerInfo(BaseModel):
@@ -233,15 +188,7 @@ class DockerSandboxContainerInfo(BaseModel):
     started_at: str | None = Field(None, description="Start timestamp")
     finished_at: str | None = Field(None, description="Finish timestamp")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "container_id": "abc123...",
-                "container_name": "deepcritical-sandbox-abc123",
-                "image": "python:3.11-slim",
-                "status": "exited",
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class DockerSandboxMetrics(BaseModel):
@@ -280,16 +227,7 @@ class DockerSandboxMetrics(BaseModel):
             return 0.0
         return self.successful_executions / self.total_executions
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "total_executions": 100,
-                "successful_executions": 95,
-                "failed_executions": 5,
-                "average_execution_time": 1.2,
-                "success_rate": 0.95,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class DockerSandboxRequest(BaseModel):
@@ -318,24 +256,7 @@ class DockerSandboxRequest(BaseModel):
         """Get the Docker sandbox policies."""
         return self.policies or DockerSandboxPolicies()
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "execution": {
-                    "language": "python",
-                    "code": "print('Hello, World!')",
-                    "timeout": 30,
-                },
-                "config": {
-                    "image": "python:3.11-slim",
-                    "auto_remove": True,
-                },
-                "environment": {
-                    "variables": {"PYTHONUNBUFFERED": "1"},
-                    "working_directory": "/workspace",
-                },
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class DockerSandboxResponse(BaseModel):
@@ -348,28 +269,7 @@ class DockerSandboxResponse(BaseModel):
     )
     metrics: DockerSandboxMetrics | None = Field(None, description="Execution metrics")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "request": {},
-                "result": {
-                    "success": True,
-                    "stdout": "Hello, World!",
-                    "exit_code": 0,
-                    "execution_time": 0.5,
-                },
-                "container_info": {
-                    "container_id": "abc123...",
-                    "container_name": "deepcritical-sandbox-abc123",
-                    "image": "python:3.11-slim",
-                },
-                "metrics": {
-                    "total_executions": 1,
-                    "successful_executions": 1,
-                    "average_execution_time": 0.5,
-                },
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 # Handle forward references for Pydantic v2

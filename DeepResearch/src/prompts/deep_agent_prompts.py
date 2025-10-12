@@ -10,7 +10,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class PromptType(str, Enum):
@@ -52,15 +52,7 @@ class PromptTemplate(BaseModel):
         except KeyError as e:
             raise ValueError(f"Missing required variable: {e}")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "name": "write_todos_system",
-                "template": "You have access to the write_todos tool...",
-                "variables": ["other_agents"],
-                "prompt_type": "system",
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 # Tool descriptions

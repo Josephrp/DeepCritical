@@ -17,7 +17,7 @@ class TestQualimapServer(BaseBioinformaticsToolTest):
 
     @property
     def tool_name(self) -> str:
-        return "qualimap"
+        return "qualimap-server"
 
     @property
     def tool_class(self):
@@ -46,6 +46,7 @@ class TestQualimapServer(BaseBioinformaticsToolTest):
     def test_qualimap_bamqc(self, tool_instance, sample_input_files, sample_output_dir):
         """Test Qualimap bamqc functionality."""
         params = {
+            "operation": "bamqc",
             "bam_file": str(sample_input_files["bam_file"]),
             "output_dir": str(sample_output_dir),
         }
@@ -54,3 +55,7 @@ class TestQualimapServer(BaseBioinformaticsToolTest):
 
         assert result["success"] is True
         assert "output_files" in result
+
+        # Skip file checks for mock results
+        if result.get("mock"):
+            return

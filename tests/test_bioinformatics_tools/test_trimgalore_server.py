@@ -17,7 +17,7 @@ class TestTrimGaloreServer(BaseBioinformaticsToolTest):
 
     @property
     def tool_name(self) -> str:
-        return "trimgalore"
+        return "trimgalore-server"
 
     @property
     def tool_class(self):
@@ -50,6 +50,7 @@ class TestTrimGaloreServer(BaseBioinformaticsToolTest):
     ):
         """Test TrimGalore trim functionality."""
         params = {
+            "operation": "trim",
             "input_files": [str(sample_input_files["input_files"][0])],
             "output_dir": str(sample_output_dir),
             "quality": 20,
@@ -59,3 +60,7 @@ class TestTrimGaloreServer(BaseBioinformaticsToolTest):
 
         assert result["success"] is True
         assert "output_files" in result
+
+        # Skip file checks for mock results
+        if result.get("mock"):
+            return

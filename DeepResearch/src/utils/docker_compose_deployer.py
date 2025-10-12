@@ -16,7 +16,7 @@ import tempfile
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..datatypes.bioinformatics_mcp import (
     MCPServerConfig,
@@ -41,8 +41,8 @@ class DockerComposeConfig(BaseModel):
         default_factory=dict, description="Volume definitions"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "compose_version": "3.8",
                 "services": {
@@ -55,6 +55,7 @@ class DockerComposeConfig(BaseModel):
                 "networks": {"mcp-network": {"driver": "bridge"}},
             }
         }
+    )
 
 
 class DockerComposeDeployer:

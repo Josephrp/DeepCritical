@@ -14,7 +14,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # ============================================================================
 # Core Enums and Types
@@ -154,8 +154,8 @@ class ModelConfig(BaseModel):
         False, description="Skip tokenizer initialization"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                 "tokenizer_mode": "auto",
@@ -164,6 +164,7 @@ class ModelConfig(BaseModel):
                 "dtype": "auto",
             }
         }
+    )
 
 
 class CacheConfig(BaseModel):
@@ -195,8 +196,8 @@ class CacheConfig(BaseModel):
     sliding_window_size: int | None = Field(None, description="Sliding window size")
     sliding_window_blocks: int | None = Field(None, description="Sliding window blocks")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "block_size": 16,
                 "gpu_memory_utilization": 0.9,
@@ -204,6 +205,7 @@ class CacheConfig(BaseModel):
                 "cache_dtype": "auto",
             }
         }
+    )
 
 
 class LoadConfig(BaseModel):
@@ -277,14 +279,15 @@ class LoadConfig(BaseModel):
     load_in_half_bfloat8: bool = Field(False, description="Load in half bfloat8")
     load_in_half_float8: bool = Field(False, description="Load in half float8")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "max_model_len": 4096,
                 "max_num_batched_tokens": 8192,
                 "max_num_seqs": 256,
             }
         }
+    )
 
 
 class ParallelConfig(BaseModel):
@@ -308,14 +311,15 @@ class ParallelConfig(BaseModel):
         None, description="Ray runtime environment"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "pipeline_parallel_size": 1,
                 "tensor_parallel_size": 1,
                 "worker_use_ray": False,
             }
         }
+    )
 
 
 class SchedulerConfig(BaseModel):
@@ -333,14 +337,15 @@ class SchedulerConfig(BaseModel):
     sliding_window_size: int | None = Field(None, description="Sliding window size")
     sliding_window_blocks: int | None = Field(None, description="Sliding window blocks")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "max_num_batched_tokens": 8192,
                 "max_num_seqs": 256,
                 "max_paddings": 256,
             }
         }
+    )
 
 
 class DeviceConfig(BaseModel):
@@ -350,10 +355,11 @@ class DeviceConfig(BaseModel):
     device_id: int = Field(0, description="Device ID")
     memory_fraction: float = Field(1.0, description="Memory fraction")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {"device": "cuda", "device_id": 0, "memory_fraction": 1.0}
         }
+    )
 
 
 class SpeculativeConfig(BaseModel):
@@ -489,10 +495,11 @@ class SpeculativeConfig(BaseModel):
         0.0, description="N-gram prompt lookup encoder encoder epsilon cutoff"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {"speculative_mode": "small_model", "num_speculative_tokens": 5}
         }
+    )
 
 
 class LoRAConfig(BaseModel):
@@ -506,10 +513,11 @@ class LoRAConfig(BaseModel):
     lora_extra_vocab_size: int = Field(256, description="LoRA extra vocabulary size")
     lora_dtype: str = Field("auto", description="LoRA data type")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {"max_lora_rank": 16, "max_loras": 1, "max_cpu_loras": 2}
         }
+    )
 
 
 class PromptAdapterConfig(BaseModel):
@@ -520,10 +528,11 @@ class PromptAdapterConfig(BaseModel):
         None, description="Prompt adapter configuration"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {"prompt_adapter_type": "lora", "prompt_adapter_config": {}}
         }
+    )
 
 
 class MultiModalConfig(BaseModel):
@@ -537,13 +546,14 @@ class MultiModalConfig(BaseModel):
         None, description="Image processor configuration"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "image_input_type": "pixel_values",
                 "image_input_shape": "dynamic",
             }
         }
+    )
 
 
 class PoolerConfig(BaseModel):
@@ -554,8 +564,9 @@ class PoolerConfig(BaseModel):
         None, description="Pooling parameters"
     )
 
-    class Config:
-        json_schema_extra = {"example": {"pooling_type": "mean", "pooling_params": {}}}
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"pooling_type": "mean", "pooling_params": {}}}
+    )
 
 
 class DecodingConfig(BaseModel):
@@ -566,10 +577,11 @@ class DecodingConfig(BaseModel):
         None, description="Decoding parameters"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {"decoding_strategy": "greedy", "decoding_params": {}}
         }
+    )
 
 
 class ObservabilityConfig(BaseModel):
@@ -585,14 +597,15 @@ class ObservabilityConfig(BaseModel):
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s", description="Log format"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "disable_log_stats": False,
                 "disable_log_requests": False,
                 "log_level": "INFO",
             }
         }
+    )
 
 
 class KVTransferConfig(BaseModel):
@@ -602,14 +615,15 @@ class KVTransferConfig(BaseModel):
     kv_transfer_interval: int = Field(100, description="KV transfer interval")
     kv_transfer_batch_size: int = Field(32, description="KV transfer batch size")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "enable_kv_transfer": False,
                 "kv_transfer_interval": 100,
                 "kv_transfer_batch_size": 32,
             }
         }
+    )
 
 
 class CompilationConfig(BaseModel):
@@ -622,14 +636,15 @@ class CompilationConfig(BaseModel):
         None, description="Compilation cache directory"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "enable_compilation": False,
                 "compilation_mode": "default",
                 "compilation_backend": "torch",
             }
         }
+    )
 
 
 class VllmConfig(BaseModel):
@@ -663,8 +678,8 @@ class VllmConfig(BaseModel):
         None, description="Compilation configuration"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "model": {
                     "model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
@@ -678,6 +693,7 @@ class VllmConfig(BaseModel):
                 "observability": {"disable_log_stats": False, "log_level": "INFO"},
             }
         }
+    )
 
 
 # ============================================================================
@@ -702,10 +718,11 @@ class TextPrompt(BaseModel):
         None, description="Multi-modal data"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {"text": "Once upon a time", "prompt_id": "prompt_001"}
         }
+    )
 
 
 class TokensPrompt(BaseModel):
@@ -714,10 +731,11 @@ class TokensPrompt(BaseModel):
     token_ids: list[int] = Field(..., description="List of token IDs")
     prompt_id: str | None = Field(None, description="Unique identifier for the prompt")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {"token_ids": [1, 2, 3, 4, 5], "prompt_id": "tokens_001"}
         }
+    )
 
 
 class MultiModalDataDict(BaseModel):
@@ -779,8 +797,8 @@ class SamplingParams(BaseModel):
     )
     detokenize: bool = Field(True, description="Detokenize output")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "temperature": 0.7,
                 "top_p": 0.9,
@@ -788,6 +806,7 @@ class SamplingParams(BaseModel):
                 "stop": ["\n", "Human:"],
             }
         }
+    )
 
 
 class PoolingParams(BaseModel):
@@ -798,8 +817,7 @@ class PoolingParams(BaseModel):
         None, description="Additional pooling parameters"
     )
 
-    class Config:
-        json_schema_extra = {"example": {"pooling_type": "mean"}}
+    model_config = ConfigDict(json_schema_extra={"example": {"pooling_type": "mean"}})
 
 
 # ============================================================================
@@ -819,8 +837,8 @@ class RequestOutput(BaseModel):
     outputs: list[CompletionOutput] = Field(..., description="Generated outputs")
     finished: bool = Field(..., description="Whether the request is finished")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "request_id": "req_001",
                 "prompt": "Hello world",
@@ -829,6 +847,7 @@ class RequestOutput(BaseModel):
                 "finished": False,
             }
         }
+    )
 
 
 class CompletionOutput(BaseModel):
@@ -843,8 +862,8 @@ class CompletionOutput(BaseModel):
     )
     finish_reason: str | None = Field(None, description="Reason for completion")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "index": 0,
                 "text": "Hello there!",
@@ -853,6 +872,7 @@ class CompletionOutput(BaseModel):
                 "finish_reason": "stop",
             }
         }
+    )
 
 
 class EmbeddingRequest(BaseModel):
@@ -863,14 +883,15 @@ class EmbeddingRequest(BaseModel):
     encoding_format: str = Field("float", description="Encoding format")
     user: str | None = Field(None, description="User identifier")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "model": "text-embedding-ada-002",
                 "input": "The quick brown fox",
                 "encoding_format": "float",
             }
         }
+    )
 
 
 class EmbeddingResponse(BaseModel):
@@ -881,8 +902,8 @@ class EmbeddingResponse(BaseModel):
     model: str = Field(..., description="Model name")
     usage: UsageStats = Field(..., description="Usage statistics")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "object": "list",
                 "data": [],
@@ -890,6 +911,7 @@ class EmbeddingResponse(BaseModel):
                 "usage": {"prompt_tokens": 4, "total_tokens": 4},
             }
         }
+    )
 
 
 class EmbeddingData(BaseModel):
@@ -899,10 +921,11 @@ class EmbeddingData(BaseModel):
     embedding: list[float] = Field(..., description="Embedding vector")
     index: int = Field(..., description="Index of the embedding")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {"object": "embedding", "embedding": [0.1, 0.2, 0.3], "index": 0}
         }
+    )
 
 
 class UsageStats(BaseModel):
@@ -912,10 +935,11 @@ class UsageStats(BaseModel):
     completion_tokens: int = Field(0, description="Number of completion tokens")
     total_tokens: int = Field(..., description="Total number of tokens")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}
         }
+    )
 
 
 # ============================================================================
@@ -938,8 +962,8 @@ class EngineMetrics(BaseModel):
     gpu_cache_usage: float = Field(..., description="GPU cache usage percentage")
     cpu_cache_usage: float = Field(..., description="CPU cache usage percentage")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "num_requests_running": 5,
                 "num_requests_waiting": 10,
@@ -947,6 +971,7 @@ class EngineMetrics(BaseModel):
                 "gpu_cache_usage": 0.75,
             }
         }
+    )
 
 
 class ServerMetrics(BaseModel):
@@ -962,8 +987,8 @@ class ServerMetrics(BaseModel):
     p95_latency: float = Field(..., description="95th percentile latency")
     p99_latency: float = Field(..., description="99th percentile latency")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "engine_metrics": {},
                 "server_start_time": "2024-01-01T00:00:00Z",
@@ -973,6 +998,7 @@ class ServerMetrics(BaseModel):
                 "failed_requests": 50,
             }
         }
+    )
 
 
 # ============================================================================
@@ -993,8 +1019,8 @@ class AsyncRequestOutput(BaseModel):
     finished: bool = Field(..., description="Whether the request is finished")
     error: str | None = Field(None, description="Error message if any")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "request_id": "async_req_001",
                 "prompt": "Hello world",
@@ -1004,6 +1030,7 @@ class AsyncRequestOutput(BaseModel):
                 "error": None,
             }
         }
+    )
 
 
 class StreamingRequestOutput(BaseModel):
@@ -1021,8 +1048,8 @@ class StreamingRequestOutput(BaseModel):
         None, description="Delta output for streaming"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "request_id": "stream_req_001",
                 "prompt": "Hello world",
@@ -1032,6 +1059,7 @@ class StreamingRequestOutput(BaseModel):
                 "delta": None,
             }
         }
+    )
 
 
 # ============================================================================
@@ -1346,8 +1374,8 @@ class ChatCompletionRequest(BaseModel):
     logit_bias: dict[str, float] | None = Field(None, description="Logit bias")
     user: str | None = Field(None, description="User identifier")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "model": "gpt-3.5-turbo",
                 "messages": [{"role": "user", "content": "Hello, how are you?"}],
@@ -1355,6 +1383,7 @@ class ChatCompletionRequest(BaseModel):
                 "max_tokens": 50,
             }
         }
+    )
 
 
 class ChatCompletionResponse(BaseModel):
@@ -1367,8 +1396,8 @@ class ChatCompletionResponse(BaseModel):
     choices: list[ChatCompletionChoice] = Field(..., description="Completion choices")
     usage: UsageStats = Field(..., description="Usage statistics")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "chatcmpl-123",
                 "object": "chat.completion",
@@ -1382,6 +1411,7 @@ class ChatCompletionResponse(BaseModel):
                 },
             }
         }
+    )
 
 
 class ChatCompletionChoice(BaseModel):
@@ -1391,8 +1421,8 @@ class ChatCompletionChoice(BaseModel):
     message: ChatMessage = Field(..., description="Chat message")
     finish_reason: str | None = Field(None, description="Finish reason")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "index": 0,
                 "message": {
@@ -1402,6 +1432,7 @@ class ChatCompletionChoice(BaseModel):
                 "finish_reason": "stop",
             }
         }
+    )
 
 
 class ChatMessage(BaseModel):
@@ -1411,10 +1442,11 @@ class ChatMessage(BaseModel):
     content: str = Field(..., description="Message content")
     name: str | None = Field(None, description="Message author name")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {"role": "user", "content": "Hello, how are you?"}
         }
+    )
 
 
 class CompletionRequest(BaseModel):
@@ -1437,8 +1469,8 @@ class CompletionRequest(BaseModel):
     logit_bias: dict[str, float] | None = Field(None, description="Logit bias")
     user: str | None = Field(None, description="User identifier")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "model": "text-davinci-003",
                 "prompt": "The quick brown fox",
@@ -1446,6 +1478,7 @@ class CompletionRequest(BaseModel):
                 "temperature": 0.7,
             }
         }
+    )
 
 
 class CompletionResponse(BaseModel):
@@ -1458,8 +1491,8 @@ class CompletionResponse(BaseModel):
     choices: list[CompletionChoice] = Field(..., description="Completion choices")
     usage: UsageStats = Field(..., description="Usage statistics")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "cmpl-123",
                 "object": "text_completion",
@@ -1473,6 +1506,7 @@ class CompletionResponse(BaseModel):
                 },
             }
         }
+    )
 
 
 class CompletionChoice(BaseModel):
@@ -1483,14 +1517,15 @@ class CompletionChoice(BaseModel):
     logprobs: dict[str, Any] | None = Field(None, description="Log probabilities")
     finish_reason: str | None = Field(None, description="Finish reason")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "text": " jumps over the lazy dog",
                 "index": 0,
                 "finish_reason": "stop",
             }
         }
+    )
 
 
 # ============================================================================
@@ -1508,8 +1543,8 @@ class BatchRequest(BaseModel):
     max_retries: int = Field(3, description="Maximum retries for failed requests")
     timeout: float | None = Field(None, description="Request timeout in seconds")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "requests": [],
                 "batch_id": "batch_001",
@@ -1517,6 +1552,7 @@ class BatchRequest(BaseModel):
                 "timeout": 30.0,
             }
         }
+    )
 
 
 class BatchResponse(BaseModel):
@@ -1534,8 +1570,8 @@ class BatchResponse(BaseModel):
     failed_requests: int = Field(..., description="Number of failed requests")
     processing_time: float = Field(..., description="Total processing time in seconds")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "batch_id": "batch_001",
                 "responses": [],
@@ -1546,6 +1582,7 @@ class BatchResponse(BaseModel):
                 "processing_time": 5.2,
             }
         }
+    )
 
 
 # ============================================================================
@@ -1566,8 +1603,8 @@ class ModelInfo(BaseModel):
     root: str = Field(..., description="Model root")
     parent: str | None = Field(None, description="Parent model")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "gpt-3.5-turbo",
                 "object": "model",
@@ -1577,6 +1614,7 @@ class ModelInfo(BaseModel):
                 "root": "gpt-3.5-turbo",
             }
         }
+    )
 
 
 class ModelListResponse(BaseModel):
@@ -1585,8 +1623,9 @@ class ModelListResponse(BaseModel):
     object: str = Field("list", description="Object type")
     data: list[ModelInfo] = Field(..., description="List of models")
 
-    class Config:
-        json_schema_extra = {"example": {"object": "list", "data": []}}
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"object": "list", "data": []}}
+    )
 
 
 class HealthCheck(BaseModel):
@@ -1599,8 +1638,8 @@ class HealthCheck(BaseModel):
     memory_usage: dict[str, Any] = Field(..., description="Memory usage statistics")
     gpu_usage: dict[str, Any] = Field(..., description="GPU usage statistics")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "status": "healthy",
                 "timestamp": "2024-01-01T00:00:00Z",
@@ -1610,6 +1649,7 @@ class HealthCheck(BaseModel):
                 "gpu_usage": {"utilization": 75.5, "memory": "6.2GB"},
             }
         }
+    )
 
 
 class TokenizerInfo(BaseModel):
@@ -1621,8 +1661,8 @@ class TokenizerInfo(BaseModel):
     is_fast: bool = Field(..., description="Whether it's a fast tokenizer")
     tokenizer_type: str = Field(..., description="Tokenizer type")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "gpt2",
                 "vocab_size": 50257,
@@ -1631,6 +1671,7 @@ class TokenizerInfo(BaseModel):
                 "tokenizer_type": "GPT2TokenizerFast",
             }
         }
+    )
 
 
 # ============================================================================
@@ -1643,8 +1684,8 @@ class VLLMError(BaseModel):
 
     error: dict[str, Any] = Field(..., description="Error details")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "error": {
                     "message": "Invalid request",
@@ -1653,6 +1694,7 @@ class VLLMError(BaseModel):
                 }
             }
         }
+    )
 
 
 class ValidationError(VLLMError):
@@ -2049,7 +2091,6 @@ class VLLMDocument(BaseModel):
     model_name: str | None = Field(None, description="Model used for processing")
     chunk_size: int | None = Field(None, description="Chunk size if document was split")
 
-    class Config:
-        """Pydantic configuration."""
-
-        json_encoders = {datetime: lambda v: v.isoformat() if v else None}
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )

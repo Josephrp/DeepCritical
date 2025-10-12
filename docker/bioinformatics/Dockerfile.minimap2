@@ -1,21 +1,42 @@
 # Minimap2 Docker container for versatile pairwise alignment
-FROM python:3.11-slim
+FROM condaforge/miniforge3:latest
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    minimap2 \
-    zlib1g-dev \
+    default-jre \
+    wget \
+    curl \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy requirements first (for better Docker layer caching)
+COPY requirements.txt /tmp/
+RUN pip install uv && \
+    uv pip install --system -r /tmp/requirements.txt
+
+# Or for conda
+COPY environment.yaml /tmp/
+RUN conda env update -f /tmp/environment.yaml && conda clean -a
+
 # Create working directory
-WORKDIR /workspace
+WORKDIR /app
+
+# Create workspace and output directories
+RUN mkdir -p /app/workspace /app/output
 
 # Set environment variables
 ENV MINIMAP2_VERSION=2.26
+ENV CONDA_DEFAULT_ENV=base
+
+# Make sure the server script is executable
+RUN chmod +x /app/minimap2_server.py
+
+# Expose port for MCP over HTTP (optional)
+EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD minimap2 --version || exit 1
+    CMD python -c "import sys; sys.exit(0)"
 
-# Default command
-CMD ["minimap2", "--help"]
+# Default command runs the MCP server via stdio
+CMD ["python", "/app/minimap2_server.py"]

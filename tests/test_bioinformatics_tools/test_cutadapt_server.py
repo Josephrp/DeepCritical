@@ -4,6 +4,7 @@ Cutadapt server component tests.
 
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -17,19 +18,20 @@ class TestCutadaptServer(BaseBioinformaticsToolTest):
 
     @property
     def tool_name(self) -> str:
-        return "cutadapt"
+        return "cutadapt-server"
 
     @property
     def tool_class(self):
-        from unittest.mock import Mock
+        # Import the actual CutadaptServer server class
+        from DeepResearch.src.tools.bioinformatics.cutadapt_server import CutadaptServer
 
-        return Mock
+        return CutadaptServer
 
     @property
     def required_parameters(self) -> dict:
         return {
-            "input_files": ["path/to/reads_1.fq"],
-            "output_files": ["path/to/trimmed_1.fq"],
+            "input_file": "path/to/reads.fq",
+            "output_file": "path/to/trimmed.fq",
         }
 
     @pytest.fixture
@@ -54,14 +56,27 @@ class TestCutadaptServer(BaseBioinformaticsToolTest):
     @pytest.mark.optional
     def test_cutadapt_trim(self, tool_instance, sample_input_files, sample_output_dir):
         """Test Cutadapt trim functionality."""
-        params = {
-            "input_files": [str(sample_input_files["input_files"][0])],
-            "output_files": [str(sample_output_dir / "trimmed.fq.gz")],
-            "quality_cutoff": 20,
-            "minimum_length": 20,
-        }
+        # Use run_tool method if available (for class-based servers)
+        if hasattr(tool_instance, "run_tool"):
+            # For testing, we'll mock the subprocess call
+            with patch("subprocess.run") as mock_run:
+                mock_run.return_value = type(
+                    "MockResult",
+                    (),
+                    {"stdout": "Trimmed reads: 100", "stderr": "", "returncode": 0},
+                )()
 
-        result = tool_instance.run(params)
+                result = tool_instance.run_tool(
+                    "cutadapt",
+                    input_file=sample_input_files["input_files"][0],
+                    output_file=sample_output_dir / "trimmed.fq",
+                    quality_cutoff="20",
+                    minimum_length="20",
+                )
 
-        assert result["success"] is True
-        assert "output_files" in result
+                assert "command_executed" in result
+                assert "output_files" in result
+                assert len(result["output_files"]) > 0
+        else:
+            # Fallback for direct MCP function testing
+            pytest.skip("Direct MCP function testing not implemented")

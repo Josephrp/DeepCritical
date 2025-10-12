@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from ..utils.vllm_client import VLLMClient
 
@@ -23,8 +23,7 @@ class VLLMAgentDependencies(BaseModel):
     )
     embedding_model: str | None = Field(None, description="Embedding model name")
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class VLLMAgentConfig(BaseModel):

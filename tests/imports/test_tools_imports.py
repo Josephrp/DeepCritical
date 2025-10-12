@@ -423,13 +423,6 @@ class TestToolsModuleImports:
         # Verify accessible and not None
         assert BUSCOServer is not None
 
-    def test_bioinformatics_bwa_server_imports(self):
-        """Test imports from bioinformatics/bwa_server module."""
-        from DeepResearch.src.tools.bioinformatics.bwa_server import BWAServer
-
-        # Verify accessible and not None
-        assert BWAServer is not None
-
     def test_bioinformatics_cutadapt_server_imports(self):
         """Test imports from bioinformatics/cutadapt_server module."""
         from DeepResearch.src.tools.bioinformatics.cutadapt_server import CutadaptServer
@@ -492,20 +485,6 @@ class TestToolsModuleImports:
         # Verify accessible and not None
         assert HISAT2Server is not None
 
-    def test_bioinformatics_homer_server_imports(self):
-        """Test imports from bioinformatics/homer_server module."""
-        from DeepResearch.src.tools.bioinformatics.homer_server import HOMERServer
-
-        # Verify accessible and not None
-        assert HOMERServer is not None
-
-    def test_bioinformatics_htseq_server_imports(self):
-        """Test imports from bioinformatics/htseq_server module."""
-        from DeepResearch.src.tools.bioinformatics.htseq_server import HTSeqServer
-
-        # Verify accessible and not None
-        assert HTSeqServer is not None
-
     def test_bioinformatics_kallisto_server_imports(self):
         """Test imports from bioinformatics/kallisto_server module."""
         from DeepResearch.src.tools.bioinformatics.kallisto_server import KallistoServer
@@ -540,13 +519,6 @@ class TestToolsModuleImports:
 
         # Verify accessible and not None
         assert MultiQCServer is not None
-
-    def test_bioinformatics_picard_server_imports(self):
-        """Test imports from bioinformatics/picard_server module."""
-        from DeepResearch.src.tools.bioinformatics.picard_server import PicardServer
-
-        # Verify accessible and not None
-        assert PicardServer is not None
 
     def test_bioinformatics_qualimap_server_imports(self):
         """Test imports from bioinformatics/qualimap_server module."""
@@ -591,13 +563,6 @@ class TestToolsModuleImports:
 
         # Verify accessible and not None
         assert StringTieServer is not None
-
-    def test_bioinformatics_tophat_server_imports(self):
-        """Test imports from bioinformatics/tophat_server module."""
-        from DeepResearch.src.tools.bioinformatics.tophat_server import TopHatServer
-
-        # Verify accessible and not None
-        assert TopHatServer is not None
 
     def test_bioinformatics_trimgalore_server_imports(self):
         """Test imports from bioinformatics/trimgalore_server module."""

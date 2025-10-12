@@ -17,13 +17,14 @@ class TestFastQCServer(BaseBioinformaticsToolTest):
 
     @property
     def tool_name(self) -> str:
-        return "fastqc"
+        return "fastqc-server"
 
     @property
     def tool_class(self):
-        from unittest.mock import Mock
+        # Import the actual FastQCServer server class
+        from DeepResearch.src.tools.bioinformatics.fastqc_server import FastQCServer
 
-        return Mock
+        return FastQCServer
 
     @property
     def required_parameters(self) -> dict:
@@ -48,6 +49,7 @@ class TestFastQCServer(BaseBioinformaticsToolTest):
     def test_run_fastqc(self, tool_instance, sample_input_files, sample_output_dir):
         """Test FastQC run functionality."""
         params = {
+            "operation": "fastqc",
             "input_files": [str(sample_input_files["input_files"][0])],
             "output_dir": str(sample_output_dir),
         }
@@ -56,3 +58,7 @@ class TestFastQCServer(BaseBioinformaticsToolTest):
 
         assert result["success"] is True
         assert "output_files" in result
+
+        # Skip file checks for mock results
+        if result.get("mock"):
+            return

@@ -9,7 +9,7 @@ import asyncio
 import json
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic_ai import RunContext
 
 from .base import ExecutionResult, ToolRunner, ToolSpec
@@ -23,14 +23,7 @@ class WebSearchRequest(BaseModel):
     search_type: str = Field("search", description="Type of search: 'search' or 'news'")
     num_results: int | None = Field(4, description="Number of results to fetch (1-20)")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "query": "artificial intelligence developments 2024",
-                "search_type": "news",
-                "num_results": 5,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class WebSearchResponse(BaseModel):
@@ -43,17 +36,7 @@ class WebSearchResponse(BaseModel):
     success: bool = Field(..., description="Whether the search was successful")
     error: str | None = Field(None, description="Error message if search failed")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "query": "artificial intelligence developments 2024",
-                "search_type": "news",
-                "num_results": 5,
-                "content": "## AI Breakthrough in 2024\n**Source:** TechCrunch   **Date:** 2024-01-15\n...",
-                "success": True,
-                "error": None,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class ChunkedSearchRequest(BaseModel):
@@ -74,20 +57,7 @@ class ChunkedSearchRequest(BaseModel):
     )
     clean_text: bool = Field(True, description="Whether to clean text")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "query": "machine learning algorithms",
-                "search_type": "search",
-                "num_results": 3,
-                "chunk_size": 1000,
-                "chunk_overlap": 100,
-                "heading_level": 3,
-                "min_characters_per_chunk": 50,
-                "max_characters_per_section": 4000,
-                "clean_text": True,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class ChunkedSearchResponse(BaseModel):
@@ -98,22 +68,7 @@ class ChunkedSearchResponse(BaseModel):
     success: bool = Field(..., description="Whether the search was successful")
     error: str | None = Field(None, description="Error message if search failed")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "query": "machine learning algorithms",
-                "chunks": [
-                    {
-                        "text": "Machine learning algorithms are...",
-                        "source_title": "ML Guide",
-                        "url": "https://example.com/ml-guide",
-                        "token_count": 150,
-                    }
-                ],
-                "success": True,
-                "error": None,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class WebSearchTool(ToolRunner):

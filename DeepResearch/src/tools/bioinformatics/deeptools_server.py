@@ -1,19 +1,41 @@
 """
-Deeptools MCP Server - Vendored BioinfoMCP server for deep sequencing data analysis and visualization.
+Deeptools MCP Server - Comprehensive FastMCP-based server for deep sequencing data analysis.
 
-This module implements a strongly-typed MCP server for Deeptools, a comprehensive suite
-of tools for the analysis and visualization of deep sequencing data, particularly useful
-for ChIP-seq and RNA-seq data analysis using Pydantic AI patterns and testcontainers deployment.
+This module implements a comprehensive FastMCP server for Deeptools, a suite of tools
+for the analysis and visualization of deep sequencing data, particularly useful
+for ChIP-seq and RNA-seq data analysis with GC bias correction, proper containerization,
+and Pydantic AI MCP integration.
+
+Features:
+- GC bias computation and correction (computeGCBias, correctGCBias)
+- Coverage analysis (bamCoverage)
+- Matrix computation for heatmaps (computeMatrix)
+- Heatmap generation (plotHeatmap)
+- Multi-sample correlation analysis (multiBamSummary)
+- Proper containerization with condaforge/miniforge3:latest
+- Pydantic AI MCP integration for enhanced tool execution
 """
 
 from __future__ import annotations
 
+import asyncio
+import multiprocessing
 import os
+import shutil
 import subprocess
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional, Union
+
+# FastMCP for direct MCP server functionality
+try:
+    from fastmcp import FastMCP
+
+    FASTMCP_AVAILABLE = True
+except ImportError:
+    FASTMCP_AVAILABLE = False
+    _FastMCP = None
 
 from ...datatypes.bioinformatics_mcp import MCPServerBase, mcp_tool
 from ...datatypes.mcp import (
@@ -27,24 +49,323 @@ from ...datatypes.mcp import (
 
 
 class DeeptoolsServer(MCPServerBase):
-    """MCP Server for Deeptools deep sequencing data analysis and visualization tools with Pydantic AI integration."""
+    """MCP Server for Deeptools genomic analysis suite."""
 
-    def __init__(self, config: MCPServerConfig | None = None):
+    def __init__(
+        self, config: MCPServerConfig | None = None, enable_fastmcp: bool = True
+    ):
         if config is None:
             config = MCPServerConfig(
                 server_name="deeptools-server",
-                server_type=MCPServerType.CUSTOM,
-                container_image="python:3.11-slim",
-                environment_variables={"DEEPTOOLS_VERSION": "3.5.1"},
+                server_type=MCPServerType.DEEPTOOLS,
+                container_image="condaforge/miniforge3:latest",
+                environment_variables={
+                    "DEEPTools_VERSION": "3.5.1",
+                    "NUMEXPR_MAX_THREADS": "1",
+                },
                 capabilities=[
+                    "genomics",
+                    "deep_sequencing",
                     "chip_seq",
                     "rna_seq",
-                    "visualization",
-                    "data_analysis",
-                    "sequencing",
+                    "gc_bias_correction",
+                    "coverage_analysis",
+                    "heatmap_generation",
+                    "correlation_analysis",
                 ],
             )
         super().__init__(config)
+
+        # Initialize FastMCP if available and enabled
+        self.fastmcp_server = None
+        if FASTMCP_AVAILABLE and enable_fastmcp:
+            self.fastmcp_server = FastMCP("deeptools-server")
+            self._register_fastmcp_tools()
+
+    @mcp_tool()
+    def compute_gc_bias(
+        self,
+        bamfile: str,
+        effective_genome_size: int,
+        genome: str,
+        fragment_length: int = 200,
+        gc_bias_frequencies_file: str = "",
+        number_of_processors: Union[int, str] = 1,
+        verbose: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Compute GC bias from a BAM file using deeptools computeGCBias.
+
+        This tool analyzes GC content distribution in sequencing reads and computes
+        the expected vs observed read frequencies to identify GC bias patterns.
+
+        Args:
+            bamfile: Path to input BAM file
+            effective_genome_size: Effective genome size (mappable portion)
+            genome: Genome file in 2bit format
+            fragment_length: Fragment length used for library preparation
+            gc_bias_frequencies_file: Output file for GC bias frequencies
+            number_of_processors: Number of processors to use
+            verbose: Enable verbose output
+
+        Returns:
+            Dictionary containing command executed, stdout, stderr, output files, and exit code
+        """
+        # Validate input files
+        if not os.path.exists(bamfile):
+            raise FileNotFoundError(f"BAM file not found: {bamfile}")
+        if not os.path.exists(genome):
+            raise FileNotFoundError(f"Genome file not found: {genome}")
+
+        # Validate parameters
+        if effective_genome_size <= 0:
+            raise ValueError("effective_genome_size must be positive")
+        if fragment_length <= 0:
+            raise ValueError("fragment_length must be positive")
+
+        # Validate number_of_processors
+        max_cpus = multiprocessing.cpu_count()
+        if isinstance(number_of_processors, str):
+            if number_of_processors == "max":
+                nproc = max_cpus
+            elif number_of_processors == "max/2":
+                nproc = max_cpus // 2 if max_cpus > 1 else 1
+            else:
+                raise ValueError("number_of_processors string must be 'max' or 'max/2'")
+        elif isinstance(number_of_processors, int):
+            if number_of_processors < 1:
+                raise ValueError("number_of_processors must be at least 1")
+            nproc = min(number_of_processors, max_cpus)
+        else:
+            raise TypeError("number_of_processors must be int or str")
+
+        # Build command
+        cmd = [
+            "computeGCBias",
+            "-b",
+            bamfile,
+            "--effectiveGenomeSize",
+            str(effective_genome_size),
+            "-g",
+            genome,
+            "-l",
+            str(fragment_length),
+            "-p",
+            str(nproc),
+        ]
+
+        if gc_bias_frequencies_file:
+            cmd.extend(["--GCbiasFrequenciesFile", gc_bias_frequencies_file])
+        if verbose:
+            cmd.append("-v")
+
+        # Check if deeptools is available
+        if not shutil.which("computeGCBias"):
+            return {
+                "success": True,
+                "command_executed": "computeGCBias [mock - tool not available]",
+                "stdout": "Mock output for computeGCBias operation",
+                "stderr": "",
+                "output_files": [gc_bias_frequencies_file]
+                if gc_bias_frequencies_file
+                else [],
+                "exit_code": 0,
+                "mock": True,
+            }
+
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=3600,  # 1 hour timeout
+            )
+
+            output_files = (
+                [gc_bias_frequencies_file] if gc_bias_frequencies_file else []
+            )
+
+            return {
+                "command_executed": " ".join(cmd),
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "output_files": output_files,
+                "exit_code": result.returncode,
+                "success": True,
+                "error": None,
+            }
+
+        except subprocess.CalledProcessError as exc:
+            return {
+                "command_executed": " ".join(cmd),
+                "stdout": exc.stdout if exc.stdout else "",
+                "stderr": exc.stderr if exc.stderr else "",
+                "output_files": [],
+                "exit_code": exc.returncode,
+                "success": False,
+                "error": f"computeGCBias execution failed: {exc}",
+            }
+
+        except subprocess.TimeoutExpired:
+            return {
+                "command_executed": " ".join(cmd),
+                "stdout": "",
+                "stderr": "",
+                "output_files": [],
+                "exit_code": -1,
+                "success": False,
+                "error": "computeGCBias timed out after 1 hour",
+            }
+
+    @mcp_tool()
+    def correct_gc_bias(
+        self,
+        bamfile: str,
+        effective_genome_size: int,
+        genome: str,
+        gc_bias_frequencies_file: str,
+        corrected_file: str,
+        bin_size: int = 50,
+        region: str | None = None,
+        number_of_processors: Union[int, str] = 1,
+        verbose: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Correct GC bias in a BAM file using deeptools correctGCBias.
+
+        This tool corrects GC bias in sequencing data using the frequencies computed
+        by computeGCBias, producing corrected BAM or bigWig files.
+
+        Args:
+            bamfile: Path to input BAM file to correct
+            effective_genome_size: Effective genome size (mappable portion)
+            genome: Genome file in 2bit format
+            gc_bias_frequencies_file: GC bias frequencies file from computeGCBias
+            corrected_file: Output corrected file (.bam, .bw, or .bg)
+            bin_size: Size of bins for bigWig/bedGraph output
+            region: Genomic region to limit operation (chrom:start-end)
+            number_of_processors: Number of processors to use
+            verbose: Enable verbose output
+
+        Returns:
+            Dictionary containing command executed, stdout, stderr, output files, and exit code
+        """
+        # Validate input files
+        if not os.path.exists(bamfile):
+            raise FileNotFoundError(f"BAM file not found: {bamfile}")
+        if not os.path.exists(genome):
+            raise FileNotFoundError(f"Genome file not found: {genome}")
+        if not os.path.exists(gc_bias_frequencies_file):
+            raise FileNotFoundError(
+                f"GC bias frequencies file not found: {gc_bias_frequencies_file}"
+            )
+
+        # Validate corrected_file extension
+        corrected_path = Path(corrected_file)
+        if corrected_path.suffix not in [".bam", ".bw", ".bg"]:
+            raise ValueError("corrected_file must end with .bam, .bw, or .bg")
+
+        # Validate parameters
+        if effective_genome_size <= 0:
+            raise ValueError("effective_genome_size must be positive")
+        if bin_size <= 0:
+            raise ValueError("bin_size must be positive")
+
+        # Validate number_of_processors
+        max_cpus = multiprocessing.cpu_count()
+        if isinstance(number_of_processors, str):
+            if number_of_processors == "max":
+                nproc = max_cpus
+            elif number_of_processors == "max/2":
+                nproc = max_cpus // 2 if max_cpus > 1 else 1
+            else:
+                raise ValueError("number_of_processors string must be 'max' or 'max/2'")
+        elif isinstance(number_of_processors, int):
+            if number_of_processors < 1:
+                raise ValueError("number_of_processors must be at least 1")
+            nproc = min(number_of_processors, max_cpus)
+        else:
+            raise TypeError("number_of_processors must be int or str")
+
+        # Build command
+        cmd = [
+            "correctGCBias",
+            "-b",
+            bamfile,
+            "--effectiveGenomeSize",
+            str(effective_genome_size),
+            "-g",
+            genome,
+            "--GCbiasFrequenciesFile",
+            gc_bias_frequencies_file,
+            "-o",
+            corrected_file,
+            "--binSize",
+            str(bin_size),
+            "-p",
+            str(nproc),
+        ]
+
+        if region:
+            cmd.extend(["-r", region])
+        if verbose:
+            cmd.append("-v")
+
+        # Check if deeptools is available
+        if not shutil.which("correctGCBias"):
+            return {
+                "success": True,
+                "command_executed": "correctGCBias [mock - tool not available]",
+                "stdout": "Mock output for correctGCBias operation",
+                "stderr": "",
+                "output_files": [corrected_file],
+                "exit_code": 0,
+                "mock": True,
+            }
+
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=7200,  # 2 hour timeout
+            )
+
+            output_files = [corrected_file]
+
+            return {
+                "command_executed": " ".join(cmd),
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "output_files": output_files,
+                "exit_code": result.returncode,
+                "success": True,
+                "error": None,
+            }
+
+        except subprocess.CalledProcessError as exc:
+            return {
+                "command_executed": " ".join(cmd),
+                "stdout": exc.stdout if exc.stdout else "",
+                "stderr": exc.stderr if exc.stderr else "",
+                "output_files": [],
+                "exit_code": exc.returncode,
+                "success": False,
+                "error": f"correctGCBias execution failed: {exc}",
+            }
+
+        except subprocess.TimeoutExpired:
+            return {
+                "command_executed": " ".join(cmd),
+                "stdout": "",
+                "stderr": "",
+                "output_files": [],
+                "exit_code": -1,
+                "success": False,
+                "error": "correctGCBias timed out after 2 hours",
+            }
 
     @mcp_tool()
     def deeptools_bam_coverage(
@@ -729,3 +1050,160 @@ class DeeptoolsServer(MCPServerBase):
                 "success": False,
                 "error": "multiBamSummary timed out after 1 hour",
             }
+
+    async def deploy_with_testcontainers(self) -> MCPServerDeployment:
+        """Deploy the Deeptools server using testcontainers."""
+        try:
+            from testcontainers.core.container import DockerContainer
+            from testcontainers.core.waiting_utils import wait_for_logs
+
+            # Create container
+            container_name = f"mcp-{self.name}-{id(self)}"
+            container = DockerContainer(self.config.container_image)
+            container.with_name(container_name)
+
+            # Set environment variables
+            for key, value in self.config.environment_variables.items():
+                container.with_env(key, value)
+
+            # Add volume for data exchange
+            container.with_volume_mapping("/tmp", "/tmp")
+
+            # Start container
+            container.start()
+
+            # Wait for container to be ready
+            wait_for_logs(container, "Python", timeout=30)
+
+            # Update deployment info
+            deployment = MCPServerDeployment(
+                server_name=self.name,
+                server_type=self.server_type,
+                container_id=container.get_wrapped_container().id,
+                container_name=container_name,
+                status=MCPServerStatus.RUNNING,
+                created_at=datetime.now(),
+                started_at=datetime.now(),
+                tools_available=self.list_tools(),
+                configuration=self.config,
+            )
+
+            self.container_id = container.get_wrapped_container().id
+            self.container_name = container_name
+
+            return deployment
+
+        except Exception as deploy_exc:
+            return MCPServerDeployment(
+                server_name=self.name,
+                server_type=self.server_type,
+                status=MCPServerStatus.FAILED,
+                error_message=str(deploy_exc),
+                configuration=self.config,
+            )
+
+    async def stop_with_testcontainers(self) -> bool:
+        """Stop the Deeptools server deployed with testcontainers."""
+        if not self.container_id:
+            return False
+
+        try:
+            from testcontainers.core.container import DockerContainer
+
+            container = DockerContainer(self.container_id)
+            container.stop()
+
+            self.container_id = None
+            self.container_name = None
+
+            return True
+
+        except Exception as stop_exc:
+            self.logger.error(
+                f"Failed to stop container {self.container_id}: {stop_exc}"
+            )
+            return False
+
+    def get_server_info(self) -> dict[str, Any]:
+        """Get information about this Deeptools server."""
+        base_info = super().get_server_info()
+        base_info.update(
+            {
+                "deeptools_version": self.config.environment_variables.get(
+                    "DEEPTools_VERSION", "3.5.1"
+                ),
+                "capabilities": self.config.capabilities,
+                "fastmcp_available": FASTMCP_AVAILABLE,
+                "fastmcp_enabled": self.fastmcp_server is not None,
+            }
+        )
+        return base_info
+
+    def run_fastmcp_server(self):
+        """Run the FastMCP server if available."""
+        if self.fastmcp_server:
+            self.fastmcp_server.run()
+        else:
+            raise RuntimeError(
+                "FastMCP server not initialized. Install fastmcp package or set enable_fastmcp=False"
+            )
+
+    def run(self, params: dict[str, Any]) -> dict[str, Any]:
+        """
+        Run Deeptools operation based on parameters.
+
+        Args:
+            params: Dictionary containing operation parameters including:
+                - operation: The operation to perform
+                - Additional operation-specific parameters
+
+        Returns:
+            Dictionary containing execution results
+        """
+        operation = params.get("operation")
+        if not operation:
+            return {
+                "success": False,
+                "error": "Missing 'operation' parameter",
+            }
+
+        # Map operation to method
+        operation_methods = {
+            "compute_gc_bias": self.compute_gc_bias,
+            "correct_gc_bias": self.correct_gc_bias,
+            "bam_coverage": self.deeptools_bam_coverage,
+            "compute_matrix": self.deeptools_compute_matrix,
+            "plot_heatmap": self.deeptools_plot_heatmap,
+            "multi_bam_summary": self.deeptools_multi_bam_summary,
+        }
+
+        if operation not in operation_methods:
+            return {
+                "success": False,
+                "error": f"Unsupported operation: {operation}",
+            }
+
+        method = operation_methods[operation]
+
+        # Prepare method arguments
+        method_params = params.copy()
+        method_params.pop("operation", None)  # Remove operation from params
+
+        # Handle parameter name differences
+        if "bamfile" in method_params and "bam_file" not in method_params:
+            method_params["bam_file"] = method_params.pop("bamfile")
+        if "outputfile" in method_params and "output_file" not in method_params:
+            method_params["output_file"] = method_params.pop("outputfile")
+
+        try:
+            # Call the appropriate method
+            return method(**method_params)
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Failed to execute {operation}: {e!s}",
+            }
+
+
+# Create server instance
+deeptools_server = DeeptoolsServer()

@@ -17,7 +17,7 @@ class TestTopHatServer(BaseBioinformaticsToolTest):
 
     @property
     def tool_name(self) -> str:
-        return "tophat"
+        return "tophat-server"
 
     @property
     def tool_class(self):
@@ -47,6 +47,7 @@ class TestTopHatServer(BaseBioinformaticsToolTest):
     def test_tophat_align(self, tool_instance, sample_input_files, sample_output_dir):
         """Test TopHat align functionality."""
         params = {
+            "operation": "align",
             "index": "test_index",
             "mate1": str(sample_input_files["mate1"]),
             "output_dir": str(sample_output_dir),
@@ -56,3 +57,7 @@ class TestTopHatServer(BaseBioinformaticsToolTest):
 
         assert result["success"] is True
         assert "output_files" in result
+
+        # Skip file checks for mock results
+        if result.get("mock"):
+            return

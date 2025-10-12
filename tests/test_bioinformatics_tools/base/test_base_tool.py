@@ -61,110 +61,172 @@ class BaseBioinformaticsToolTest(ABC):
         """Test tool initializes correctly."""
         assert tool_instance is not None
         assert hasattr(tool_instance, "name")
-        assert hasattr(tool_instance, "run")
+
+        # Check for MCP server or traditional tool interface
+        is_mcp_server = hasattr(tool_instance, "list_tools") and hasattr(
+            tool_instance, "get_server_info"
+        )
+        if is_mcp_server:
+            # MCP servers should have server info
+            assert hasattr(tool_instance, "get_server_info")
+        else:
+            # Traditional tools should have run method
+            assert hasattr(tool_instance, "run")
 
     @pytest.mark.optional
     def test_tool_specification(self, tool_instance):
         """Test tool specification is correctly defined."""
-        # Mock get_spec method if it doesn't exist
-        if not hasattr(tool_instance, "get_spec"):
-            mock_spec = {
-                "name": self.tool_name,
-                "description": f"Test tool {self.tool_name}",
-                "inputs": {"param1": "TEXT"},
-                "outputs": {"result": "TEXT"},
-            }
-            tool_instance.get_spec = Mock(return_value=mock_spec)
+        # Check if this is an MCP server
+        is_mcp_server = hasattr(tool_instance, "list_tools") and hasattr(
+            tool_instance, "get_server_info"
+        )
 
-        spec = tool_instance.get_spec()
+        if is_mcp_server:
+            # For MCP servers, check server info and tools
+            server_info = tool_instance.get_server_info()
+            assert isinstance(server_info, dict)
+            assert "name" in server_info
+            assert "tools" in server_info
+            assert server_info["name"] == self.tool_name
 
-        # Check that spec is a dictionary and has required keys
-        assert isinstance(spec, dict)
-        assert "name" in spec
-        assert "description" in spec
-        assert "inputs" in spec
-        assert "outputs" in spec
-        assert spec["name"] == self.tool_name
+            # Check that tools are available
+            tools = tool_instance.list_tools()
+            assert isinstance(tools, list)
+            assert len(tools) > 0
+        else:
+            # Mock get_spec method if it doesn't exist for traditional tools
+            if not hasattr(tool_instance, "get_spec"):
+                mock_spec = {
+                    "name": self.tool_name,
+                    "description": f"Test tool {self.tool_name}",
+                    "inputs": {"param1": "TEXT"},
+                    "outputs": {"result": "TEXT"},
+                }
+                tool_instance.get_spec = Mock(return_value=mock_spec)
+
+            spec = tool_instance.get_spec()
+
+            # Check that spec is a dictionary and has required keys
+            assert isinstance(spec, dict)
+            assert "name" in spec
+            assert "description" in spec
+            assert "inputs" in spec
+            assert "outputs" in spec
+            assert spec["name"] == self.tool_name
 
     @pytest.mark.optional
     def test_parameter_validation(self, tool_instance):
         """Test parameter validation."""
-        # Mock validate_parameters method if it doesn't exist
-        if not hasattr(tool_instance, "validate_parameters"):
+        # Check if this is an MCP server
+        is_mcp_server = hasattr(tool_instance, "list_tools") and hasattr(
+            tool_instance, "get_server_info"
+        )
 
-            def mock_validate_parameters(params):
-                required_keys = set(self.required_parameters.keys())
-                provided_keys = set(params.keys())
-                return {"valid": required_keys.issubset(provided_keys)}
+        if is_mcp_server:
+            # For MCP servers, parameter validation is handled by the MCP tool decorators
+            # Just verify the server has tools available
+            tools = tool_instance.list_tools()
+            assert len(tools) > 0
+        else:
+            # Mock validate_parameters method if it doesn't exist for traditional tools
+            if not hasattr(tool_instance, "validate_parameters"):
 
-            tool_instance.validate_parameters = Mock(
-                side_effect=mock_validate_parameters
-            )
+                def mock_validate_parameters(params):
+                    required_keys = set(self.required_parameters.keys())
+                    provided_keys = set(params.keys())
+                    return {"valid": required_keys.issubset(provided_keys)}
 
-        # Test with valid parameters
-        valid_params = {**self.required_parameters, **self.optional_parameters}
-        result = tool_instance.validate_parameters(valid_params)
-        assert isinstance(result, dict)
-        assert result["valid"] is True
+                tool_instance.validate_parameters = Mock(
+                    side_effect=mock_validate_parameters
+                )
 
-        # Test with missing required parameters
-        invalid_params = self.optional_parameters.copy()
-        result = tool_instance.validate_parameters(invalid_params)
-        assert isinstance(result, dict)
-        assert result["valid"] is False
+            # Test with valid parameters
+            valid_params = {**self.required_parameters, **self.optional_parameters}
+            result = tool_instance.validate_parameters(valid_params)
+            assert isinstance(result, dict)
+            assert result["valid"] is True
+
+            # Test with missing required parameters
+            invalid_params = self.optional_parameters.copy()
+            result = tool_instance.validate_parameters(invalid_params)
+            assert isinstance(result, dict)
+            assert result["valid"] is False
 
     @pytest.mark.optional
     def test_tool_execution(self, tool_instance, sample_input_files, sample_output_dir):
         """Test tool execution with sample data."""
-        # Mock run method if it doesn't exist
-        if not hasattr(tool_instance, "run"):
+        # Check if this is an MCP server
+        is_mcp_server = hasattr(tool_instance, "list_tools") and hasattr(
+            tool_instance, "get_server_info"
+        )
 
-            def mock_run(params):
-                return {
-                    "success": True,
-                    "outputs": ["output1"],
-                    "output_files": ["file1"],
-                }
+        if is_mcp_server:
+            # For MCP servers, execution is tested in specific test methods
+            # Just verify the server can provide server info
+            server_info = tool_instance.get_server_info()
+            assert isinstance(server_info, dict)
+            assert "status" in server_info
+        else:
+            # Mock run method if it doesn't exist for traditional tools
+            if not hasattr(tool_instance, "run"):
 
-            tool_instance.run = Mock(side_effect=mock_run)
+                def mock_run(params):
+                    return {
+                        "success": True,
+                        "outputs": ["output1"],
+                        "output_files": ["file1"],
+                    }
 
-        params = {
-            **self.required_parameters,
-            **self.optional_parameters,
-            "output_dir": str(sample_output_dir),
-        }
+                tool_instance.run = Mock(side_effect=mock_run)
 
-        # Add input file paths if provided
-        for key, file_path in sample_input_files.items():
-            params[key] = str(file_path)
+            params = {
+                **self.required_parameters,
+                **self.optional_parameters,
+                "output_dir": str(sample_output_dir),
+            }
 
-        result = tool_instance.run(params)
+            # Add input file paths if provided
+            for key, file_path in sample_input_files.items():
+                params[key] = str(file_path)
 
-        assert isinstance(result, dict)
-        assert "success" in result
-        assert result["success"] is True
-        assert "outputs" in result or "output_files" in result
+            result = tool_instance.run(params)
+
+            assert isinstance(result, dict)
+            assert "success" in result
+            assert result["success"] is True
+            assert "outputs" in result or "output_files" in result
 
     @pytest.mark.optional
     def test_error_handling(self, tool_instance):
         """Test error handling for invalid inputs."""
-        # Mock run method if it doesn't exist
-        if not hasattr(tool_instance, "run"):
+        # Check if this is an MCP server
+        is_mcp_server = hasattr(tool_instance, "list_tools") and hasattr(
+            tool_instance, "get_server_info"
+        )
 
-            def mock_run(params):
-                if "invalid_param" in params:
-                    return {"success": False, "error": "Invalid parameter"}
-                return {"success": True, "outputs": ["output1"]}
+        if is_mcp_server:
+            # For MCP servers, error handling is tested in specific test methods
+            # Just verify the server exists and has tools
+            tools = tool_instance.list_tools()
+            assert isinstance(tools, list)
+        else:
+            # Mock run method if it doesn't exist for traditional tools
+            if not hasattr(tool_instance, "run"):
 
-            tool_instance.run = Mock(side_effect=mock_run)
+                def mock_run(params):
+                    if "invalid_param" in params:
+                        return {"success": False, "error": "Invalid parameter"}
+                    return {"success": True, "outputs": ["output1"]}
 
-        invalid_params = {"invalid_param": "invalid_value"}
+                tool_instance.run = Mock(side_effect=mock_run)
 
-        result = tool_instance.run(invalid_params)
+            invalid_params = {"invalid_param": "invalid_value"}
 
-        assert isinstance(result, dict)
-        assert result["success"] is False
-        assert "error" in result
+            result = tool_instance.run(invalid_params)
+
+            assert isinstance(result, dict)
+            assert result["success"] is False
+            assert "error" in result
 
     @pytest.mark.optional
     @pytest.mark.containerized

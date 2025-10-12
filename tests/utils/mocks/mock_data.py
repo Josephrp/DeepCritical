@@ -169,3 +169,37 @@ def create_test_directory_structure(base_path: Path) -> dict[str, Path]:
     structure["annotation"] = create_mock_gtf(results_dir / "annotation.gtf")
 
     return structure
+
+
+def create_mock_bed(file_path: Path, num_regions: int = 10) -> Path:
+    """Create a mock BED file for testing."""
+    regions = []
+
+    for i in range(num_regions):
+        chrom = f"chr{i % 3 + 1}"
+        start = i * 1000
+        end = start + 500
+        name = f"region_{i}"
+        score = 100
+        strand = "+" if i % 2 == 0 else "-"
+
+        regions.append(f"{chrom}\t{start}\t{end}\t{name}\t{score}\t{strand}")
+
+    file_path.write_text("\n".join(regions))
+    return file_path
+
+
+def create_mock_bam(file_path: Path, num_reads: int = 100) -> Path:
+    """Create a mock BAM file for testing."""
+    # For testing purposes, we just create a placeholder file
+    # In a real scenario, you'd use samtools or similar to create a proper BAM
+    file_path.write_text("BAM\x01")  # Minimal BAM header
+    return file_path
+
+
+def create_mock_bigwig(file_path: Path, num_entries: int = 100) -> Path:
+    """Create a mock BigWig file for testing."""
+    # For testing purposes, we just create a placeholder file
+    # In a real scenario, you'd use appropriate tools to create a proper BigWig
+    file_path.write_text("bigWig\x01")  # Minimal BigWig header
+    return file_path

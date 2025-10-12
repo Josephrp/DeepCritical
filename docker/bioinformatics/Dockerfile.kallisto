@@ -1,22 +1,23 @@
-# Kallisto Docker container for RNA-seq quantification
-FROM python:3.11-slim
+# Kallisto Docker container for RNA-seq quantification using conda
+FROM condaforge/miniforge3:latest
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    kallisto \
-    libhdf5-dev \
-    zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Copy environment first (for better Docker layer caching)
+COPY environment.yaml /tmp/
+
+# Create conda environment with kallisto
+RUN conda env create -f /tmp/environment.yaml && \
+    conda clean -a
 
 # Create working directory
 WORKDIR /workspace
 
 # Set environment variables
 ENV KALLISTO_VERSION=0.50.1
+ENV CONDA_ENV=mcp-kallisto-env
 
-# Health check
+# Health check using conda run
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD kallisto version || exit 1
+    CMD conda run -n mcp-kallisto-env kallisto version || exit 1
 
 # Default command
-CMD ["kallisto", "--help"]
+CMD ["conda", "run", "-n", "mcp-kallisto-env", "kallisto", "--help"]

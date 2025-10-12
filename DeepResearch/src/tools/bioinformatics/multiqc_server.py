@@ -4,12 +4,15 @@ MultiQC MCP Server - Vendored BioinfoMCP server for report generation.
 This module implements a strongly-typed MCP server for MultiQC, a tool for
 aggregating results from bioinformatics tools into a single report, using
 Pydantic AI patterns and testcontainers deployment.
+
+Based on the BioinfoMCP example implementation with full feature set integration.
 """
 
 from __future__ import annotations
 
 import asyncio
 import os
+import shlex
 import subprocess
 import tempfile
 from datetime import datetime
@@ -35,9 +38,12 @@ class MultiQCServer(MCPServerBase):
             config = MCPServerConfig(
                 server_name="multiqc-server",
                 server_type=MCPServerType.CUSTOM,
-                container_image="tonic01/deepcritical-bioinformatics-multiqc:latest",  # Updated Docker Hub URL
-                environment_variables={"MULTIQC_VERSION": "1.14"},
+                container_image="mcp-multiqc:latest",  # Match example Docker image
+                environment_variables={
+                    "MULTIQC_VERSION": "1.29"
+                },  # Updated to match example version
                 capabilities=["report_generation", "quality_control", "visualization"],
+                working_directory="/app/workspace",
             )
         super().__init__(config)
 
@@ -46,70 +52,77 @@ class MultiQCServer(MCPServerBase):
             name="multiqc_run",
             description="Generate MultiQC report from bioinformatics tool outputs",
             inputs={
-                "input_dir": "str",
-                "output_dir": "str",
+                "analysis_directory": "Optional[Path]",
+                "outdir": "Optional[Path]",
                 "filename": "str",
-                "title": "str",
-                "comment": "str",
                 "force": "bool",
-                "ignore_samples": "str",
-                "sample_names": "str",
-                "replace_names": "str",
-                "exclude": "str",
-                "include": "str",
-                "zip_data": "bool",
-                "export_plots": "bool",
-                "flat": "bool",
-                "interactive": "bool",
-                "pdf": "bool",
+                "config_file": "Optional[Path]",
+                "data_dir": "Optional[Path]",
+                "no_data_dir": "bool",
                 "no_report": "bool",
-                "template": "str",
-                "config": "str",
-                "cl_config": "str",
+                "no_plots": "bool",
+                "no_config": "bool",
+                "no_title": "bool",
+                "title": "Optional[str]",
+                "ignore_dirs": "Optional[str]",
+                "ignore_samples": "Optional[str]",
+                "exclude_modules": "Optional[str]",
+                "include_modules": "Optional[str]",
+                "verbose": "bool",
             },
             outputs={
                 "command_executed": "str",
                 "stdout": "str",
                 "stderr": "str",
-                "output_files": "list[str]",
-                "exit_code": "int",
+                "output_files": "List[str]",
+                "success": "bool",
+                "error": "Optional[str]",
             },
             server_type=MCPServerType.CUSTOM,
             examples=[
                 {
                     "description": "Generate MultiQC report from analysis results",
                     "parameters": {
-                        "input_dir": "/data/analysis_results",
-                        "output_dir": "/data/reports",
-                        "filename": "multiqc_report",
+                        "analysis_directory": "/data/analysis_results",
+                        "outdir": "/data/reports",
+                        "filename": "multiqc_report.html",
                         "title": "NGS Analysis Report",
+                        "force": True,
                     },
-                }
+                },
+                {
+                    "description": "Generate MultiQC report with custom configuration",
+                    "parameters": {
+                        "analysis_directory": "/workspace/analysis",
+                        "outdir": "/workspace/output",
+                        "filename": "custom_report.html",
+                        "config_file": "/workspace/multiqc_config.yaml",
+                        "title": "Custom MultiQC Report",
+                        "verbose": True,
+                    },
+                },
             ],
         )
     )
     def multiqc_run(
         self,
-        input_dir: str,
-        output_dir: str,
-        filename: str = "multiqc_report",
-        title: str = "",
-        comment: str = "",
+        analysis_directory: Path | None = None,
+        outdir: Path | None = None,
+        filename: str = "multiqc_report.html",
         force: bool = False,
-        ignore_samples: str = "",
-        sample_names: str = "",
-        replace_names: str = "",
-        exclude: str = "",
-        include: str = "",
-        zip_data: bool = False,
-        export_plots: bool = False,
-        flat: bool = False,
-        interactive: bool = False,
-        pdf: bool = False,
+        config_file: Path | None = None,
+        data_dir: Path | None = None,
+        no_data_dir: bool = False,
         no_report: bool = False,
-        template: str = "",
-        config: str = "",
-        cl_config: str = "",
+        no_plots: bool = False,
+        no_config: bool = False,
+        no_title: bool = False,
+        title: str | None = None,
+        ignore_dirs: str | None = None,
+        ignore_samples: str | None = None,
+        exclude_modules: str | None = None,
+        include_modules: str | None = None,
+        verbose: bool = False,
     ) -> dict[str, Any]:
         """
         Generate MultiQC report from bioinformatics tool outputs.
@@ -118,82 +131,112 @@ class MultiQCServer(MCPServerBase):
         a single, comprehensive HTML report with interactive plots and tables.
 
         Args:
-            input_dir: Directory containing bioinformatics tool outputs
-            output_dir: Directory to save the report
-            filename: Base name for output files
-            title: Report title
-            comment: Report comment/description
-            force: Overwrite existing reports
-            ignore_samples: Samples to ignore (comma-separated)
-            sample_names: Rename samples (comma-separated old:new pairs)
-            replace_names: Replace sample names (comma-separated old:new pairs)
-            exclude: Modules to exclude (comma-separated)
-            include: Modules to include (comma-separated)
-            zip_data: Compress data directory
-            export_plots: Export plots as static images
-            flat: Flatten directory structure
-            interactive: Generate interactive plots
-            pdf: Generate PDF report
-            no_report: Skip HTML report generation
-            template: Custom template
-            config: Configuration file
-            cl_config: Command-line configuration
+            analysis_directory: Directory to scan for analysis results (default: current directory)
+            outdir: Output directory for the MultiQC report (default: current directory)
+            filename: Name of the output report file (default: multiqc_report.html)
+            force: Overwrite existing output files
+            config_file: Path to a custom MultiQC config file
+            data_dir: Path to a directory containing MultiQC data files
+            no_data_dir: Do not use the MultiQC data directory
+            no_report: Do not generate the HTML report
+            no_plots: Do not generate plots
+            no_config: Do not load config files
+            no_title: Do not add a title to the report
+            title: Custom title for the report
+            ignore_dirs: Comma-separated list of directories to ignore
+            ignore_samples: Comma-separated list of samples to ignore
+            exclude_modules: Comma-separated list of modules to exclude
+            include_modules: Comma-separated list of modules to include
+            verbose: Enable verbose output
 
         Returns:
-            Dictionary containing command executed, stdout, stderr, output files, and exit code
+            Dictionary containing command executed, stdout, stderr, output files, and success status
         """
-        # Validate input directory exists
-        if not os.path.exists(input_dir):
+        # Validate paths
+        if analysis_directory is not None:
+            if not analysis_directory.exists() or not analysis_directory.is_dir():
+                return {
+                    "command_executed": "",
+                    "stdout": "",
+                    "stderr": f"Analysis directory '{analysis_directory}' does not exist or is not a directory.",
+                    "output_files": [],
+                    "success": False,
+                    "error": f"Analysis directory not found: {analysis_directory}",
+                }
+        else:
+            analysis_directory = Path.cwd()
+
+        if outdir is not None:
+            if not outdir.exists():
+                outdir.mkdir(parents=True, exist_ok=True)
+        else:
+            outdir = Path.cwd()
+
+        if config_file is not None and not config_file.exists():
             return {
                 "command_executed": "",
                 "stdout": "",
-                "stderr": f"Input directory does not exist: {input_dir}",
+                "stderr": f"Config file '{config_file}' does not exist.",
                 "output_files": [],
-                "exit_code": -1,
                 "success": False,
-                "error": f"Input directory not found: {input_dir}",
+                "error": f"Config file not found: {config_file}",
+            }
+
+        if data_dir is not None and not data_dir.exists():
+            return {
+                "command_executed": "",
+                "stdout": "",
+                "stderr": f"Data directory '{data_dir}' does not exist.",
+                "output_files": [],
+                "success": False,
+                "error": f"Data directory not found: {data_dir}",
             }
 
         # Build command
-        cmd = ["multiqc", input_dir, "--outdir", output_dir, "--filename", filename]
+        cmd = ["multiqc"]
 
-        if title:
-            cmd.extend(["--title", title])
-        if comment:
-            cmd.extend(["--comment", comment])
+        # Add analysis directory
+        cmd.append(str(analysis_directory))
+
+        # Output directory
+        cmd.extend(["-o", str(outdir)])
+
+        # Filename
+        if filename:
+            cmd.extend(["-n", filename])
+
+        # Flags
         if force:
-            cmd.append("--force")
-        if ignore_samples:
-            cmd.extend(["--ignore-samples", ignore_samples])
-        if sample_names:
-            cmd.extend(["--sample-names", sample_names])
-        if replace_names:
-            cmd.extend(["--replace-names", replace_names])
-        if exclude:
-            cmd.extend(["--exclude", exclude])
-        if include:
-            cmd.extend(["--include", include])
-        if zip_data:
-            cmd.append("--zip-data")
-        if export_plots:
-            cmd.append("--export-plots")
-        if flat:
-            cmd.append("--flat")
-        if interactive:
-            cmd.append("--interactive")
-        if pdf:
-            cmd.append("--pdf")
+            cmd.append("-f")
+        if config_file:
+            cmd.extend(["-c", str(config_file)])
+        if data_dir:
+            cmd.extend(["--data-dir", str(data_dir)])
+        if no_data_dir:
+            cmd.append("--no-data-dir")
         if no_report:
             cmd.append("--no-report")
-        if template:
-            cmd.extend(["--template", template])
-        if config:
-            cmd.extend(["--config", config])
-        if cl_config:
-            cmd.extend(["--cl-config", cl_config])
+        if no_plots:
+            cmd.append("--no-plots")
+        if no_config:
+            cmd.append("--no-config")
+        if no_title:
+            cmd.append("--no-title")
+        if title:
+            cmd.extend(["-t", title])
+        if ignore_dirs:
+            cmd.extend(["--ignore-dir", ignore_dirs])
+        if ignore_samples:
+            cmd.extend(["--ignore-samples", ignore_samples])
+        if exclude_modules:
+            cmd.extend(["--exclude", exclude_modules])
+        if include_modules:
+            cmd.extend(["--include", include_modules])
+        if verbose:
+            cmd.append("-v")
 
+        # Execute MultiQC report generation
         try:
-            # Execute MultiQC report generation
             result = subprocess.run(
                 cmd,
                 capture_output=True,
@@ -201,27 +244,32 @@ class MultiQCServer(MCPServerBase):
                 check=False,
             )
 
-            # Get output files
+            # Collect output files: the main report file in outdir
             output_files = []
-            try:
-                # MultiQC typically creates HTML report and data directory
-                html_report = f"{output_dir}/{filename}.html"
-                data_dir = f"{output_dir}/{filename}_data"
+            output_report = outdir / filename
+            if output_report.exists():
+                output_files.append(str(output_report.resolve()))
 
-                if os.path.exists(html_report):
-                    output_files.append(html_report)
-                if os.path.exists(data_dir):
-                    output_files.append(data_dir)
-            except Exception:
-                pass
+            # Also check for data directory if it was created
+            if not no_data_dir:
+                data_dir_path = outdir / f"{Path(filename).stem}_data"
+                if data_dir_path.exists():
+                    output_files.append(str(data_dir_path.resolve()))
+
+            success = result.returncode == 0
+            error = (
+                None
+                if success
+                else f"MultiQC failed with exit code {result.returncode}"
+            )
 
             return {
-                "command_executed": " ".join(cmd),
+                "command_executed": " ".join(shlex.quote(c) for c in cmd),
                 "stdout": result.stdout,
                 "stderr": result.stderr,
                 "output_files": output_files,
-                "exit_code": result.returncode,
-                "success": result.returncode == 0,
+                "success": success,
+                "error": error,
             }
 
         except FileNotFoundError:
@@ -230,17 +278,17 @@ class MultiQCServer(MCPServerBase):
                 "stdout": "",
                 "stderr": "MultiQC not found in PATH",
                 "output_files": [],
-                "exit_code": -1,
                 "success": False,
                 "error": "MultiQC not found in PATH",
             }
         except Exception as e:
             return {
-                "command_executed": "",
+                "command_executed": " ".join(shlex.quote(c) for c in cmd)
+                if "cmd" in locals()
+                else "",
                 "stdout": "",
                 "stderr": str(e),
                 "output_files": [],
-                "exit_code": -1,
                 "success": False,
                 "error": str(e),
             }
@@ -250,29 +298,34 @@ class MultiQCServer(MCPServerBase):
             name="multiqc_modules",
             description="List available MultiQC modules",
             inputs={
-                "search_pattern": "str",
+                "search_pattern": "Optional[str]",
             },
             outputs={
                 "command_executed": "str",
                 "stdout": "str",
                 "stderr": "str",
-                "modules": "list[str]",
-                "exit_code": "int",
+                "modules": "List[str]",
+                "success": "bool",
+                "error": "Optional[str]",
             },
             server_type=MCPServerType.CUSTOM,
             examples=[
                 {
                     "description": "List all available MultiQC modules",
+                    "parameters": {},
+                },
+                {
+                    "description": "Search for specific MultiQC modules",
                     "parameters": {
-                        "search_pattern": "*",
+                        "search_pattern": "fastqc",
                     },
-                }
+                },
             ],
         )
     )
     def multiqc_modules(
         self,
-        search_pattern: str = "*",
+        search_pattern: str | None = None,
     ) -> dict[str, Any]:
         """
         List available MultiQC modules.
@@ -281,15 +334,15 @@ class MultiQCServer(MCPServerBase):
         to generate reports from different bioinformatics tools.
 
         Args:
-            search_pattern: Pattern to search for modules
+            search_pattern: Optional pattern to search for specific modules
 
         Returns:
-            Dictionary containing command executed, stdout, stderr, modules list, and exit code
+            Dictionary containing command executed, stdout, stderr, modules list, and success status
         """
         # Build command
         cmd = ["multiqc", "--list-modules"]
 
-        if search_pattern != "*":
+        if search_pattern:
             cmd.extend(["--search", search_pattern])
 
         try:
@@ -312,13 +365,20 @@ class MultiQCServer(MCPServerBase):
             except Exception:
                 pass
 
+            success = result.returncode == 0
+            error = (
+                None
+                if success
+                else f"MultiQC failed with exit code {result.returncode}"
+            )
+
             return {
-                "command_executed": " ".join(cmd),
+                "command_executed": " ".join(shlex.quote(c) for c in cmd),
                 "stdout": result.stdout,
                 "stderr": result.stderr,
                 "modules": modules,
-                "exit_code": result.returncode,
-                "success": result.returncode == 0,
+                "success": success,
+                "error": error,
             }
 
         except FileNotFoundError:
@@ -327,17 +387,17 @@ class MultiQCServer(MCPServerBase):
                 "stdout": "",
                 "stderr": "MultiQC not found in PATH",
                 "modules": [],
-                "exit_code": -1,
                 "success": False,
                 "error": "MultiQC not found in PATH",
             }
         except Exception as e:
             return {
-                "command_executed": "",
+                "command_executed": " ".join(shlex.quote(c) for c in cmd)
+                if "cmd" in locals()
+                else "",
                 "stdout": "",
                 "stderr": str(e),
                 "modules": [],
-                "exit_code": -1,
                 "success": False,
                 "error": str(e),
             }
@@ -347,21 +407,45 @@ class MultiQCServer(MCPServerBase):
         try:
             from testcontainers.core.container import DockerContainer
 
-            # Create container
-            container = DockerContainer("python:3.11-slim")
+            # Create container with the correct image matching the example
+            container = DockerContainer(self.config.container_image)
             container.with_name(f"mcp-multiqc-server-{id(self)}")
 
-            # Install MultiQC
-            container.with_command("bash -c 'pip install multiqc && tail -f /dev/null'")
+            # Mount workspace and output directories like the example
+            if (
+                hasattr(self.config, "working_directory")
+                and self.config.working_directory
+            ):
+                workspace_path = Path(self.config.working_directory)
+                workspace_path.mkdir(parents=True, exist_ok=True)
+                container.with_volume_mapping(
+                    str(workspace_path), "/app/workspace", mode="rw"
+                )
+
+            output_path = Path("/tmp/multiqc_output")  # Default output path
+            output_path.mkdir(parents=True, exist_ok=True)
+            container.with_volume_mapping(str(output_path), "/app/output", mode="rw")
+
+            # Set environment variables
+            for key, value in self.config.environment_variables.items():
+                container.with_env(key, value)
 
             # Start container
             container.start()
 
             # Wait for container to be ready
             container.reload()
-            while container.status != "running":
-                await asyncio.sleep(0.1)
+            max_attempts = 30
+            for attempt in range(max_attempts):
+                if container.status == "running":
+                    break
+                await asyncio.sleep(0.5)
                 container.reload()
+
+            if container.status != "running":
+                raise RuntimeError(
+                    f"Container failed to start after {max_attempts} attempts"
+                )
 
             # Store container info
             self.container_id = container.get_wrapped_container().id
@@ -380,6 +464,7 @@ class MultiQCServer(MCPServerBase):
             )
 
         except Exception as e:
+            self.logger.error(f"Failed to deploy MultiQC server: {e}")
             return MCPServerDeployment(
                 server_name=self.name,
                 server_type=self.server_type,
@@ -402,7 +487,8 @@ class MultiQCServer(MCPServerBase):
 
                 return True
             return False
-        except Exception:
+        except Exception as e:
+            self.logger.error(f"Failed to stop MultiQC server: {e}")
             return False
 
     def get_server_info(self) -> dict[str, Any]:
@@ -410,10 +496,12 @@ class MultiQCServer(MCPServerBase):
         return {
             "name": self.name,
             "type": "multiqc",
-            "version": "1.14",
-            "description": "MultiQC report generation server",
+            "version": self.config.environment_variables.get("MULTIQC_VERSION", "1.29"),
+            "description": "MultiQC report generation server with Pydantic AI integration",
             "tools": self.list_tools(),
             "container_id": self.container_id,
             "container_name": self.container_name,
             "status": "running" if self.container_id else "stopped",
+            "pydantic_ai_enabled": self.pydantic_ai_agent is not None,
+            "session_active": self.session is not None,
         }

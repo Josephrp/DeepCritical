@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from .agents.workflow_pattern_agents import (
     AdaptivePatternAgent,
@@ -63,15 +63,15 @@ class WorkflowPatternConfig(BaseModel):
     enable_monitoring: bool = Field(True, description="Enable execution monitoring")
     enable_caching: bool = Field(True, description="Enable result caching")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "pattern": "collaborative",
-                "max_rounds": 10,
-                "consensus_threshold": 0.8,
-                "timeout": 300.0,
+                "enable_caching": True,
+                "cache_ttl": 3600,
+                "max_parallel_tasks": 5,
             }
         }
+    )
 
 
 class AgentExecutorRegistry:

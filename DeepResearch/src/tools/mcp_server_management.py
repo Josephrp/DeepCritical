@@ -10,11 +10,12 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Protocol
 
 from pydantic import BaseModel, Field
 from pydantic_ai import RunContext
 
+# Import all required modules
 from ..datatypes.mcp import (
     MCPServerConfig,
     MCPServerDeployment,
@@ -27,7 +28,6 @@ from ..tools.bioinformatics.bcftools_server import BCFtoolsServer
 from ..tools.bioinformatics.bedtools_server import BEDToolsServer
 from ..tools.bioinformatics.bowtie2_server import Bowtie2Server
 from ..tools.bioinformatics.busco_server import BUSCOServer
-from ..tools.bioinformatics.bwa_server import BWAServer
 from ..tools.bioinformatics.cutadapt_server import CutadaptServer
 from ..tools.bioinformatics.deeptools_server import DeeptoolsServer
 from ..tools.bioinformatics.fastp_server import FastpServer
@@ -36,27 +36,87 @@ from ..tools.bioinformatics.featurecounts_server import FeatureCountsServer
 from ..tools.bioinformatics.flye_server import FlyeServer
 from ..tools.bioinformatics.freebayes_server import FreeBayesServer
 from ..tools.bioinformatics.hisat2_server import HISAT2Server
-from ..tools.bioinformatics.homer_server import HOMERServer
-from ..tools.bioinformatics.htseq_server import HTSeqServer
 from ..tools.bioinformatics.kallisto_server import KallistoServer
 from ..tools.bioinformatics.macs3_server import MACS3Server
 from ..tools.bioinformatics.meme_server import MEMEServer
 from ..tools.bioinformatics.minimap2_server import Minimap2Server
 from ..tools.bioinformatics.multiqc_server import MultiQCServer
-from ..tools.bioinformatics.picard_server import PicardServer
 from ..tools.bioinformatics.qualimap_server import QualimapServer
 from ..tools.bioinformatics.salmon_server import SalmonServer
 from ..tools.bioinformatics.samtools_server import SamtoolsServer
 from ..tools.bioinformatics.seqtk_server import SeqtkServer
 from ..tools.bioinformatics.star_server import STARServer
 from ..tools.bioinformatics.stringtie_server import StringTieServer
-from ..tools.bioinformatics.tophat_server import TopHatServer
 from ..tools.bioinformatics.trimgalore_server import TrimGaloreServer
 from ..utils.testcontainers_deployer import (
     TestcontainersConfig,
     TestcontainersDeployer,
 )
 from .base import ExecutionResult, ToolRunner, ToolSpec, registry
+
+
+class MCPServerProtocol(Protocol):
+    """Protocol defining the expected interface for MCP server classes."""
+
+    def list_tools(self) -> list[str]:
+        """Return list of available tools."""
+        ...
+
+    def run_tool(self, tool_name: str, **kwargs) -> Any:
+        """Run a specific tool."""
+        ...
+
+
+# Placeholder classes for servers not yet implemented
+class BWAServer(MCPServerProtocol):
+    """Placeholder for BWA server - not yet implemented."""
+
+    def list_tools(self) -> list[str]:
+        return []
+
+    def run_tool(self, tool_name: str, **kwargs) -> Any:
+        raise NotImplementedError("BWA server not yet implemented")
+
+
+class TopHatServer(MCPServerProtocol):
+    """Placeholder for TopHat server - not yet implemented."""
+
+    def list_tools(self) -> list[str]:
+        return []
+
+    def run_tool(self, tool_name: str, **kwargs) -> Any:
+        raise NotImplementedError("TopHat server not yet implemented")
+
+
+class HTSeqServer(MCPServerProtocol):
+    """Placeholder for HTSeq server - not yet implemented."""
+
+    def list_tools(self) -> list[str]:
+        return []
+
+    def run_tool(self, tool_name: str, **kwargs) -> Any:
+        raise NotImplementedError("HTSeq server not yet implemented")
+
+
+class PicardServer(MCPServerProtocol):
+    """Placeholder for Picard server - not yet implemented."""
+
+    def list_tools(self) -> list[str]:
+        return []
+
+    def run_tool(self, tool_name: str, **kwargs) -> Any:
+        raise NotImplementedError("Picard server not yet implemented")
+
+
+class HOMERServer(MCPServerProtocol):
+    """Placeholder for HOMER server - not yet implemented."""
+
+    def list_tools(self) -> list[str]:
+        return []
+
+    def run_tool(self, tool_name: str, **kwargs) -> Any:
+        raise NotImplementedError("HOMER server not yet implemented")
+
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -237,7 +297,7 @@ class MCPServerListTool(ToolRunner):
 
                 if include_tools:
                     try:
-                        server_instance = server_class()
+                        server_instance: MCPServerProtocol = server_class()  # type: ignore[assignment]
                         server_info["tools"] = server_instance.list_tools()
                     except Exception as e:
                         server_info["tools"] = []

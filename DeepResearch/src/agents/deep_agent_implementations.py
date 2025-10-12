@@ -12,7 +12,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic_ai import Agent, ModelRetry
 
 # Import existing DeepCritical types
@@ -55,20 +55,7 @@ class AgentConfig(BaseModel):
             raise ValueError("Agent name cannot be empty")
         return v.strip()
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "name": "research-agent",
-                "model_name": "anthropic:claude-sonnet-4-0",
-                "system_prompt": "You are a research assistant...",
-                "tools": ["write_todos", "read_file", "web_search"],
-                "capabilities": ["research", "analysis"],
-                "max_iterations": 10,
-                "timeout": 300.0,
-                "enable_retry": True,
-                "retry_attempts": 3,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class AgentExecutionResult(BaseModel):
@@ -86,17 +73,7 @@ class AgentExecutionResult(BaseModel):
         default_factory=dict, description="Additional metadata"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "success": True,
-                "result": {"answer": "Research completed successfully"},
-                "execution_time": 45.2,
-                "iterations_used": 3,
-                "tools_used": ["write_todos", "read_file"],
-                "metadata": {"tokens_used": 1500},
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class BaseDeepAgent:

@@ -17,7 +17,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class MCPServerType(str, Enum):
@@ -81,8 +81,8 @@ class MCPToolSpec(BaseModel):
         default_factory=list, description="Usage examples"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "name": "run_fastqc",
                 "description": "Run FastQC quality control on FASTQ files",
@@ -121,6 +121,7 @@ class MCPToolSpec(BaseModel):
                 ],
             }
         }
+    )
 
 
 class MCPDeploymentMethod(str, Enum):
@@ -202,8 +203,8 @@ class MCPServerConfig(BaseModel):
         default_factory=list, description="Available tool specifications"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "server_name": "fastqc-server",
                 "server_type": "fastqc",
@@ -218,6 +219,7 @@ class MCPServerConfig(BaseModel):
                 "cpu_limit": 1.0,
             }
         }
+    )
 
 
 class MCPServerDeployment(BaseModel):
@@ -239,8 +241,8 @@ class MCPServerDeployment(BaseModel):
     )
     configuration: MCPServerConfig = Field(..., description="Server configuration")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "server_name": "fastqc-server",
                 "server_type": "fastqc",
@@ -255,6 +257,7 @@ class MCPServerDeployment(BaseModel):
                 "configuration": {},
             }
         }
+    )
 
 
 class MCPExecutionContext(BaseModel):
@@ -299,8 +302,8 @@ class MCPToolExecutionRequest(BaseModel):
     retry_on_failure: bool = Field(True, description="Whether to retry on failure")
     max_retries: int = Field(3, description="Maximum retry attempts")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "server_name": "fastqc-server",
                 "tool_name": "run_fastqc",
@@ -313,6 +316,7 @@ class MCPToolExecutionRequest(BaseModel):
                 "async_execution": False,
             }
         }
+    )
 
 
 class MCPToolExecutionResult(BaseModel):
@@ -330,8 +334,8 @@ class MCPToolExecutionResult(BaseModel):
     stderr: str = Field("", description="Standard error")
     exit_code: int = Field(0, description="Process exit code")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "request": {},
                 "success": True,
@@ -349,6 +353,7 @@ class MCPToolExecutionResult(BaseModel):
                 "exit_code": 0,
             }
         }
+    )
 
 
 class MCPBenchmarkConfig(BaseModel):
@@ -365,8 +370,8 @@ class MCPBenchmarkConfig(BaseModel):
     iterations: int = Field(3, description="Number of iterations")
     warmup_iterations: int = Field(1, description="Warmup iterations")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "test_dataset": "/data/test_fastq/",
                 "expected_outputs": {
@@ -379,6 +384,7 @@ class MCPBenchmarkConfig(BaseModel):
                 "warmup_iterations": 1,
             }
         }
+    )
 
 
 class MCPBenchmarkResult(BaseModel):
@@ -398,8 +404,8 @@ class MCPBenchmarkResult(BaseModel):
         default_factory=datetime.now, description="Completion timestamp"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "server_name": "fastqc-server",
                 "config": {},
@@ -414,6 +420,7 @@ class MCPBenchmarkResult(BaseModel):
                 "completed_at": "2024-01-15T10:30:00Z",
             }
         }
+    )
 
 
 class MCPServerRegistry(BaseModel):
@@ -480,8 +487,8 @@ class MCPWorkflowRequest(BaseModel):
     )
     timeout: int = Field(3600, description="Workflow timeout in seconds")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "workflow_name": "quality_control_pipeline",
                 "servers_required": ["fastqc", "samtools"],
@@ -496,6 +503,7 @@ class MCPWorkflowRequest(BaseModel):
                 "timeout": 3600,
             }
         }
+    )
 
 
 class MCPWorkflowResult(BaseModel):
@@ -515,8 +523,8 @@ class MCPWorkflowResult(BaseModel):
         default_factory=datetime.now, description="Completion timestamp"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "workflow_name": "quality_control_pipeline",
                 "success": True,
@@ -532,6 +540,7 @@ class MCPWorkflowResult(BaseModel):
                 "completed_at": "2024-01-15T10:32:00Z",
             }
         }
+    )
 
 
 # Pydantic AI MCP Integration Types
@@ -553,8 +562,8 @@ class MCPClientConfig(BaseModel):
         60, description="Health check interval in seconds"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "server_url": "http://localhost:8000",
                 "server_name": "fastqc-server",
@@ -563,6 +572,7 @@ class MCPClientConfig(BaseModel):
                 "retry_attempts": 3,
             }
         }
+    )
 
 
 class MCPAgentIntegration(BaseModel):
@@ -581,8 +591,8 @@ class MCPAgentIntegration(BaseModel):
     execution_timeout: int = Field(300, description="Default execution timeout")
     enable_streaming: bool = Field(True, description="Enable streaming responses")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "agent_model": "anthropic:claude-sonnet-4-0",
                 "system_prompt": "You are a bioinformatics analysis assistant with access to various tools.",
@@ -591,6 +601,7 @@ class MCPAgentIntegration(BaseModel):
                 "enable_streaming": True,
             }
         }
+    )
 
 
 class MCPToolCall(BaseModel):

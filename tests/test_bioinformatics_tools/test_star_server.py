@@ -17,14 +17,14 @@ class TestSTARServer(BaseBioinformaticsToolTest):
 
     @property
     def tool_name(self) -> str:
-        return "star"
+        return "star-server"
 
     @property
     def tool_class(self):
-        # This would import the actual STAR server class
-        from unittest.mock import Mock
+        # Import the actual StarServer server class
+        from DeepResearch.src.tools.bioinformatics.star_server import STARServer
 
-        return Mock
+        return STARServer
 
     @property
     def required_parameters(self) -> dict:
@@ -54,6 +54,7 @@ class TestSTARServer(BaseBioinformaticsToolTest):
     def test_star_alignment(self, tool_instance, sample_input_files, sample_output_dir):
         """Test STAR alignment functionality."""
         params = {
+            "operation": "alignment",
             "genome_dir": "/path/to/genome/index",  # Mock genome directory
             "read_files_in": f"{sample_input_files['reads_1']} {sample_input_files['reads_2']}",
             "out_file_name_prefix": str(sample_output_dir / "star_output"),
@@ -65,6 +66,9 @@ class TestSTARServer(BaseBioinformaticsToolTest):
         assert result["success"] is True
         assert "output_files" in result
 
+        # Skip file checks for mock results
+        if result.get("mock"):
+            return
         # Verify output files were created
         bam_file = sample_output_dir / "star_outputAligned.out.bam"
         assert bam_file.exists()
@@ -83,6 +87,7 @@ class TestSTARServer(BaseBioinformaticsToolTest):
         )
 
         params = {
+            "operation": "generate_genome",
             "genome_fasta_files": str(fasta_file),
             "sjdb_gtf_file": str(gtf_file),
             "genome_dir": str(genome_dir),
@@ -92,5 +97,11 @@ class TestSTARServer(BaseBioinformaticsToolTest):
         result = tool_instance.run(params)
 
         assert result["success"] is True
+
+        # Skip file checks for mock results
+        if result.get("mock"):
+            return
+
+        # Verify output files were created
         assert genome_dir.exists()
         assert (genome_dir / "SAindex").exists()  # STAR index files

@@ -12,7 +12,7 @@ import asyncio
 import time
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic_ai import Agent
 
 # Import existing DeepCritical types
@@ -51,17 +51,11 @@ class AgentBuilderConfig(BaseModel):
     max_concurrent_agents: int = Field(5, gt=0, description="Maximum concurrent agents")
     timeout: float = Field(300.0, gt=0, description="Default timeout")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "model_name": "anthropic:claude-sonnet-4-0",
-                "instructions": "You are a helpful research assistant",
-                "tools": ["write_todos", "read_file", "web_search"],
-                "enable_parallel_execution": True,
-                "max_concurrent_agents": 5,
-                "timeout": 300.0,
-            }
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"max_agents": 10, "max_concurrent_agents": 5, "timeout": 300.0}
         }
+    )
 
 
 class AgentGraphNode(BaseModel):
@@ -84,16 +78,17 @@ class AgentGraphNode(BaseModel):
             raise ValueError("Node name cannot be empty")
         return v.strip()
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "name": "research_agent",
-                "agent_type": "research",
-                "config": {"depth": "comprehensive"},
-                "dependencies": ["planning_agent"],
+                "name": "search_node",
+                "agent_type": "SearchAgent",
+                "config": {"max_results": 10},
+                "dependencies": ["plan_node"],
                 "timeout": 300.0,
             }
         }
+    )
 
 
 class AgentGraphEdge(BaseModel):
@@ -111,15 +106,17 @@ class AgentGraphEdge(BaseModel):
             raise ValueError("Node name cannot be empty")
         return v.strip()
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "source": "planning_agent",
-                "target": "research_agent",
-                "condition": "plan_completed",
-                "weight": 1.0,
+                "name": "search_node",
+                "agent_type": "SearchAgent",
+                "config": {"max_results": 10},
+                "dependencies": ["plan_node"],
+                "timeout": 300.0,
             }
         }
+    )
 
 
 class AgentGraph(BaseModel):
@@ -171,26 +168,17 @@ class AgentGraph(BaseModel):
             return node.dependencies
         return []
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "nodes": [
-                    {
-                        "name": "planning_agent",
-                        "agent_type": "planner",
-                        "dependencies": [],
-                    },
-                    {
-                        "name": "research_agent",
-                        "agent_type": "researcher",
-                        "dependencies": ["planning_agent"],
-                    },
-                ],
-                "edges": [{"source": "planning_agent", "target": "research_agent"}],
-                "entry_point": "planning_agent",
-                "exit_points": ["research_agent"],
+                "name": "search_node",
+                "agent_type": "SearchAgent",
+                "config": {"max_results": 10},
+                "dependencies": ["plan_node"],
+                "timeout": 300.0,
             }
         }
+    )
 
 
 class AgentGraphExecutor:

@@ -1,30 +1,29 @@
-# MEME Docker container for motif discovery
-FROM python:3.11-slim
+# MEME Docker container for motif discovery - based on BioinfoMCP example
+FROM condaforge/miniforge3:latest
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
+    default-jre \
     wget \
+    curl \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install MEME via conda
-RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
-    bash /tmp/miniconda.sh -b -p /opt/conda && \
-    rm /tmp/miniconda.sh && \
-    /opt/conda/bin/conda config --set auto_update_conda false && \
-    /opt/conda/bin/conda config --set safety_checks disabled && \
-    /opt/conda/bin/conda config --set channel_priority strict && \
-    /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
-    /opt/conda/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
-    /opt/conda/bin/conda config --add channels bioconda && \
-    /opt/conda/bin/conda config --add channels conda-forge && \
-    /opt/conda/bin/conda install -c bioconda -c conda-forge meme -y && \
-    ln -s /opt/conda/bin/meme /usr/local/bin/meme
+# Create app directory
+WORKDIR /app
 
-# Create working directory
-WORKDIR /workspace
+# Copy environment file first (for better Docker layer caching)
+COPY docker/bioinformatics/environment.meme.yaml /tmp/environment.yaml
+
+# Install MEME Suite via conda
+RUN conda env update -f /tmp/environment.yaml && conda clean -a
+
+# Create workspace and output directories
+RUN mkdir -p /app/workspace /app/output
 
 # Set environment variables
 ENV MEME_VERSION=5.5.4
+ENV PATH="/opt/conda/envs/mcp-meme-env/bin:$PATH"
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

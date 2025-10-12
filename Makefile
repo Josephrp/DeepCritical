@@ -460,30 +460,22 @@ docker-status-bioinformatics:
 # Validate bioinformatics configurations
 validate-bioinformatics:
 	@echo "🔍 Validating bioinformatics configurations..."
-	python -c "
-import yaml
-import os
-from pathlib import Path
-
-config_dir = Path('DeepResearch/src/tools/bioinformatics')
-valid_configs = 0
-invalid_configs = 0
-
-for config_file in config_dir.glob('*_server.py'):
-    try:
-        # Basic syntax check by importing
-        module_name = config_file.stem
-        exec(f'from DeepResearch.src.tools.bioinformatics.{module_name} import *')
-        print(f'✅ {module_name}')
-        valid_configs += 1
-    except Exception as e:
-        print(f'❌ {module_name}: {e}')
-        invalid_configs += 1
-
-print(f'\\n📊 Validation Summary:')
-print(f'✅ Valid configs: {valid_configs}')
-print(f'❌ Invalid configs: {invalid_configs}')
-
-if invalid_configs > 0:
-    exit(1)
-"
+	@python3 -c "\
+import yaml, os; \
+from pathlib import Path; \
+config_dir = Path('DeepResearch/src/tools/bioinformatics'); \
+valid_configs = 0; \
+invalid_configs = 0; \
+for config_file in config_dir.glob('*_server.py'): \
+    try: \
+        module_name = config_file.stem; \
+        exec(f'from DeepResearch.src.tools.bioinformatics.{module_name} import *'); \
+        print(f'✅ {module_name}'); \
+        valid_configs += 1; \
+    except Exception as e: \
+        print(f'❌ {module_name}: {e}'); \
+        invalid_configs += 1; \
+print(f'\\n📊 Validation Summary:'); \
+print(f'✅ Valid configs: {valid_configs}'); \
+print(f'❌ Invalid configs: {invalid_configs}'); \
+if invalid_configs > 0: exit(1)"

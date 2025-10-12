@@ -17,7 +17,7 @@ class TestHOMERServer(BaseBioinformaticsToolTest):
 
     @property
     def tool_name(self) -> str:
-        return "homer"
+        return "homer-server"
 
     @property
     def tool_class(self):
@@ -49,6 +49,7 @@ class TestHOMERServer(BaseBioinformaticsToolTest):
     ):
         """Test HOMER findMotifs functionality."""
         params = {
+            "operation": "findMotifs",
             "input_file": str(sample_input_files["input_file"]),
             "output_dir": str(sample_output_dir),
             "genome": "hg38",
@@ -60,12 +61,17 @@ class TestHOMERServer(BaseBioinformaticsToolTest):
         assert result["success"] is True
         assert "output_files" in result
 
+        # Skip file checks for mock results
+        if result.get("mock"):
+            return
+
     @pytest.mark.optional
     def test_homer_annotatePeaks(
         self, tool_instance, sample_input_files, sample_output_dir
     ):
         """Test HOMER annotatePeaks functionality."""
         params = {
+            "operation": "annotatePeaks",
             "input_file": str(sample_input_files["input_file"]),
             "genome": "hg38",
             "output_file": str(sample_output_dir / "annotated.txt"),
@@ -75,3 +81,7 @@ class TestHOMERServer(BaseBioinformaticsToolTest):
 
         assert result["success"] is True
         assert "output_files" in result
+
+        # Skip file checks for mock results
+        if result.get("mock"):
+            return

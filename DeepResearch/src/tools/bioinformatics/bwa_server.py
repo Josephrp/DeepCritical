@@ -1,719 +1,546 @@
 """
-BWA MCP Server - Vendored BioinfoMCP server for DNA sequence alignment.
+BWA MCP Server - Pydantic AI compatible MCP server for DNA sequence alignment.
 
-This module implements a strongly-typed MCP server for BWA (Burrows-Wheeler Aligner),
-a fast and accurate short read aligner for DNA sequencing data, using Pydantic AI
-patterns and testcontainers deployment.
+This module implements an MCP server for BWA (Burrows-Wheeler Aligner),
+a fast and accurate short read aligner for DNA sequencing data, following
+Pydantic AI MCP integration patterns.
+
+This server can be used with Pydantic AI agents via MCPServerStdio toolset.
+
+Usage with Pydantic AI:
+```python
+from pydantic_ai import Agent
+from pydantic_ai.mcp import MCPServerStdio
+
+# Create MCP server toolset
+bwa_server = MCPServerStdio(
+    command='python',
+    args=['bwa_server.py'],
+    tool_prefix='bwa'
+)
+
+# Create agent with BWA tools
+agent = Agent(
+    'openai:gpt-4o',
+    toolsets=[bwa_server]
+)
+
+# Use BWA tools in agent queries
+async def main():
+    async with agent:
+        result = await agent.run(
+            'Index the reference genome at /data/hg38.fa and align reads from /data/reads.fq'
+        )
+        print(result.data)
+```
+
+Run the MCP server:
+```bash
+python bwa_server.py
+```
+
+The server exposes the following tools:
+- bwa_index: Index database sequences in FASTA format
+- bwa_mem: Align 70bp-1Mbp query sequences with BWA-MEM algorithm
+- bwa_aln: Find SA coordinates using BWA-backtrack algorithm
+- bwa_samse: Generate SAM alignments from single-end reads
+- bwa_sampe: Generate SAM alignments from paired-end reads
+- bwa_bwasw: Align sequences using BWA-SW algorithm
 """
 
 from __future__ import annotations
 
-import asyncio
 import os
 import subprocess
-import tempfile
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
-from ...datatypes.bioinformatics_mcp import MCPServerBase, mcp_tool
-from ...datatypes.mcp import (
-    MCPServerConfig,
-    MCPServerDeployment,
-    MCPServerStatus,
-    MCPServerType,
-    MCPToolSpec,
-)
+try:
+    from fastmcp import FastMCP
+except ImportError:
+    # Fallback for environments without fastmcp
+    print("Warning: fastmcp not available, MCP server functionality limited")
+    _FastMCP = None
+
+# Create MCP server instance
+try:
+    mcp = FastMCP("bwa-server")
+except NameError:
+    mcp = None
 
 
-class BWAServer(MCPServerBase):
-    """MCP Server for BWA DNA sequence alignment tool with Pydantic AI integration."""
+# MCP Tool definitions using FastMCP
+# Define the functions first, then apply decorators if FastMCP is available
 
-    def __init__(self, config: MCPServerConfig | None = None):
-        if config is None:
-            config = MCPServerConfig(
-                server_name="bwa-server",
-                server_type=MCPServerType.CUSTOM,
-                container_image="python:3.11-slim",
-                environment_variables={"BWA_VERSION": "0.7.17"},
-                capabilities=["dna_alignment", "short_read_alignment", "genomics"],
-            )
-        super().__init__(config)
 
-    @mcp_tool(
-        MCPToolSpec(
-            name="bwa_index",
-            description="Build BWA index from reference genome FASTA file",
-            inputs={
-                "reference": "str",
-                "algorithm": "str",
-                "prefix": "str",
-            },
-            outputs={
-                "command_executed": "str",
-                "stdout": "str",
-                "stderr": "str",
-                "output_files": "List[str]",
-                "exit_code": "int",
-            },
-            server_type=MCPServerType.CUSTOM,
-            examples=[
-                {
-                    "description": "Build BWA index from reference genome",
-                    "parameters": {
-                        "reference": "/data/genome.fa",
-                        "algorithm": "bwtsw",
-                        "prefix": "/data/hg38",
-                    },
-                }
-            ],
-        )
-    )
-    def bwa_index(
-        self,
-        reference: str,
-        algorithm: str = "bwtsw",
-        prefix: str = "",
-    ) -> dict[str, Any]:
-        """
-        Build BWA index from reference genome FASTA file.
+def bwa_index(
+    in_db_fasta: Path,
+    p: str | None = None,
+    a: str = "is",
+):
+    """
+    Index database sequences in the FASTA format using bwa index.
+    -p STR: Prefix of the output database [default: same as db filename]
+    -a STR: Algorithm for constructing BWT index. Options: 'is' (default), 'bwtsw'.
+    """
+    if not in_db_fasta.exists():
+        raise FileNotFoundError(f"Input fasta file {in_db_fasta} does not exist")
+    if a not in ("is", "bwtsw"):
+        raise ValueError("Parameter 'a' must be either 'is' or 'bwtsw'")
 
-        This tool builds a BWA index from a reference genome FASTA file,
-        which is required for fast and accurate alignment of DNA sequencing reads.
+    cmd = ["bwa", "index"]
+    if p:
+        cmd += ["-p", p]
+    cmd += ["-a", a]
+    cmd.append(str(in_db_fasta))
 
-        Args:
-            reference: Path to reference genome FASTA file
-            algorithm: Indexing algorithm (bwtsw, is)
-            prefix: Prefix for index files (optional, defaults to reference prefix)
-
-        Returns:
-            Dictionary containing command executed, stdout, stderr, output files, and exit code
-        """
-        # Validate reference file exists
-        if not os.path.exists(reference):
-            return {
-                "command_executed": "",
-                "stdout": "",
-                "stderr": f"Reference file does not exist: {reference}",
-                "output_files": [],
-                "exit_code": -1,
-                "success": False,
-                "error": f"Reference file not found: {reference}",
-            }
-
-        # Build command
-        cmd = ["bwa", "index", "-a", algorithm]
-
-        if prefix:
-            cmd.extend(["-p", prefix])
-            index_prefix = prefix
-        else:
-            # Use reference filename as prefix
-            index_prefix = reference.rsplit(".", 1)[0]
-
-        cmd.append(reference)
-
-        try:
-            # Execute BWA index building
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-
-            # Get output files
-            output_files = []
-            try:
-                # BWA creates index files with various extensions
-                index_extensions = [".amb", ".ann", ".bwt", ".pac", ".sa"]
-                for ext in index_extensions:
-                    index_file = f"{index_prefix}{ext}"
-                    if os.path.exists(index_file):
-                        output_files.append(index_file)
-            except Exception:
-                pass
-
-            return {
-                "command_executed": " ".join(cmd),
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "output_files": output_files,
-                "exit_code": result.returncode,
-                "success": result.returncode == 0,
-            }
-
-        except FileNotFoundError:
-            return {
-                "command_executed": "",
-                "stdout": "",
-                "stderr": "BWA not found in PATH",
-                "output_files": [],
-                "exit_code": -1,
-                "success": False,
-                "error": "BWA not found in PATH",
-            }
-        except Exception as e:
-            return {
-                "command_executed": "",
-                "stdout": "",
-                "stderr": str(e),
-                "output_files": [],
-                "exit_code": -1,
-                "success": False,
-                "error": str(e),
-            }
-
-    @mcp_tool(
-        MCPToolSpec(
-            name="bwa_mem",
-            description="Align DNA sequencing reads using BWA-MEM algorithm",
-            inputs={
-                "index": "str",
-                "read1": "str",
-                "read2": "Optional[str]",
-                "output_file": "str",
-                "threads": "int",
-                "min_seed_length": "int",
-                "band_width": "int",
-                "off_diag": "int",
-                "no_rescue": "bool",
-                "skip_mate_rescue": "bool",
-                "skip_pairing": "bool",
-                "match_score": "int",
-                "mismatch_penalty": "int",
-                "gap_open_penalty": "int",
-                "gap_extension_penalty": "int",
-                "clipping_penalty": "int",
-                "unpaired_read_penalty": "int",
-                "score_threshold": "int",
-                "split_factor": "float",
-                "split_width": "int",
-                "h": "bool",
-                "a": "bool",
-                "c": "bool",
-                "mark_secondary_splits": "bool",
-                "u": "bool",
-                "r": "str",
-            },
-            outputs={
-                "command_executed": "str",
-                "stdout": "str",
-                "stderr": "str",
-                "output_files": "List[str]",
-                "exit_code": "int",
-            },
-            server_type=MCPServerType.CUSTOM,
-            examples=[
-                {
-                    "description": "Align paired-end DNA reads to reference",
-                    "parameters": {
-                        "index": "/data/hg38",
-                        "read1": "/data/read1.fq",
-                        "read2": "/data/read2.fq",
-                        "output_file": "/data/alignment.sam",
-                        "threads": 4,
-                    },
-                }
-            ],
-        )
-    )
-    def bwa_mem(
-        self,
-        index: str,
-        read1: str,
-        read2: str | None = None,
-        output_file: str = "",
-        threads: int = 1,
-        min_seed_length: int = 19,
-        band_width: int = 100,
-        off_diag: int = 100,
-        no_rescue: bool = False,
-        skip_mate_rescue: bool = False,
-        skip_pairing: bool = False,
-        match_score: int = 1,
-        mismatch_penalty: int = 4,
-        gap_open_penalty: int = 6,
-        gap_extension_penalty: int = 1,
-        clipping_penalty: int = 5,
-        unpaired_read_penalty: int = 17,
-        score_threshold: int = 30,
-        split_factor: float = 1.5,
-        split_width: int = 16,
-        h: bool = False,
-        a: bool = False,
-        c: bool = False,
-        mark_secondary_splits: bool = False,
-        u: bool = False,
-        r: str = "",
-    ) -> dict[str, Any]:
-        """
-        Align DNA sequencing reads using BWA-MEM algorithm.
-
-        This tool aligns DNA sequencing reads to a reference genome using BWA-MEM,
-        which is optimized for high-throughput sequencing data.
-
-        Args:
-            index: Path to BWA index prefix
-            read1: Path to first read file
-            read2: Path to second read file (optional, for paired-end)
-            output_file: Output SAM file
-            threads: Number of threads to use
-            min_seed_length: Minimum seed length
-            band_width: Band width for banded alignment
-            off_diag: Off-diagonal X-dropoff
-            no_rescue: Skip mate rescue
-            skip_mate_rescue: Skip mate rescue
-            skip_pairing: Skip pairing
-            match_score: Match score
-            mismatch_penalty: Mismatch penalty
-            gap_open_penalty: Gap open penalty
-            gap_extension_penalty: Gap extension penalty
-            clipping_penalty: Clipping penalty
-            unpaired_read_penalty: Unpaired read penalty
-            score_threshold: Minimum score to output
-            split_factor: Split factor
-            split_width: Split width
-            h: Use hard clipping
-            a: Output all alignments
-            c: Append FASTA/FASTQ comment to SAM output
-            mark_secondary_splits: Mark shorter split hits as secondary
-            u: Output unmapped reads
-            r: Read group header line
-
-        Returns:
-            Dictionary containing command executed, stdout, stderr, output files, and exit code
-        """
-        # Validate index files exist
-        index_files = [
-            f"{index}.amb",
-            f"{index}.ann",
-            f"{index}.bwt",
-            f"{index}.pac",
-            f"{index}.sa",
-        ]
-        missing_files = [f for f in index_files if not os.path.exists(f)]
-        if missing_files:
-            return {
-                "command_executed": "",
-                "stdout": "",
-                "stderr": f"Missing index files: {', '.join(missing_files)}",
-                "output_files": [],
-                "exit_code": -1,
-                "success": False,
-                "error": f"Missing index files: {', '.join(missing_files)}",
-            }
-
-        # Validate input files exist
-        if not os.path.exists(read1):
-            return {
-                "command_executed": "",
-                "stdout": "",
-                "stderr": f"Read 1 file does not exist: {read1}",
-                "output_files": [],
-                "exit_code": -1,
-                "success": False,
-                "error": f"Read 1 file not found: {read1}",
-            }
-
-        if read2 and not os.path.exists(read2):
-            return {
-                "command_executed": "",
-                "stdout": "",
-                "stderr": f"Read 2 file does not exist: {read2}",
-                "output_files": [],
-                "exit_code": -1,
-                "success": False,
-                "error": f"Read 2 file not found: {read2}",
-            }
-
-        # Build command
-        cmd = ["bwa", "mem", "-t", str(threads)]
-
-        # Add scoring parameters
-        cmd.extend(["-k", str(min_seed_length)])
-        cmd.extend(["-w", str(band_width)])
-        cmd.extend(["-d", str(off_diag)])
-        cmd.extend(["-r", str(split_factor)])
-        cmd.extend(["-c", str(split_width)])
-        cmd.extend(["-A", str(match_score)])
-        cmd.extend(["-B", str(mismatch_penalty)])
-        cmd.extend(["-O", str(gap_open_penalty)])
-        cmd.extend(["-E", str(gap_extension_penalty)])
-        cmd.extend(["-L", str(clipping_penalty)])
-        cmd.extend(["-U", str(unpaired_read_penalty)])
-        cmd.extend(["-T", str(score_threshold)])
-
-        # Add boolean flags
-        if no_rescue:
-            cmd.append("-P")
-        if skip_mate_rescue:
-            cmd.append("-S")
-        if skip_pairing:
-            cmd.append("-P")
-        if h:
-            cmd.append("-H")
-        if a:
-            cmd.append("-a")
-        if c:
-            cmd.append("-C")
-        if mark_secondary_splits:
-            cmd.append("-L")
-        if u:
-            cmd.append("-U")
-
-        # Add read group
-        if r:
-            cmd.extend(["-R", r])
-
-        # Add index and reads
-        cmd.append(index)
-
-        if read2:
-            cmd.extend([read1, read2])
-        else:
-            cmd.append(read1)
-
-        try:
-            # Execute BWA-MEM alignment with output redirection
-            with open(output_file, "w") as outfile:
-                result = subprocess.run(
-                    cmd,
-                    stdout=outfile,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    check=False,
-                )
-
-            # Get output files
-            output_files = []
-            if os.path.exists(output_file):
-                output_files = [output_file]
-
-            return {
-                "command_executed": " ".join(cmd),
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "output_files": output_files,
-                "exit_code": result.returncode,
-                "success": result.returncode == 0,
-            }
-
-        except FileNotFoundError:
-            return {
-                "command_executed": "",
-                "stdout": "",
-                "stderr": "BWA not found in PATH",
-                "output_files": [],
-                "exit_code": -1,
-                "success": False,
-                "error": "BWA not found in PATH",
-            }
-        except Exception as e:
-            return {
-                "command_executed": "",
-                "stdout": "",
-                "stderr": str(e),
-                "output_files": [],
-                "exit_code": -1,
-                "success": False,
-                "error": str(e),
-            }
-
-    @mcp_tool(
-        MCPToolSpec(
-            name="bwa_aln",
-            description="Align DNA sequencing reads using BWA-ALN algorithm",
-            inputs={
-                "index": "str",
-                "read1": "str",
-                "read2": "Optional[str]",
-                "output_file": "str",
-                "threads": "int",
-                "min_seed_length": "int",
-                "band_width": "int",
-                "off_diag": "int",
-                "no_rescue": "bool",
-                "skip_mate_rescue": "bool",
-                "skip_pairing": "bool",
-                "match_score": "int",
-                "mismatch_penalty": "int",
-                "gap_open_penalty": "int",
-                "gap_extension_penalty": "int",
-                "clipping_penalty": "int",
-                "unpaired_read_penalty": "int",
-                "score_threshold": "int",
-                "split_factor": "float",
-                "split_width": "int",
-            },
-            outputs={
-                "command_executed": "str",
-                "stdout": "str",
-                "stderr": "str",
-                "output_files": "List[str]",
-                "exit_code": "int",
-            },
-            server_type=MCPServerType.CUSTOM,
-            examples=[
-                {
-                    "description": "Align paired-end DNA reads using BWA-ALN",
-                    "parameters": {
-                        "index": "/data/hg38",
-                        "read1": "/data/read1.fq",
-                        "read2": "/data/read2.fq",
-                        "output_file": "/data/alignment.sai",
-                        "threads": 4,
-                    },
-                }
-            ],
-        )
-    )
-    def bwa_aln(
-        self,
-        index: str,
-        read1: str,
-        read2: str | None = None,
-        output_file: str = "",
-        threads: int = 1,
-        min_seed_length: int = 32,
-        band_width: int = 100,
-        off_diag: int = 100,
-        no_rescue: bool = False,
-        skip_mate_rescue: bool = False,
-        skip_pairing: bool = False,
-        match_score: int = 1,
-        mismatch_penalty: int = 3,
-        gap_open_penalty: int = 11,
-        gap_extension_penalty: int = 4,
-        clipping_penalty: int = 5,
-        unpaired_read_penalty: int = 9,
-        score_threshold: int = 30,
-        split_factor: float = 1.5,
-        split_width: int = 16,
-    ) -> dict[str, Any]:
-        """
-        Align DNA sequencing reads using BWA-ALN algorithm.
-
-        This tool aligns DNA sequencing reads using BWA-ALN, which is optimized
-        for reads up to 100bp. For longer reads, use BWA-MEM instead.
-
-        Args:
-            index: Path to BWA index prefix
-            read1: Path to first read file
-            read2: Path to second read file (optional, for paired-end)
-            output_file: Output SAI file
-            threads: Number of threads to use
-            min_seed_length: Minimum seed length
-            band_width: Band width for banded alignment
-            off_diag: Off-diagonal X-dropoff
-            no_rescue: Skip mate rescue
-            skip_mate_rescue: Skip mate rescue
-            skip_pairing: Skip pairing
-            match_score: Match score
-            mismatch_penalty: Mismatch penalty
-            gap_open_penalty: Gap open penalty
-            gap_extension_penalty: Gap extension penalty
-            clipping_penalty: Clipping penalty
-            unpaired_read_penalty: Unpaired read penalty
-            score_threshold: Minimum score to output
-            split_factor: Split factor
-            split_width: Split width
-
-        Returns:
-            Dictionary containing command executed, stdout, stderr, output files, and exit code
-        """
-        # Validate index files exist
-        index_files = [
-            f"{index}.amb",
-            f"{index}.ann",
-            f"{index}.bwt",
-            f"{index}.pac",
-            f"{index}.sa",
-        ]
-        missing_files = [f for f in index_files if not os.path.exists(f)]
-        if missing_files:
-            return {
-                "command_executed": "",
-                "stdout": "",
-                "stderr": f"Missing index files: {', '.join(missing_files)}",
-                "output_files": [],
-                "exit_code": -1,
-                "success": False,
-                "error": f"Missing index files: {', '.join(missing_files)}",
-            }
-
-        # Validate input files exist
-        if not os.path.exists(read1):
-            return {
-                "command_executed": "",
-                "stdout": "",
-                "stderr": f"Read 1 file does not exist: {read1}",
-                "output_files": [],
-                "exit_code": -1,
-                "success": False,
-                "error": f"Read 1 file not found: {read1}",
-            }
-
-        if read2 and not os.path.exists(read2):
-            return {
-                "command_executed": "",
-                "stdout": "",
-                "stderr": f"Read 2 file does not exist: {read2}",
-                "output_files": [],
-                "exit_code": -1,
-                "success": False,
-                "error": f"Read 2 file not found: {read2}",
-            }
-
-        # Build command
-        cmd = ["bwa", "aln", "-t", str(threads)]
-
-        # Add scoring parameters
-        cmd.extend(["-k", str(min_seed_length)])
-        cmd.extend(["-w", str(band_width)])
-        cmd.extend(["-d", str(off_diag)])
-        cmd.extend(["-r", str(split_factor)])
-        cmd.extend(["-c", str(split_width)])
-        cmd.extend(["-A", str(match_score)])
-        cmd.extend(["-B", str(mismatch_penalty)])
-        cmd.extend(["-O", str(gap_open_penalty)])
-        cmd.extend(["-E", str(gap_extension_penalty)])
-        cmd.extend(["-L", str(clipping_penalty)])
-        cmd.extend(["-U", str(unpaired_read_penalty)])
-        cmd.extend(["-T", str(score_threshold)])
-
-        # Add boolean flags
-        if no_rescue:
-            cmd.append("-P")
-        if skip_mate_rescue:
-            cmd.append("-S")
-        if skip_pairing:
-            cmd.append("-P")
-
-        # Add index and reads
-        cmd.append(index)
-        cmd.append(read1)
-
-        try:
-            # Execute BWA-ALN alignment with output redirection
-            with open(output_file, "w") as outfile:
-                result = subprocess.run(
-                    cmd,
-                    stdout=outfile,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    check=False,
-                )
-
-            # Get output files
-            output_files = []
-            if os.path.exists(output_file):
-                output_files = [output_file]
-
-            return {
-                "command_executed": " ".join(cmd),
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "output_files": output_files,
-                "exit_code": result.returncode,
-                "success": result.returncode == 0,
-            }
-
-        except FileNotFoundError:
-            return {
-                "command_executed": "",
-                "stdout": "",
-                "stderr": "BWA not found in PATH",
-                "output_files": [],
-                "exit_code": -1,
-                "success": False,
-                "error": "BWA not found in PATH",
-            }
-        except Exception as e:
-            return {
-                "command_executed": "",
-                "stdout": "",
-                "stderr": str(e),
-                "output_files": [],
-                "exit_code": -1,
-                "success": False,
-                "error": str(e),
-            }
-
-    async def deploy_with_testcontainers(self) -> MCPServerDeployment:
-        """Deploy BWA server using testcontainers."""
-        try:
-            from testcontainers.core.container import DockerContainer
-
-            # Create container
-            container = DockerContainer("python:3.11-slim")
-            container.with_name(f"mcp-bwa-server-{id(self)}")
-
-            # Install BWA
-            container.with_command(
-                "bash -c 'apt-get update && apt-get install -y wget bwa && tail -f /dev/null'"
-            )
-
-            # Start container
-            container.start()
-
-            # Wait for container to be ready
-            container.reload()
-            while container.status != "running":
-                await asyncio.sleep(0.1)
-                container.reload()
-
-            # Store container info
-            self.container_id = container.get_wrapped_container().id
-            self.container_name = container.get_wrapped_container().name
-
-            return MCPServerDeployment(
-                server_name=self.name,
-                server_type=self.server_type,
-                container_id=self.container_id,
-                container_name=self.container_name,
-                status=MCPServerStatus.RUNNING,
-                created_at=datetime.now(),
-                started_at=datetime.now(),
-                tools_available=self.list_tools(),
-                configuration=self.config,
-            )
-
-        except Exception as e:
-            return MCPServerDeployment(
-                server_name=self.name,
-                server_type=self.server_type,
-                status=MCPServerStatus.FAILED,
-                error_message=str(e),
-                configuration=self.config,
-            )
-
-    async def stop_with_testcontainers(self) -> bool:
-        """Stop BWA server deployed with testcontainers."""
-        try:
-            if self.container_id:
-                from testcontainers.core.container import DockerContainer
-
-                container = DockerContainer(self.container_id)
-                container.stop()
-
-                self.container_id = None
-                self.container_name = None
-
-                return True
-            return False
-        except Exception:
-            return False
-
-    def get_server_info(self) -> dict[str, Any]:
-        """Get information about this BWA server."""
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        output_files = []
+        prefix = p if p else in_db_fasta.with_suffix("").name
+        # BWA index creates multiple files with extensions: .amb, .ann, .bwt, .pac, .sa
+        for ext in [".amb", ".ann", ".bwt", ".pac", ".sa"]:
+            f = Path(prefix + ext)
+            if f.exists():
+                output_files.append(str(f.resolve()))
         return {
-            "name": self.name,
-            "type": "bwa",
-            "version": "0.7.17",
-            "description": "BWA DNA sequence alignment server",
-            "tools": self.list_tools(),
-            "container_id": self.container_id,
-            "container_name": self.container_name,
-            "status": "running" if self.container_id else "stopped",
+            "command_executed": " ".join(cmd),
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "output_files": output_files,
         }
+    except subprocess.CalledProcessError as e:
+        return {
+            "command_executed": " ".join(cmd),
+            "stdout": e.stdout,
+            "stderr": e.stderr,
+            "output_files": [],
+            "error": f"bwa index failed with return code {e.returncode}",
+        }
+
+
+def bwa_mem(
+    db_prefix: Path,
+    reads_fq: Path,
+    mates_fq: Path | None = None,
+    a: bool = False,
+    c_flag: bool = False,
+    h: bool = False,
+    m: bool = False,
+    p: bool = False,
+    t: int = 1,
+    k: int = 19,
+    w: int = 100,
+    d: int = 100,
+    r: float = 1.5,
+    c_value: int = 10000,
+    a_penalty: int = 1,
+    b_penalty: int = 4,
+    o_penalty: int = 6,
+    e_penalty: int = 1,
+    l_penalty: int = 5,
+    u_penalty: int = 9,
+    r_string: str | None = None,
+    v: int = 3,
+    t_value: int = 30,
+):
+    """
+    Align 70bp-1Mbp query sequences with the BWA-MEM algorithm.
+    Supports single-end, paired-end, and interleaved paired-end reads.
+    Parameters correspond to bwa mem options.
+    """
+    if not db_prefix.exists():
+        raise FileNotFoundError(f"Database prefix {db_prefix} does not exist")
+    if not reads_fq.exists():
+        raise FileNotFoundError(f"Reads file {reads_fq} does not exist")
+    if mates_fq and not mates_fq.exists():
+        raise FileNotFoundError(f"Mates file {mates_fq} does not exist")
+    if t < 1:
+        raise ValueError("Number of threads 't' must be >= 1")
+    if k < 1:
+        raise ValueError("Minimum seed length 'k' must be >= 1")
+    if w < 1:
+        raise ValueError("Band width 'w' must be >= 1")
+    if d < 0:
+        raise ValueError("Off-diagonal X-dropoff 'd' must be >= 0")
+    if r <= 0:
+        raise ValueError("Trigger re-seeding ratio 'r' must be > 0")
+    if c_value < 0:
+        raise ValueError("Discard MEM occurrence 'c_value' must be >= 0")
+    if (
+        a_penalty < 0
+        or b_penalty < 0
+        or o_penalty < 0
+        or e_penalty < 0
+        or l_penalty < 0
+        or u_penalty < 0
+    ):
+        raise ValueError("Scoring penalties must be non-negative")
+    if v < 0:
+        raise ValueError("Verbose level 'v' must be >= 0")
+    if t_value < 0:
+        raise ValueError("Minimum output alignment score 't_value' must be >= 0")
+
+    cmd = ["bwa", "mem"]
+    if a:
+        cmd.append("-a")
+    if c_flag:
+        cmd.append("-C")
+    if h:
+        cmd.append("-H")
+    if m:
+        cmd.append("-M")
+    if p:
+        cmd.append("-p")
+    cmd += ["-t", str(t)]
+    cmd += ["-k", str(k)]
+    cmd += ["-w", str(w)]
+    cmd += ["-d", str(d)]
+    cmd += ["-r", str(r)]
+    cmd += ["-c", str(c_value)]
+    cmd += ["-A", str(a_penalty)]
+    cmd += ["-B", str(b_penalty)]
+    cmd += ["-O", str(o_penalty)]
+    cmd += ["-E", str(e_penalty)]
+    cmd += ["-L", str(l_penalty)]
+    cmd += ["-U", str(u_penalty)]
+    if r_string:
+        # Replace literal \t with tab character
+        r_fixed = r_string.replace("\\t", "\t")
+        cmd += ["-R", r_fixed]
+    cmd += ["-v", str(v)]
+    cmd += ["-T", str(t_value)]
+    cmd.append(str(db_prefix))
+    cmd.append(str(reads_fq))
+    if mates_fq and not p:
+        cmd.append(str(mates_fq))
+
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        # bwa mem outputs SAM to stdout
+        return {
+            "command_executed": " ".join(cmd),
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "output_files": [],
+        }
+    except subprocess.CalledProcessError as e:
+        return {
+            "command_executed": " ".join(cmd),
+            "stdout": e.stdout,
+            "stderr": e.stderr,
+            "output_files": [],
+            "error": f"bwa mem failed with return code {e.returncode}",
+        }
+
+
+def bwa_aln(
+    in_db_fasta: Path,
+    in_query_fq: Path,
+    n: float = 0.04,
+    o: int = 1,
+    e: int = -1,
+    d: int = 16,
+    i: int = 5,
+    seed_length: int | None = None,
+    k: int = 2,
+    t: int = 1,
+    m: int = 3,
+    o_penalty2: int = 11,
+    e_penalty: int = 4,
+    r: int = 0,
+    c_flag: bool = False,
+    n_value: bool = False,
+    q: int = 0,
+    i_flag: bool = False,
+    b_penalty: int = 0,
+    b: bool = False,
+    zero: bool = False,
+    one: bool = False,
+    two: bool = False,
+):
+    """
+    Find the SA coordinates of the input reads using bwa aln (BWA-backtrack).
+    Parameters correspond to bwa aln options.
+    """
+    if not in_db_fasta.exists():
+        raise FileNotFoundError(f"Input fasta file {in_db_fasta} does not exist")
+    if not in_query_fq.exists():
+        raise FileNotFoundError(f"Input query file {in_query_fq} does not exist")
+    if n < 0:
+        raise ValueError("Maximum edit distance 'n' must be non-negative")
+    if o < 0:
+        raise ValueError("Maximum number of gap opens 'o' must be non-negative")
+    if e < -1:
+        raise ValueError("Maximum number of gap extensions 'e' must be >= -1")
+    if d < 0:
+        raise ValueError("Disallow long deletion 'd' must be non-negative")
+    if i < 0:
+        raise ValueError("Disallow indel near ends 'i' must be non-negative")
+    if seed_length is not None and seed_length < 1:
+        raise ValueError("Seed length 'seed_length' must be positive or None")
+    if k < 0:
+        raise ValueError("Maximum edit distance in seed 'k' must be non-negative")
+    if t < 1:
+        raise ValueError("Number of threads 't' must be >= 1")
+    if m < 0 or o_penalty2 < 0 or e_penalty < 0 or r < 0 or q < 0 or b_penalty < 0:
+        raise ValueError("Penalty and threshold parameters must be non-negative")
+
+    cmd = ["bwa", "aln"]
+    cmd += ["-n", str(n)]
+    cmd += ["-o", str(o)]
+    cmd += ["-e", str(e)]
+    cmd += ["-d", str(d)]
+    cmd += ["-i", str(i)]
+    if seed_length is not None:
+        cmd += ["-l", str(seed_length)]
+    cmd += ["-k", str(k)]
+    cmd += ["-t", str(t)]
+    cmd += ["-M", str(m)]
+    cmd += ["-O", str(o_penalty2)]
+    cmd += ["-E", str(e_penalty)]
+    cmd += ["-R", str(r)]
+    if c_flag:
+        cmd.append("-c")
+    if n_value:
+        cmd.append("-N")
+    cmd += ["-q", str(q)]
+    if i_flag:
+        cmd.append("-I")
+    if b_penalty > 0:
+        cmd += ["-B", str(b_penalty)]
+    if b:
+        cmd.append("-b")
+    if zero:
+        cmd.append("-0")
+    if one:
+        cmd.append("-1")
+    if two:
+        cmd.append("-2")
+    cmd.append(str(in_db_fasta))
+    cmd.append(str(in_query_fq))
+
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        # bwa aln outputs .sai to stdout
+        return {
+            "command_executed": " ".join(cmd),
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "output_files": [],
+        }
+    except subprocess.CalledProcessError as exc:
+        return {
+            "command_executed": " ".join(cmd),
+            "stdout": exc.stdout,
+            "stderr": exc.stderr,
+            "output_files": [],
+            "error": f"bwa aln failed with return code {exc.returncode}",
+        }
+
+
+def bwa_samse(
+    in_db_fasta: Path,
+    in_sai: Path,
+    in_fq: Path,
+    n: int = 3,
+    r: str | None = None,
+):
+    """
+    Generate alignments in the SAM format given single-end reads using bwa samse.
+    -n INT: Maximum number of alignments to output in XA tag [3]
+    -r STR: Specify the read group header line (e.g. '@RG\\tID:foo\\tSM:bar')
+    """
+    if not in_db_fasta.exists():
+        raise FileNotFoundError(f"Input fasta file {in_db_fasta} does not exist")
+    if not in_sai.exists():
+        raise FileNotFoundError(f"Input sai file {in_sai} does not exist")
+    if not in_fq.exists():
+        raise FileNotFoundError(f"Input fastq file {in_fq} does not exist")
+    if n < 0:
+        raise ValueError("Maximum number of alignments 'n' must be non-negative")
+
+    cmd = ["bwa", "samse"]
+    cmd += ["-n", str(n)]
+    if r:
+        r_fixed = r.replace("\\t", "\t")
+        cmd += ["-r", r_fixed]
+    cmd.append(str(in_db_fasta))
+    cmd.append(str(in_sai))
+    cmd.append(str(in_fq))
+
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        # bwa samse outputs SAM to stdout
+        return {
+            "command_executed": " ".join(cmd),
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "output_files": [],
+        }
+    except subprocess.CalledProcessError as e:
+        return {
+            "command_executed": " ".join(cmd),
+            "stdout": e.stdout,
+            "stderr": e.stderr,
+            "output_files": [],
+            "error": f"bwa samse failed with return code {e.returncode}",
+        }
+
+
+def bwa_sampe(
+    in_db_fasta: Path,
+    in1_sai: Path,
+    in2_sai: Path,
+    in1_fq: Path,
+    in2_fq: Path,
+    a: int = 500,
+    o: int = 100000,
+    n: int = 3,
+    n_value: int = 10,
+    p_flag: bool = False,
+    r: str | None = None,
+):
+    """
+    Generate alignments in the SAM format given paired-end reads using bwa sampe.
+    -a INT: Maximum insert size for proper pair [500]
+    -o INT: Maximum occurrences of a read for pairing [100000]
+    -n INT: Max alignments in XA tag for properly paired reads [3]
+    -N INT: Max alignments in XA tag for discordant pairs [10]
+    -P: Load entire FM-index into memory
+    -r STR: Specify the read group header line
+    """
+    for f in [in_db_fasta, in1_sai, in2_sai, in1_fq, in2_fq]:
+        if not f.exists():
+            raise FileNotFoundError(f"Input file {f} does not exist")
+    if a < 0 or o < 0 or n < 0 or n_value < 0:
+        raise ValueError("Parameters a, o, n, n_value must be non-negative")
+
+    cmd = ["bwa", "sampe"]
+    cmd += ["-a", str(a)]
+    cmd += ["-o", str(o)]
+    if p_flag:
+        cmd.append("-P")
+    cmd += ["-n", str(n)]
+    cmd += ["-N", str(n_value)]
+    if r:
+        r_fixed = r.replace("\\t", "\t")
+        cmd += ["-r", r_fixed]
+    cmd.append(str(in_db_fasta))
+    cmd.append(str(in1_sai))
+    cmd.append(str(in2_sai))
+    cmd.append(str(in1_fq))
+    cmd.append(str(in2_fq))
+
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        # bwa sampe outputs SAM to stdout
+        return {
+            "command_executed": " ".join(cmd),
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "output_files": [],
+        }
+    except subprocess.CalledProcessError as e:
+        return {
+            "command_executed": " ".join(cmd),
+            "stdout": e.stdout,
+            "stderr": e.stderr,
+            "output_files": [],
+            "error": f"bwa sampe failed with return code {e.returncode}",
+        }
+
+
+def bwa_bwasw(
+    in_db_fasta: Path,
+    in_fq: Path,
+    mate_fq: Path | None = None,
+    a: int = 1,
+    b: int = 3,
+    q: int = 5,
+    r: int = 2,
+    t: int = 1,
+    w: int = 33,
+    t_value: int = 37,
+    c: float = 5.5,
+    z: int = 1,
+    s: int = 3,
+    n_hits: int = 5,
+):
+    """
+    Align query sequences using bwa bwasw (BWA-SW algorithm).
+    Supports single-end and paired-end (Illumina short-insert) reads.
+    """
+    if not in_db_fasta.exists():
+        raise FileNotFoundError(f"Input fasta file {in_db_fasta} does not exist")
+    if not in_fq.exists():
+        raise FileNotFoundError(f"Input fastq file {in_fq} does not exist")
+    if mate_fq and not mate_fq.exists():
+        raise FileNotFoundError(f"Mate fastq file {mate_fq} does not exist")
+    if t < 1:
+        raise ValueError("Number of threads 't' must be >= 1")
+    if w < 1:
+        raise ValueError("Band width 'w' must be >= 1")
+    if t_value < 0:
+        raise ValueError("Minimum score threshold 't_value' must be >= 0")
+    if c < 0:
+        raise ValueError("Coefficient 'c' must be >= 0")
+    if z < 1:
+        raise ValueError("Z-best heuristics 'z' must be >= 1")
+    if s < 1:
+        raise ValueError("Maximum SA interval size 's' must be >= 1")
+    if n_hits < 0:
+        raise ValueError("Minimum number of seeds 'n_hits' must be >= 0")
+
+    cmd = ["bwa", "bwasw"]
+    cmd += ["-a", str(a)]
+    cmd += ["-b", str(b)]
+    cmd += ["-q", str(q)]
+    cmd += ["-r", str(r)]
+    cmd += ["-t", str(t)]
+    cmd += ["-w", str(w)]
+    cmd += ["-T", str(t_value)]
+    cmd += ["-c", str(c)]
+    cmd += ["-z", str(z)]
+    cmd += ["-s", str(s)]
+    cmd += ["-N", str(n_hits)]
+    cmd.append(str(in_db_fasta))
+    cmd.append(str(in_fq))
+    if mate_fq:
+        cmd.append(str(mate_fq))
+
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        # bwa bwasw outputs SAM to stdout
+        return {
+            "command_executed": " ".join(cmd),
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "output_files": [],
+        }
+    except subprocess.CalledProcessError as e:
+        return {
+            "command_executed": " ".join(cmd),
+            "stdout": e.stdout,
+            "stderr": e.stderr,
+            "output_files": [],
+            "error": f"bwa bwasw failed with return code {e.returncode}",
+        }
+
+
+# Apply MCP decorators if FastMCP is available
+if mcp:
+    # Re-bind the functions with MCP decorators
+    bwa_index = mcp.tool()(bwa_index)  # type: ignore[assignment]
+    bwa_mem = mcp.tool()(bwa_mem)  # type: ignore[assignment]
+    bwa_aln = mcp.tool()(bwa_aln)  # type: ignore[assignment]
+    bwa_samse = mcp.tool()(bwa_samse)  # type: ignore[assignment]
+    bwa_sampe = mcp.tool()(bwa_sampe)  # type: ignore[assignment]
+    bwa_bwasw = mcp.tool()(bwa_bwasw)  # type: ignore[assignment]
+
+# Main execution
+if __name__ == "__main__":
+    if mcp:
+        mcp.run()
+    else:
+        print("FastMCP not available. Please install fastmcp to run the MCP server.")
