@@ -35,16 +35,16 @@ jobs:
         # For dev branch: exclude optional tests (docker, llm, performance, pydantic_ai)
         if [ "${{ github.ref }}" = "refs/heads/main" ]; then
           echo "Running all tests including optional tests for main branch"
-          pytest tests/ --cov=DeepResearch --cov-report=xml --cov-report=term-missing
+          pytest tests/ --cov=DeepResearch --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy
         else
           echo "Running tests excluding optional tests for dev branch"
-          pytest tests/ -m "not optional and not containerized" --cov=DeepResearch --cov-report=xml --cov-report=term-missing
+          pytest tests/ -m "not optional and not containerized" --cov=DeepResearch --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy
         fi
 
     - name: Run bioinformatics unit tests (all branches)
       run: |
         echo "🧬 Running bioinformatics unit tests..."
-        pytest tests/test_bioinformatics_tools/ -m "not containerized" --cov=DeepResearch --cov-append --cov-report=xml --cov-report=term-missing
+        pytest tests/test_bioinformatics_tools/ -m "not containerized" --cov=DeepResearch --cov-append --cov-report=xml --cov-report=term-missing --junitxml=junit-bioinformatics.xml -o junit_family=legacy
 
     - name: Run bioinformatics containerized tests (main branch only)
       if: github.ref == 'refs/heads/docker'
@@ -58,12 +58,18 @@ jobs:
         fi
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./coverage.xml
         fail_ci_if_error: true
         verbose: true
+
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Run VLLM tests (optional, manual trigger only)
       if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[vllm-tests]')
