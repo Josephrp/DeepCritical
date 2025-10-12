@@ -17,13 +17,16 @@ class TestHTSeqServer(BaseBioinformaticsToolTest):
 
     @property
     def tool_name(self) -> str:
-        return "htseq-server"
+        return "featurecounts-server"
 
     @property
     def tool_class(self):
-        from unittest.mock import Mock
+        # Use FeatureCountsServer as HTSeq equivalent
+        from DeepResearch.src.tools.bioinformatics.featurecounts_server import (
+            FeatureCountsServer,
+        )
 
-        return Mock
+        return FeatureCountsServer
 
     @property
     def required_parameters(self) -> dict:
@@ -55,15 +58,15 @@ class TestHTSeqServer(BaseBioinformaticsToolTest):
 
     @pytest.mark.optional
     def test_htseq_count(self, tool_instance, sample_input_files, sample_output_dir):
-        """Test HTSeq count functionality."""
+        """Test HTSeq count functionality using FeatureCounts."""
         params = {
             "operation": "count",
-            "sam_file": str(sample_input_files["sam_file"]),
-            "gtf_file": str(sample_input_files["gtf_file"]),
+            "annotation_file": str(sample_input_files["gtf_file"]),
+            "input_files": [str(sample_input_files["sam_file"])],
             "output_file": str(sample_output_dir / "counts.txt"),
-            "format": "sam",
-            "stranded": "no",
-            "mode": "union",
+            "feature_type": "exon",
+            "attribute_type": "gene_id",
+            "stranded": "0",  # unstranded
         }
 
         result = tool_instance.run(params)

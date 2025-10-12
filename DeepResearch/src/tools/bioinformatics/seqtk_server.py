@@ -112,6 +112,52 @@ class SeqtkServer(MCPServerBase):
 
             tool_name_check = "seqtk"
             if not shutil.which(tool_name_check):
+                # Validate parameters even for mock results
+                if operation == "sample":
+                    fraction = method_params.get("fraction")
+                    if fraction is not None and (fraction <= 0 or fraction > 1):
+                        return {
+                            "success": False,
+                            "error": "Fraction must be between 0 and 1",
+                            "mock": True,
+                        }
+                elif operation == "fqchk":
+                    quality_encoding = method_params.get("quality_encoding")
+                    if quality_encoding and quality_encoding not in [
+                        "sanger",
+                        "solexa",
+                        "illumina",
+                    ]:
+                        return {
+                            "success": False,
+                            "error": f"Invalid quality encoding: {quality_encoding}",
+                            "mock": True,
+                        }
+
+                # Validate input files even for mock results
+                if operation in [
+                    "seq",
+                    "fqchk",
+                    "subseq",
+                    "sample",
+                    "mergepe",
+                    "comp",
+                    "trimfq",
+                    "hety",
+                    "mutfa",
+                    "mergefa",
+                    "dropse",
+                    "rename",
+                    "cutN",
+                ]:
+                    input_file = method_params.get("input_file")
+                    if input_file and not Path(input_file).exists():
+                        return {
+                            "success": False,
+                            "error": f"Input file not found: {input_file}",
+                            "mock": True,
+                        }
+
                 # Return mock success result for testing when tool is not available
                 return {
                     "success": True,

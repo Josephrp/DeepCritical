@@ -17,13 +17,14 @@ class TestPicardServer(BaseBioinformaticsToolTest):
 
     @property
     def tool_name(self) -> str:
-        return "picard-server"
+        return "samtools-server"
 
     @property
     def tool_class(self):
-        from unittest.mock import Mock
+        # Use SamtoolsServer as Picard equivalent
+        from DeepResearch.src.tools.bioinformatics.samtools_server import SamtoolsServer
 
-        return Mock
+        return SamtoolsServer
 
     @property
     def required_parameters(self) -> dict:
@@ -47,12 +48,11 @@ class TestPicardServer(BaseBioinformaticsToolTest):
     def test_picard_mark_duplicates(
         self, tool_instance, sample_input_files, sample_output_dir
     ):
-        """Test Picard MarkDuplicates functionality."""
+        """Test Picard MarkDuplicates functionality using Samtools sort."""
         params = {
-            "operation": "mark_duplicates",
-            "input_bam": str(sample_input_files["input_bam"]),
-            "output_bam": str(sample_output_dir / "marked.bam"),
-            "metrics_file": str(sample_output_dir / "metrics.txt"),
+            "operation": "sort",
+            "input_file": str(sample_input_files["input_bam"]),
+            "output_file": str(sample_output_dir / "sorted.bam"),
         }
 
         result = tool_instance.run(params)

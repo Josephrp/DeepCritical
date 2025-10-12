@@ -21,9 +21,12 @@ class TestStringTieServer(BaseBioinformaticsToolTest):
 
     @property
     def tool_class(self):
-        from unittest.mock import Mock
+        # Use StringTieServer
+        from DeepResearch.src.tools.bioinformatics.stringtie_server import (
+            StringTieServer,
+        )
 
-        return Mock
+        return StringTieServer
 
     @property
     def required_parameters(self) -> dict:

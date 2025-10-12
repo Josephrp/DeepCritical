@@ -62,9 +62,13 @@ class BaseBioinformaticsToolTest(ABC):
         assert tool_instance is not None
         assert hasattr(tool_instance, "name")
 
-        # Check for MCP server or traditional tool interface
-        is_mcp_server = hasattr(tool_instance, "list_tools") and hasattr(
-            tool_instance, "get_server_info"
+        # Check for MCP server or traditional tool interface (avoid Mock objects)
+        is_mcp_server = (
+            hasattr(tool_instance, "list_tools")
+            and hasattr(tool_instance, "get_server_info")
+            and not isinstance(tool_instance, Mock)
+            and hasattr(tool_instance, "__class__")
+            and "Mock" not in str(type(tool_instance))
         )
         if is_mcp_server:
             # MCP servers should have server info
@@ -76,9 +80,13 @@ class BaseBioinformaticsToolTest(ABC):
     @pytest.mark.optional
     def test_tool_specification(self, tool_instance):
         """Test tool specification is correctly defined."""
-        # Check if this is an MCP server
-        is_mcp_server = hasattr(tool_instance, "list_tools") and hasattr(
-            tool_instance, "get_server_info"
+        # Check if this is an MCP server (avoid Mock objects)
+        is_mcp_server = (
+            hasattr(tool_instance, "list_tools")
+            and hasattr(tool_instance, "get_server_info")
+            and not isinstance(tool_instance, Mock)
+            and hasattr(tool_instance, "__class__")
+            and "Mock" not in str(type(tool_instance))
         )
 
         if is_mcp_server:
@@ -117,9 +125,13 @@ class BaseBioinformaticsToolTest(ABC):
     @pytest.mark.optional
     def test_parameter_validation(self, tool_instance):
         """Test parameter validation."""
-        # Check if this is an MCP server
-        is_mcp_server = hasattr(tool_instance, "list_tools") and hasattr(
-            tool_instance, "get_server_info"
+        # Check if this is an MCP server (avoid Mock objects)
+        is_mcp_server = (
+            hasattr(tool_instance, "list_tools")
+            and hasattr(tool_instance, "get_server_info")
+            and not isinstance(tool_instance, Mock)
+            and hasattr(tool_instance, "__class__")
+            and "Mock" not in str(type(tool_instance))
         )
 
         if is_mcp_server:
@@ -155,9 +167,13 @@ class BaseBioinformaticsToolTest(ABC):
     @pytest.mark.optional
     def test_tool_execution(self, tool_instance, sample_input_files, sample_output_dir):
         """Test tool execution with sample data."""
-        # Check if this is an MCP server
-        is_mcp_server = hasattr(tool_instance, "list_tools") and hasattr(
-            tool_instance, "get_server_info"
+        # Check if this is an MCP server (avoid Mock objects)
+        is_mcp_server = (
+            hasattr(tool_instance, "list_tools")
+            and hasattr(tool_instance, "get_server_info")
+            and not isinstance(tool_instance, Mock)
+            and hasattr(tool_instance, "__class__")
+            and "Mock" not in str(type(tool_instance))
         )
 
         if is_mcp_server:
@@ -199,9 +215,13 @@ class BaseBioinformaticsToolTest(ABC):
     @pytest.mark.optional
     def test_error_handling(self, tool_instance):
         """Test error handling for invalid inputs."""
-        # Check if this is an MCP server
-        is_mcp_server = hasattr(tool_instance, "list_tools") and hasattr(
-            tool_instance, "get_server_info"
+        # Check if this is an MCP server (avoid Mock objects)
+        is_mcp_server = (
+            hasattr(tool_instance, "list_tools")
+            and hasattr(tool_instance, "get_server_info")
+            and not isinstance(tool_instance, Mock)
+            and hasattr(tool_instance, "__class__")
+            and "Mock" not in str(type(tool_instance))
         )
 
         if is_mcp_server:

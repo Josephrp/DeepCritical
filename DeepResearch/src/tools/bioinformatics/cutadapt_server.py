@@ -548,6 +548,23 @@ class CutadaptServer(MCPServerBase if BASE_CLASS_AVAILABLE else object):
             return cutadapt(**kwargs)  # type: ignore[call-arg]
         raise ValueError(f"Unknown tool: {tool_name}")
 
+    def run(self, params: dict):
+        """Run method for compatibility with test framework."""
+        operation = params.get("operation", "cutadapt")
+        if operation == "trim":
+            # Map trim operation to cutadapt
+            output_dir = Path(params.get("output_dir", "/tmp"))
+            return self.run_tool(
+                "cutadapt",
+                input_file=Path(params["input_files"][0]),
+                output_file=output_dir / "trimmed.fq",
+                adapter=params.get("adapter"),
+                quality_cutoff=str(params.get("quality", 20)),
+            )
+        return self.run_tool(
+            operation, **{k: v for k, v in params.items() if k != "operation"}
+        )
+
 
 if __name__ == "__main__":
     if mcp is not None:

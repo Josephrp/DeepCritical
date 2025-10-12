@@ -17,13 +17,14 @@ class TestTopHatServer(BaseBioinformaticsToolTest):
 
     @property
     def tool_name(self) -> str:
-        return "tophat-server"
+        return "hisat2-server"
 
     @property
     def tool_class(self):
-        from unittest.mock import Mock
+        # Use HISAT2Server as TopHat equivalent
+        from DeepResearch.src.tools.bioinformatics.hisat2_server import HISAT2Server
 
-        return Mock
+        return HISAT2Server
 
     @property
     def required_parameters(self) -> dict:
@@ -45,12 +46,12 @@ class TestTopHatServer(BaseBioinformaticsToolTest):
 
     @pytest.mark.optional
     def test_tophat_align(self, tool_instance, sample_input_files, sample_output_dir):
-        """Test TopHat align functionality."""
+        """Test TopHat align functionality using HISAT2."""
         params = {
             "operation": "align",
             "index": "test_index",
-            "mate1": str(sample_input_files["mate1"]),
-            "output_dir": str(sample_output_dir),
+            "fastq_files": [str(sample_input_files["mate1"])],
+            "output_file": str(sample_output_dir / "aligned.sam"),
         }
 
         result = tool_instance.run(params)

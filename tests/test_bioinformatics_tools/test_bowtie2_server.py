@@ -42,6 +42,8 @@ class TestBowtie2Server(BaseBioinformaticsToolTest):
 
     @property
     def tool_class(self):
+        if not BOWTIE2_AVAILABLE:
+            pytest.skip("Bowtie2 not available on system")
         # Import the actual Bowtie2 server class
         from DeepResearch.src.tools.bioinformatics.bowtie2_server import Bowtie2Server
 

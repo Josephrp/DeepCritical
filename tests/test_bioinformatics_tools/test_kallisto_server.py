@@ -45,6 +45,8 @@ class TestKallistoServer(BaseBioinformaticsToolTest):
 
     @property
     def tool_class(self):
+        if not KALLISTO_AVAILABLE:
+            pytest.skip("Kallisto not available on system")
         # Import the actual Kallisto server class
         from DeepResearch.src.tools.bioinformatics.kallisto_server import KallistoServer
 

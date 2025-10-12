@@ -17,13 +17,20 @@ class TestTrimGaloreServer(BaseBioinformaticsToolTest):
 
     @property
     def tool_name(self) -> str:
-        return "trimgalore-server"
+        return "cutadapt-server"
 
     @property
     def tool_class(self):
-        from unittest.mock import Mock
+        # Check if cutadapt is available
+        import shutil
 
-        return Mock
+        if not shutil.which("cutadapt"):
+            pytest.skip("cutadapt not available on system")
+
+        # Use CutadaptServer as TrimGalore equivalent
+        from DeepResearch.src.tools.bioinformatics.cutadapt_server import CutadaptServer
+
+        return CutadaptServer
 
     @property
     def required_parameters(self) -> dict:

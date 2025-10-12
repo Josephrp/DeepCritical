@@ -21,9 +21,10 @@ class TestQualimapServer(BaseBioinformaticsToolTest):
 
     @property
     def tool_class(self):
-        from unittest.mock import Mock
+        # Use QualimapServer
+        from DeepResearch.src.tools.bioinformatics.qualimap_server import QualimapServer
 
-        return Mock
+        return QualimapServer
 
     @property
     def required_parameters(self) -> dict:
