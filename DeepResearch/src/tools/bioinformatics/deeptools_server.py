@@ -82,6 +82,19 @@ class DeeptoolsServer(MCPServerBase):
             self.fastmcp_server = FastMCP("deeptools-server")
             self._register_fastmcp_tools()
 
+    def _register_fastmcp_tools(self):
+        """Register tools with FastMCP server."""
+        if not self.fastmcp_server:
+            return
+
+        # Register all deeptools MCP tools
+        self.fastmcp_server.tool()(self.compute_gc_bias)
+        self.fastmcp_server.tool()(self.correct_gc_bias)
+        self.fastmcp_server.tool()(self.deeptools_compute_matrix)
+        self.fastmcp_server.tool()(self.deeptools_plot_heatmap)
+        self.fastmcp_server.tool()(self.deeptools_multi_bam_summary)
+        self.fastmcp_server.tool()(self.deeptools_bam_coverage)
+
     @mcp_tool()
     def compute_gc_bias(
         self,

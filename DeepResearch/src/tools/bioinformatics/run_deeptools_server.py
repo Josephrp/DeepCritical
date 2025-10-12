@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Standalone runner for the Deeptools MCP Server.
 

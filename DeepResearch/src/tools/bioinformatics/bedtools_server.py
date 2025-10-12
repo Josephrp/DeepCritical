@@ -56,6 +56,16 @@ class BEDToolsServer(MCPServerBase):
             self.fastmcp_server = FastMCP("bedtools-server")
             self._register_fastmcp_tools()
 
+    def _register_fastmcp_tools(self):
+        """Register tools with FastMCP server."""
+        if not self.fastmcp_server:
+            return
+
+        # Register all bedtools MCP tools
+        self.fastmcp_server.tool()(self.bedtools_intersect)
+        self.fastmcp_server.tool()(self.bedtools_merge)
+        self.fastmcp_server.tool()(self.bedtools_coverage)
+
     @mcp_tool()
     def bedtools_intersect(
         self,
