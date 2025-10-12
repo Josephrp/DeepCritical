@@ -1,0 +1,3 @@
+"""
+Bioinformatics tools testing module.
+"""

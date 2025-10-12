@@ -11,9 +11,9 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncGenerator
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypedDict, Union
 
-from pydantic import BaseModel, Field, HttpUrl, model_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, model_validator
 
 # Import existing dataclasses for alignment
 from .chunk_dataclass import Chunk, generate_id
@@ -198,9 +198,9 @@ class Document(BaseModel):
             **kwargs,
         )
 
-    class Config:
-        arbitrary_types_allowed = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+        json_schema_extra={
             "example": {
                 "id": "doc_001",
                 "content": "This is a sample document about machine learning.",
@@ -215,7 +215,8 @@ class Document(BaseModel):
                 "bioinformatics_type": "pubmed_paper",
                 "source_database": "PubMed",
             }
-        }
+        },
+    )
 
 
 class SearchResult(BaseModel):
@@ -225,8 +226,8 @@ class SearchResult(BaseModel):
     score: float = Field(..., description="Similarity score")
     rank: int = Field(..., description="Rank in search results")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "document": {
                     "id": "doc_001",
@@ -237,6 +238,7 @@ class SearchResult(BaseModel):
                 "rank": 1,
             }
         }
+    )
 
 
 class EmbeddingsConfig(BaseModel):
@@ -253,8 +255,8 @@ class EmbeddingsConfig(BaseModel):
     max_retries: int = Field(3, description="Maximum retry attempts")
     timeout: float = Field(30.0, description="Request timeout in seconds")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "model_type": "openai",
                 "model_name": "text-embedding-3-small",
@@ -262,6 +264,7 @@ class EmbeddingsConfig(BaseModel):
                 "batch_size": 32,
             }
         }
+    )
 
 
 class VLLMConfig(BaseModel):
@@ -280,17 +283,18 @@ class VLLMConfig(BaseModel):
     stop: list[str] | None = Field(None, description="Stop sequences")
     stream: bool = Field(False, description="Enable streaming responses")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "model_type": "huggingface",
-                "model_name": "microsoft/DialoGPT-medium",
+                "model_name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                 "host": "localhost",
                 "port": 8000,
                 "max_tokens": 2048,
                 "temperature": 0.7,
             }
         }
+    )
 
 
 class VectorStoreConfig(BaseModel):
@@ -309,8 +313,8 @@ class VectorStoreConfig(BaseModel):
     distance_metric: str = Field("cosine", description="Distance metric for similarity")
     index_type: str | None = Field(None, description="Index type (e.g., HNSW, IVF)")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "store_type": "chroma",
                 "host": "localhost",
@@ -319,6 +323,7 @@ class VectorStoreConfig(BaseModel):
                 "embedding_dimension": 1536,
             }
         }
+    )
 
 
 class RAGQuery(BaseModel):
@@ -335,8 +340,8 @@ class RAGQuery(BaseModel):
     )
     filters: dict[str, Any] | None = Field(None, description="Metadata filters")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "text": "What is machine learning?",
                 "search_type": "similarity",
@@ -344,6 +349,7 @@ class RAGQuery(BaseModel):
                 "filters": {"source": "research_paper"},
             }
         }
+    )
 
 
 class RAGResponse(BaseModel):
@@ -360,8 +366,8 @@ class RAGResponse(BaseModel):
     )
     processing_time: float = Field(..., description="Total processing time in seconds")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "query": "What is machine learning?",
                 "retrieved_documents": [],
@@ -370,6 +376,7 @@ class RAGResponse(BaseModel):
                 "processing_time": 1.5,
             }
         }
+    )
 
 
 class IntegratedSearchRequest(BaseModel):
@@ -385,8 +392,8 @@ class IntegratedSearchRequest(BaseModel):
         True, description="Whether to convert results to RAG format"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "query": "artificial intelligence developments 2024",
                 "search_type": "news",
@@ -397,6 +404,7 @@ class IntegratedSearchRequest(BaseModel):
                 "convert_to_rag": True,
             }
         }
+    )
 
 
 class IntegratedSearchResponse(BaseModel):
@@ -414,8 +422,8 @@ class IntegratedSearchResponse(BaseModel):
     success: bool = Field(..., description="Whether the search was successful")
     error: str | None = Field(None, description="Error message if search failed")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "query": "artificial intelligence developments 2024",
                 "documents": [],
@@ -426,6 +434,7 @@ class IntegratedSearchResponse(BaseModel):
                 "error": None,
             }
         }
+    )
 
 
 class RAGConfig(BaseModel):
@@ -461,8 +470,8 @@ class RAGConfig(BaseModel):
 
         return values
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "embeddings": {
                     "model_type": "openai",
@@ -471,7 +480,7 @@ class RAGConfig(BaseModel):
                 },
                 "llm": {
                     "model_type": "huggingface",
-                    "model_name": "microsoft/DialoGPT-medium",
+                    "model_name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                     "host": "localhost",
                     "port": 8000,
                 },
@@ -480,6 +489,7 @@ class RAGConfig(BaseModel):
                 "chunk_overlap": 200,
             }
         }
+    )
 
 
 # Abstract base classes for implementations
@@ -652,8 +662,7 @@ class RAGSystem(BaseModel):
             processing_time=processing_time,
         )
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class BioinformaticsRAGSystem(RAGSystem):
@@ -712,7 +721,7 @@ class BioinformaticsRAGSystem(RAGSystem):
 
         # Build context from retrieved documents
         context_parts = []
-        bioinformatics_summary = {
+        bioinformatics_summary: BioinformaticsSummary = {
             "total_documents": len(search_results),
             "bioinformatics_types": set(),
             "source_databases": set(),
@@ -752,9 +761,10 @@ class BioinformaticsRAGSystem(RAGSystem):
                     cross_references[ref_type].update(refs)
 
         # Convert sets to lists for JSON serialization
-        for key, value in bioinformatics_summary.items():
+        summary_dict = dict(bioinformatics_summary)
+        for key, value in summary_dict.items():
             if isinstance(value, set):
-                bioinformatics_summary[key] = list(value)
+                summary_dict[key] = list(value)
 
         for key, value in cross_references.items():
             cross_references[key] = list(value)
@@ -777,8 +787,8 @@ class BioinformaticsRAGSystem(RAGSystem):
                 else 0.0
             ),
             "high_quality_docs": sum(1 for r in search_results if r.score > 0.8),
-            "evidence_diversity": len(bioinformatics_summary["evidence_codes"]),
-            "source_diversity": len(bioinformatics_summary["source_databases"]),
+            "evidence_diversity": len(bioinformatics_summary["evidence_codes"]),  # type: ignore
+            "source_diversity": len(bioinformatics_summary["source_databases"]),  # type: ignore
         }
 
         return BioinformaticsRAGResponse(
@@ -887,8 +897,8 @@ class BioinformaticsRAGQuery(BaseModel):
         None, ge=0.0, le=1.0, description="Minimum quality score"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "text": "What genes are involved in DNA damage response?",
                 "search_type": "similarity",
@@ -899,6 +909,30 @@ class BioinformaticsRAGQuery(BaseModel):
                 "quality_threshold": 0.8,
             }
         }
+    )
+
+
+class BioinformaticsSummary(TypedDict):
+    """Type definition for bioinformatics summary data."""
+
+    total_documents: int
+    bioinformatics_types: set[str]
+    source_databases: set[str]
+    evidence_codes: set[str]
+    organisms: set[str]
+    gene_symbols: set[str]
+
+
+def _default_bioinformatics_summary() -> BioinformaticsSummary:
+    """Default factory for bioinformatics summary."""
+    return {
+        "total_documents": 0,
+        "bioinformatics_types": set(),
+        "source_databases": set(),
+        "evidence_codes": set(),
+        "organisms": set(),
+        "gene_symbols": set(),
+    }
 
 
 class BioinformaticsRAGResponse(BaseModel):
@@ -916,8 +950,9 @@ class BioinformaticsRAGResponse(BaseModel):
     processing_time: float = Field(..., description="Total processing time in seconds")
 
     # Bioinformatics-specific response data
-    bioinformatics_summary: dict[str, Any] = Field(
-        default_factory=dict, description="Summary of bioinformatics data"
+    bioinformatics_summary: BioinformaticsSummary = Field(
+        default_factory=_default_bioinformatics_summary,
+        description="Summary of bioinformatics data",
     )
     cross_references: dict[str, list[str]] = Field(
         default_factory=dict, description="Cross-references found"
@@ -926,8 +961,8 @@ class BioinformaticsRAGResponse(BaseModel):
         default_factory=dict, description="Quality metrics for retrieved data"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "query": "What genes are involved in DNA damage response?",
                 "retrieved_documents": [],
@@ -941,6 +976,7 @@ class BioinformaticsRAGResponse(BaseModel):
                 },
             }
         }
+    )
 
 
 class RAGWorkflowState(BaseModel):
@@ -971,8 +1007,8 @@ class RAGWorkflowState(BaseModel):
         default_factory=dict, description="Data fusion metadata"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "query": "What is machine learning?",
                 "rag_config": {},
@@ -982,3 +1018,4 @@ class RAGWorkflowState(BaseModel):
                 "bioinformatics_data": {"go_annotations": [], "pubmed_papers": []},
             }
         }
+    )

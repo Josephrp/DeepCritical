@@ -12,7 +12,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # Import existing DeepCritical types
 from .deep_agent_types import AgentContext
@@ -66,17 +66,7 @@ class Todo(BaseModel):
         self.status = TaskStatus.FAILED
         self.updated_at = datetime.now()
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "id": "todo_001",
-                "content": "Research CRISPR technology applications",
-                "status": "pending",
-                "priority": 1,
-                "tags": ["research", "biotech"],
-                "metadata": {"estimated_time": "30 minutes"},
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class FileInfo(BaseModel):
@@ -104,15 +94,7 @@ class FileInfo(BaseModel):
         self.size = len(new_content.encode("utf-8"))
         self.updated_at = datetime.now()
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "path": "/workspace/research_notes.md",
-                "content": "# Research Notes\n\n## CRISPR Technology\n...",
-                "size": 1024,
-                "metadata": {"encoding": "utf-8", "type": "markdown"},
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class FilesystemState(BaseModel):
@@ -152,20 +134,7 @@ class FilesystemState(BaseModel):
             return True
         return False
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "files": {
-                    "/workspace/notes.md": {
-                        "path": "/workspace/notes.md",
-                        "content": "# Notes\n\nSome content here...",
-                        "size": 256,
-                    }
-                },
-                "current_directory": "/workspace",
-                "permissions": {"/workspace/notes.md": ["read", "write"]},
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class PlanningState(BaseModel):
@@ -213,21 +182,7 @@ class PlanningState(BaseModel):
         """Get completed todos."""
         return self.get_todos_by_status(TaskStatus.COMPLETED)
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "todos": [
-                    {
-                        "id": "todo_001",
-                        "content": "Research CRISPR technology",
-                        "status": "pending",
-                        "priority": 1,
-                    }
-                ],
-                "active_plan": "research_plan_001",
-                "planning_context": {"focus_area": "biotechnology"},
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class DeepAgentState(BaseModel):
@@ -323,37 +278,7 @@ class DeepAgentState(BaseModel):
             completed_tasks=self.completed_tasks,
         )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "session_id": "session_123",
-                "todos": [
-                    {
-                        "id": "todo_001",
-                        "content": "Research CRISPR technology",
-                        "status": "pending",
-                    }
-                ],
-                "files": {
-                    "/workspace/notes.md": {
-                        "path": "/workspace/notes.md",
-                        "content": "# Notes\n\nSome content...",
-                        "size": 256,
-                    }
-                },
-                "current_directory": "/workspace",
-                "active_tasks": ["task_001"],
-                "completed_tasks": [],
-                "conversation_history": [
-                    {
-                        "role": "user",
-                        "content": "Help me research CRISPR technology",
-                        "timestamp": "2024-01-15T10:30:00Z",
-                    }
-                ],
-                "shared_state": {"research_focus": "CRISPR applications"},
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 # State reducer functions for merging state updates

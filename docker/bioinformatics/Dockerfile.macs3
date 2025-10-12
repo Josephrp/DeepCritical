@@ -1,0 +1,26 @@
+# MACS3 Docker container for ChIP-seq peak calling
+FROM python:3.11-slim
+
+# Install system dependencies for building C extensions
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    macs3 \
+    numpy \
+    scipy
+
+# Create working directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV MACS3_VERSION=3.0.0
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import macs3; print('MACS3 installed')" || exit 1
+
+# Default command
+CMD ["macs3", "--help"]

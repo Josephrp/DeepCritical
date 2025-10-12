@@ -8,11 +8,21 @@ workflow with the existing tool registry system.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import Any, Dict, TypedDict
 
 from .base import ExecutionResult, ToolRunner, ToolSpec, registry
 
 # from ..statemachines.deepsearch_workflow import run_deepsearch_workflow
+
+
+class WorkflowOutput(TypedDict):
+    """Type definition for parsed workflow output."""
+
+    answer: str
+    confidence_score: float
+    quality_metrics: dict[str, float]
+    processing_steps: list[str]
+    search_summary: dict[str, str]
 
 
 @dataclass
@@ -102,10 +112,10 @@ class DeepSearchWorkflowTool(ToolRunner):
                 success=False, data={}, error=f"Deep search workflow failed: {e!s}"
             )
 
-    def _parse_workflow_output(self, output: str) -> dict[str, Any]:
+    def _parse_workflow_output(self, output: str) -> WorkflowOutput:
         """Parse the workflow output to extract structured information."""
         lines = output.split("\n")
-        parsed = {
+        parsed: WorkflowOutput = {
             "answer": "",
             "confidence_score": 0.8,
             "quality_metrics": {},

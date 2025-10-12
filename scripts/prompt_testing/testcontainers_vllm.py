@@ -10,9 +10,20 @@ import logging
 import re
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
 from omegaconf import DictConfig
+
+
+class ReasoningData(TypedDict):
+    """Type definition for reasoning data extracted from LLM responses."""
+
+    has_reasoning: bool
+    reasoning_steps: list[str]
+    tool_calls: list[dict[str, Any]]
+    final_answer: str
+    reasoning_format: str
+
 
 # Try to import VLLM container, but handle gracefully if not available
 try:
@@ -24,7 +35,7 @@ try:
         def __init__(
             self,
             image: str = "vllm/vllm-openai:latest",
-            model: str = "microsoft/DialoGPT-medium",
+            model: str = "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
             host_port: int = 8000,
             container_port: int = 8000,
             **kwargs,
@@ -140,7 +151,7 @@ class VLLMPromptTester:
 
         # Apply configuration with overrides
         self.model_name = model_name or model_config.get(
-            "name", "microsoft/DialoGPT-medium"
+            "name", "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
         )
         self.container_timeout = container_timeout or performance_config.get(
             "max_container_startup_time", 120
@@ -223,7 +234,7 @@ class VLLMPromptTester:
                 },
             },
             "model": {
-                "name": "microsoft/DialoGPT-medium",
+                "name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                 "generation": {
                     "max_tokens": 256,
                     "temperature": 0.7,
@@ -570,12 +581,12 @@ class VLLMPromptTester:
         ]
         return random.choice(responses)
 
-    def _parse_reasoning(self, response: str) -> dict[str, Any]:
+    def _parse_reasoning(self, response: str) -> ReasoningData:
         """Parse reasoning and tool calls from response.
 
         This implements basic reasoning parsing based on VLLM reasoning outputs.
         """
-        reasoning_data = {
+        reasoning_data: ReasoningData = {
             "has_reasoning": False,
             "reasoning_steps": [],
             "tool_calls": [],
@@ -627,7 +638,7 @@ class VLLMPromptTester:
         if reasoning_data["has_reasoning"]:
             # Remove reasoning sections from final answer
             final_answer = response
-            for step in reasoning_data["reasoning_steps"]:
+            for step in reasoning_data["reasoning_steps"]:  # type: ignore
                 final_answer = final_answer.replace(step, "").strip()
 
             # Clean up extra whitespace

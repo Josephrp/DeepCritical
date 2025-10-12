@@ -14,6 +14,24 @@ help:
 	@echo "  test         Run all tests"
 	@echo "  test-cov     Run tests with coverage report"
 	@echo "  test-fast    Run tests quickly (skip slow tests)"
+	@echo "  test-dev     Run tests excluding optional (for dev branch)"
+	@echo "  test-dev-cov Run tests excluding optional with coverage (for dev branch)"
+	@echo "  test-main    Run all tests including optional (for main branch)"
+	@echo "  test-main-cov Run all tests including optional with coverage (for main branch)"
+	@echo "  test-optional Run only optional tests"
+	@echo "  test-optional-cov Run only optional tests with coverage"
+	@echo "  test-*-pytest  Alternative pytest-only versions (for CI without uv)"
+ifeq ($(OS),Windows_NT)
+	@echo "  test-unit-win       Run unit tests (Windows)"
+	@echo "  test-integration-win Run integration tests (Windows)"
+	@echo "  test-docker-win     Run Docker tests (Windows, requires Docker)"
+	@echo "  test-bioinformatics-win Run bioinformatics tests (Windows, requires Docker)"
+	@echo "  test-llm-win        Run LLM framework tests (Windows)"
+	@echo "  test-pydantic-ai-win Run Pydantic AI tests (Windows)"
+	@echo "  test-containerized-win Run all containerized tests (Windows, requires Docker)"
+	@echo "  test-performance-win Run performance tests (Windows)"
+	@echo "  test-optional-win   Run all optional tests (Windows)"
+endif
 	@echo "  lint         Run linting (ruff)"
 	@echo "  format       Run formatting (ruff + black)"
 	@echo "  type-check   Run type checking (ty)"
@@ -39,7 +57,19 @@ help:
 	@echo "  vllm-test    Run VLLM-based tests"
 	@echo "  clean        Remove build artifacts and cache"
 	@echo "  build        Build the package"
-	@echo "  docs         Build documentation"
+	@echo "  docs         Build documentation (full validation)"
+	@echo ""
+	@echo "🐳 Bioinformatics Docker:"
+	@echo "  docker-build-bioinformatics    Build all bioinformatics Docker images"
+	@echo "  docker-publish-bioinformatics  Publish images to Docker Hub"
+	@echo "  docker-test-bioinformatics     Test built bioinformatics images"
+	@echo "  docker-check-bioinformatics    Check Docker Hub image availability"
+	@echo "  docker-pull-bioinformatics     Pull latest images from Docker Hub"
+	@echo "  docker-clean-bioinformatics    Remove local bioinformatics images"
+	@echo "  docker-status-bioinformatics   Show bioinformatics image status"
+	@echo "  test-bioinformatics-containerized Run containerized bioinformatics tests"
+	@echo "  test-bioinformatics-all        Run all bioinformatics tests"
+	@echo "  validate-bioinformatics        Validate bioinformatics configurations"
 	@echo ""
 	@echo "📊 Examples & Demos:"
 	@echo "  examples     Show example usage patterns"
@@ -63,6 +93,85 @@ test-cov:
 
 test-fast:
 	uv run pytest tests/ -m "not slow" -v
+
+# Branch-specific testing targets
+test-dev:
+	uv run pytest tests/ -m "not optional" -v
+
+test-dev-cov:
+	uv run pytest tests/ -m "not optional" --cov=DeepResearch --cov-report=html --cov-report=term
+
+test-main:
+	uv run pytest tests/ -v
+
+test-main-cov:
+	uv run pytest tests/ --cov=DeepResearch --cov-report=html --cov-report=term
+
+test-optional:
+	uv run pytest tests/ -m "optional" -v
+
+test-optional-cov:
+	uv run pytest tests/ -m "optional" --cov=DeepResearch --cov-report=html --cov-report=term
+
+# Alternative pytest-only versions (for CI environments without uv)
+test-dev-pytest:
+	pytest tests/ -m "not optional" -v
+
+test-dev-cov-pytest:
+	pytest tests/ -m "not optional" --cov=DeepResearch --cov-report=xml --cov-report=term-missing
+
+test-main-pytest:
+	pytest tests/ -v
+
+test-main-cov-pytest:
+	pytest tests/ --cov=DeepResearch --cov-report=xml --cov-report=term-missing
+
+test-optional-pytest:
+	pytest tests/ -m "optional" -v
+
+test-optional-cov-pytest:
+	pytest tests/ -m "optional" --cov=DeepResearch --cov-report=xml --cov-report=term-missing
+
+# Windows-specific testing targets (using PowerShell script)
+ifeq ($(OS),Windows_NT)
+test-unit-win:
+	@powershell -ExecutionPolicy Bypass -File scripts/test/run_tests.ps1 -TestType unit
+
+test-integration-win:
+	@powershell -ExecutionPolicy Bypass -File scripts/test/run_tests.ps1 -TestType integration
+
+test-docker-win:
+	@powershell -ExecutionPolicy Bypass -File scripts/test/run_tests.ps1 -TestType docker
+
+test-bioinformatics-win:
+	@powershell -ExecutionPolicy Bypass -File scripts/test/run_tests.ps1 -TestType bioinformatics
+
+test-bioinformatics-unit-win:
+	@echo "Running bioinformatics unit tests..."
+	uv run pytest tests/test_bioinformatics_tools/ -m "not containerized" -v --tb=short
+
+# General bioinformatics test target (works on all platforms)
+test-bioinformatics:
+	@echo "Running bioinformatics tests..."
+	uv run pytest tests/test_bioinformatics_tools/ -v --tb=short
+
+test-llm-win:
+	@echo "Running LLM framework tests..."
+	uv run pytest tests/test_llm_framework/ -v --tb=short
+
+test-pydantic-ai-win:
+	@echo "Running Pydantic AI tests..."
+	uv run pytest tests/test_pydantic_ai/ -v --tb=short
+
+test-containerized-win:
+	@powershell -ExecutionPolicy Bypass -File scripts/test/run_tests.ps1 -TestType containerized
+
+test-performance-win:
+	@powershell -ExecutionPolicy Bypass -File scripts/test/run_tests.ps1 -TestType performance
+
+test-optional-win: test-containerized-win test-performance-win
+	@echo "Optional tests completed"
+endif
 
 # Code quality targets
 lint:
@@ -101,7 +210,23 @@ build:
 	uv build
 
 docs:
-	@echo "Documentation build not configured yet"
+	@echo "📚 Building DeepCritical Documentation"
+	@echo "======================================"
+	@echo "Building documentation (like pre-commit and CI)..."
+	uv run mkdocs build --clean
+	@echo ""
+	@echo "✅ Documentation built successfully!"
+	@echo "📁 Site files generated in: ./site/"
+	@echo ""
+	@echo "🔍 Running strict validation..."
+	uv run mkdocs build --strict --quiet
+	@echo ""
+	@echo "✅ Documentation validation passed!"
+	@echo ""
+	@echo "🚀 Next steps:"
+	@echo "  • Serve locally: make docs-serve"
+	@echo "  • Deploy to GitHub Pages: make docs-deploy"
+	@echo "  • Check links: make docs-check"
 
 # Pre-commit targets
 pre-commit:
@@ -193,6 +318,17 @@ examples:
 	@echo "🛠️  Development:"
 	@echo "  make quality    # Run all quality checks"
 	@echo "  make test       # Run all tests"
+ifeq ($(OS),Windows_NT)
+	@echo "  make test-unit-win       # Run unit tests (Windows)"
+	@echo "  make test-integration-win # Run integration tests (Windows)"
+	@echo "  make test-docker-win     # Run Docker tests (Windows, requires Docker)"
+	@echo "  make test-bioinformatics-win # Run bioinformatics tests (Windows, requires Docker)"
+	@echo "  make test-llm-win        # Run LLM framework tests (Windows)"
+	@echo "  make test-pydantic-ai-win # Run Pydantic AI tests (Windows)"
+	@echo "  make test-containerized-win # Run all containerized tests (Windows, requires Docker)"
+	@echo "  make test-performance-win # Run performance tests (Windows)"
+	@echo "  make test-optional-win   # Run all optional tests (Windows)"
+endif
 	@echo "  make prompt-test # Test prompt functionality"
 	@echo "  make vllm-test  # Test with VLLM containers"
 
@@ -241,5 +377,105 @@ docs-deploy:
 	uv run mkdocs gh-deploy
 
 docs-check:
-	@echo "🔍 Checking documentation links..."
+	@echo "🔍 Running strict documentation validation (warnings = errors)..."
 	uv run mkdocs build --strict
+
+# Docker targets
+docker-build-bioinformatics:
+	@echo "🐳 Building bioinformatics Docker images..."
+	@for dockerfile in docker/bioinformatics/Dockerfile.*; do \
+		tool=$$(basename "$$dockerfile" | cut -d'.' -f2); \
+		echo "Building $$tool..."; \
+		docker build -f "$$dockerfile" -t "deepcritical-$$tool:latest" . ; \
+	done
+
+docker-publish-bioinformatics:
+	@echo "🚀 Publishing bioinformatics Docker images to Docker Hub..."
+	python scripts/publish_docker_images.py
+
+docker-test-bioinformatics:
+	@echo "🐳 Testing bioinformatics Docker images..."
+	@for dockerfile in docker/bioinformatics/Dockerfile.*; do \
+		tool=$$(basename "$$dockerfile" | cut -d'.' -f2); \
+		echo "Testing $$tool container..."; \
+		docker run --rm "deepcritical-$$tool:latest" --version || echo "⚠️  $$tool test failed"; \
+	done
+
+# Update the existing test targets to include containerized tests
+test-bioinformatics-containerized:
+	@echo "🐳 Running containerized bioinformatics tests..."
+	uv run pytest tests/test_bioinformatics_tools/ -m "containerized" -v --tb=short
+
+test-bioinformatics-all:
+	@echo "🧬 Running all bioinformatics tests..."
+	uv run pytest tests/test_bioinformatics_tools/ -v --tb=short
+
+# Check Docker Hub images
+docker-check-bioinformatics:
+	@echo "🔍 Checking bioinformatics Docker Hub images..."
+	python scripts/publish_docker_images.py --check-only
+
+# Clean up local bioinformatics Docker images
+docker-clean-bioinformatics:
+	@echo "🧹 Cleaning up bioinformatics Docker images..."
+	@for dockerfile in docker/bioinformatics/Dockerfile.*; do \
+		tool=$$(basename "$$dockerfile" | cut -d'.' -f2); \
+		echo "Removing deepcritical-$$tool:latest..."; \
+		docker rmi "deepcritical-$$tool:latest" 2>/dev/null || echo "Image not found: deepcritical-$$tool:latest"; \
+	done
+	@echo "Removing dangling images..."
+	docker image prune -f
+
+# Pull latest bioinformatics images from Docker Hub
+docker-pull-bioinformatics:
+	@echo "📥 Pulling latest bioinformatics images from Docker Hub..."
+	@for dockerfile in docker/bioinformatics/Dockerfile.*; do \
+		tool=$$(basename "$$dockerfile" | cut -d'.' -f2); \
+		image_name="tonic01/deepcritical-bioinformatics-$$tool:latest"; \
+		echo "Pulling $$image_name..."; \
+		docker pull "$$image_name" || echo "Failed to pull $$image_name"; \
+	done
+
+# Show bioinformatics Docker image status
+docker-status-bioinformatics:
+	@echo "📊 Bioinformatics Docker Images Status:"
+	@echo "=========================================="
+	@for dockerfile in docker/bioinformatics/Dockerfile.*; do \
+		tool=$$(basename "$$dockerfile" | cut -d'.' -f2); \
+		local_image="deepcritical-$$tool:latest"; \
+		hub_image="tonic01/deepcritical-bioinformatics-$$tool:latest"; \
+		echo "$$tool:"; \
+		if docker images --format "table {{.Repository}}:{{.Tag}}" | grep -q "$$local_image"; then \
+			echo "  ✅ Local: $$local_image"; \
+		else \
+			echo "  ❌ Local: $$local_image (not built)"; \
+		fi; \
+		if docker images --format "table {{.Repository}}:{{.Tag}}" | grep -q "$$hub_image"; then \
+			echo "  ✅ Hub: $$hub_image"; \
+		else \
+			echo "  ❌ Hub: $$hub_image (not pulled)"; \
+		fi; \
+	done
+
+# Validate bioinformatics configurations
+validate-bioinformatics:
+	@echo "🔍 Validating bioinformatics configurations..."
+	@python3 -c "\
+import yaml, os; \
+from pathlib import Path; \
+config_dir = Path('DeepResearch/src/tools/bioinformatics'); \
+valid_configs = 0; \
+invalid_configs = 0; \
+for config_file in config_dir.glob('*_server.py'): \
+    try: \
+        module_name = config_file.stem; \
+        exec(f'from DeepResearch.src.tools.bioinformatics.{module_name} import *'); \
+        print(f'✅ {module_name}'); \
+        valid_configs += 1; \
+    except Exception as e: \
+        print(f'❌ {module_name}: {e}'); \
+        invalid_configs += 1; \
+print(f'\\n📊 Validation Summary:'); \
+print(f'✅ Valid configs: {valid_configs}'); \
+print(f'❌ Invalid configs: {invalid_configs}'); \
+if invalid_configs > 0: exit(1)"

@@ -7,7 +7,7 @@ and results that align with DeepCritical's architecture.
 
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SearchAgentConfig(BaseModel):
@@ -22,17 +22,7 @@ class SearchAgentConfig(BaseModel):
     chunk_size: int = Field(1000, description="Default chunk size")
     chunk_overlap: int = Field(0, description="Default chunk overlap")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "model": "gpt-4",
-                "enable_analytics": True,
-                "default_search_type": "search",
-                "default_num_results": 4,
-                "chunk_size": 1000,
-                "chunk_overlap": 0,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class SearchQuery(BaseModel):
@@ -45,15 +35,7 @@ class SearchQuery(BaseModel):
     num_results: int | None = Field(None, description="Number of results to fetch")
     use_rag: bool = Field(False, description="Whether to use RAG-optimized search")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "query": "artificial intelligence developments 2024",
-                "search_type": "news",
-                "num_results": 5,
-                "use_rag": True,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class SearchResult(BaseModel):
@@ -70,17 +52,7 @@ class SearchResult(BaseModel):
     )
     error: str | None = Field(None, description="Error message if search failed")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "query": "artificial intelligence developments 2024",
-                "content": "Search results content...",
-                "success": True,
-                "processing_time": 1.2,
-                "analytics_recorded": True,
-                "error": None,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class SearchAgentDependencies(BaseModel):
@@ -107,14 +79,4 @@ class SearchAgentDependencies(BaseModel):
             use_rag=query.use_rag,
         )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "query": "artificial intelligence developments 2024",
-                "search_type": "search",
-                "num_results": 4,
-                "chunk_size": 1000,
-                "chunk_overlap": 0,
-                "use_rag": False,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})

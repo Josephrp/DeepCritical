@@ -7,7 +7,7 @@ into the existing Pydantic Graph state machine architecture.
 
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # Optional import for pydantic_graph
 try:
@@ -67,23 +67,7 @@ class SearchWorkflowState(BaseModel):
         default_factory=list, description="Any errors encountered"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "query": "artificial intelligence developments 2024",
-                "search_type": "news",
-                "num_results": 5,
-                "chunk_size": 1000,
-                "chunk_overlap": 100,
-                "raw_content": None,
-                "documents": [],
-                "chunks": [],
-                "analytics_recorded": False,
-                "processing_time": 0.0,
-                "status": "PENDING",
-                "errors": [],
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class InitializeSearch(BaseNode[SearchWorkflowState]):  # type: ignore[unsupported-base]

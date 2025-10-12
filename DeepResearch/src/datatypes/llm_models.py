@@ -10,7 +10,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Dict, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class LLMProvider(str, Enum):
@@ -57,10 +57,7 @@ class LLMModelConfig(BaseModel):
             raise ValueError("base_url cannot be empty")
         return v.strip()
 
-    class Config:
-        """Pydantic configuration."""
-
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class GenerationConfig(BaseModel):

@@ -508,4 +508,4 @@ def run_bioinformatics_workflow(
     result = asyncio.run(
         bioinformatics_workflow.run(ParseBioinformaticsQuery(), state=state)  # type: ignore
     )
-    return result.output
+    return result.output or ""

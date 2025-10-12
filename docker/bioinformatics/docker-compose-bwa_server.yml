@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  bwa-server:
+    build:
+      context: ..
+      dockerfile: bioinformatics/Dockerfile.bwa_server
+    image: bwa-server:latest
+    container_name: bwa-server
+    environment:
+      - MCP_SERVER_NAME=bwa-server
+      - BWA_VERSION=0.7.17
+    volumes:
+      - ./workspace:/app/workspace
+      - ./output:/app/output
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import fastmcp; print('FastMCP available')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    stdin_open: true
+    tty: true

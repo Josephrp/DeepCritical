@@ -27,6 +27,8 @@ dependencies = [
   "python-dateutil>=2.9.0.post0",
   "testcontainers",
   "trafilatura>=2.0.0",
+  "psutil>=5.9.0",
+  "fastmcp>=2.12.4",
 ]
 
 [project.optional-dependencies]
@@ -221,6 +223,7 @@ dev = [
   "mkdocs-minify-plugin>=0.7.0",
   "mkdocstrings>=0.24.0",
   "mkdocstrings-python>=1.7.0",
+  "testcontainers>=4.13.1",
   "requests-mock>=1.11.0",
   "pytest-mock>=3.12.0",
 ]

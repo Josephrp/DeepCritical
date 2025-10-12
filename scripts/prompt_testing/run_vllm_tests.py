@@ -96,7 +96,7 @@ def create_default_test_config() -> DictConfig:
             },
         },
         "model": {
-            "name": "microsoft/DialoGPT-medium",
+            "name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
             "generation": {
                 "max_tokens": 256,
                 "temperature": 0.7,
@@ -199,16 +199,16 @@ def run_vllm_tests(
                 return 0
 
         test_files = [
-            f"test_prompts_{module}_vllm.py"
+            f"test_prompts_vllm/test_prompts_{module}_vllm.py"
             for module in modules
-            if (test_dir / f"test_prompts_{module}_vllm.py").exists()
+            if (test_dir / f"test_prompts_vllm/test_prompts_{module}_vllm.py").exists()
         ]
         if not test_files:
             logger.error(f"No test files found for modules: {modules}")
             return 1
     else:
         # Run all VLLM test files, respecting module filtering
-        all_test_files = list(test_dir.glob("test_prompts_*_vllm.py"))
+        all_test_files = list(test_dir.glob("test_prompts_vllm/test_prompts_*_vllm.py"))
         scope_config = test_config.get("scope", {})
 
         if scope_config.get("test_all_modules", True):

@@ -11,7 +11,7 @@ import time
 from collections.abc import Callable
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from pydantic_ai import Agent, RunContext
 
 # Import existing DeepCritical types
@@ -30,16 +30,7 @@ class MiddlewareConfig(BaseModel):
     retry_attempts: int = Field(3, ge=0, description="Number of retry attempts")
     retry_delay: float = Field(1.0, gt=0, description="Delay between retries")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "enabled": True,
-                "priority": 0,
-                "timeout": 30.0,
-                "retry_attempts": 3,
-                "retry_delay": 1.0,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class MiddlewareResult(BaseModel):

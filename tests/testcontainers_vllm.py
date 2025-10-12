@@ -9,13 +9,24 @@ import json
 import logging
 import re
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
 try:
     from testcontainers.vllm import VLLMContainer  # type: ignore
 except ImportError:
     VLLMContainer = None  # type: ignore
 from omegaconf import DictConfig
+
+
+class ReasoningData(TypedDict):
+    """Type definition for reasoning data extracted from LLM responses."""
+
+    has_reasoning: bool
+    reasoning_steps: list[str]
+    tool_calls: list[dict[str, Any]]
+    final_answer: str
+    reasoning_format: str
+
 
 # Set up logging for test artifacts
 logging.basicConfig(
@@ -83,13 +94,13 @@ class VLLMPromptTester:
 
         # Apply configuration with overrides
         self.model_name = model_name or model_config.get(
-            "name", "microsoft/DialoGPT-medium"
+            "name", "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
         )
         self.container_timeout = container_timeout or performance_config.get(
             "max_container_startup_time", 120
         )
         self.max_tokens = max_tokens or model_config.get("generation", {}).get(
-            "max_tokens", 256
+            "max_tokens", 56
         )
         self.temperature = temperature or model_config.get("generation", {}).get(
             "temperature", 0.7
@@ -152,9 +163,9 @@ class VLLMPromptTester:
                 },
             },
             "model": {
-                "name": "microsoft/DialoGPT-medium",
+                "name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                 "generation": {
-                    "max_tokens": 256,
+                    "max_tokens": 56,
                     "temperature": 0.7,
                 },
             },
@@ -414,12 +425,12 @@ class VLLMPromptTester:
         result = response.json()
         return result["choices"][0]["text"].strip()
 
-    def _parse_reasoning(self, response: str) -> dict[str, Any]:
+    def _parse_reasoning(self, response: str) -> ReasoningData:
         """Parse reasoning and tool calls from response.
 
         This implements basic reasoning parsing based on VLLM reasoning outputs.
         """
-        reasoning_data = {
+        reasoning_data: ReasoningData = {
             "has_reasoning": False,
             "reasoning_steps": [],
             "tool_calls": [],
@@ -471,7 +482,7 @@ class VLLMPromptTester:
         if reasoning_data["has_reasoning"]:
             # Remove reasoning sections from final answer
             final_answer = response
-            for step in reasoning_data["reasoning_steps"]:
+            for step in reasoning_data["reasoning_steps"]:  # type: ignore
                 final_answer = final_answer.replace(step, "").strip()
 
             # Clean up extra whitespace

@@ -1,0 +1,28 @@
+# Qualimap Docker container for quality control
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    default-jre \
+    r-base \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and install Qualimap
+RUN wget -q https://bitbucket.org/kokonech/qualimap/downloads/qualimap_v2.3.zip -O /tmp/qualimap.zip && \
+    unzip /tmp/qualimap.zip -d /opt/ && \
+    rm /tmp/qualimap.zip && \
+    ln -s /opt/qualimap_v2.3/qualimap /usr/local/bin/qualimap
+
+# Create working directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV QUALIMAP_VERSION=2.3
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD qualimap --help | head -1 || exit 1
+
+# Default command
+CMD ["qualimap", "--help"]

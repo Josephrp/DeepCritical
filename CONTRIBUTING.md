@@ -100,14 +100,51 @@ git checkout -b bugfix/issue-number
 
 ### 3. Test Your Changes
 
+#### Cross-Platform Testing
+
+DeepCritical supports comprehensive testing across multiple platforms with Windows-specific PowerShell integration.
+
+**For Windows Development:**
 ```bash
-# Run all tests
-uv run pytest tests/ -v
+# Basic tests (always available)
+make test-unit-win
+make test-pydantic-ai-win
+make test-performance-win
 
-# Run specific test categories
-uv run pytest tests/unit/ -v
-uv run pytest tests/integration/ -v
+# Containerized tests (requires Docker)
+$env:DOCKER_TESTS = "true"
+make test-containerized-win
+make test-docker-win
+make test-bioinformatics-win
+```
 
+**For GitHub Contributors (Cross-Platform):**
+```bash
+# Basic tests (works on all platforms)
+make test-unit
+make test-pydantic-ai
+make test-performance
+
+# Containerized tests (works when Docker available)
+DOCKER_TESTS=true make test-containerized
+DOCKER_TESTS=true make test-docker
+DOCKER_TESTS=true make test-bioinformatics
+```
+
+#### Test Categories
+
+DeepCritical includes comprehensive test coverage:
+
+- **Unit Tests**: Basic functionality testing
+- **Pydantic AI Tests**: Agent workflows and tool integration
+- **Performance Tests**: Response time and memory usage testing
+- **LLM Framework Tests**: VLLM and LLaMACPP containerized testing
+- **Bioinformatics Tests**: BWA, SAMtools, BEDTools, STAR, HISAT2, FreeBayes testing
+- **Docker Sandbox Tests**: Container isolation and security testing
+
+#### Quality Checks
+
+```bash
 # Run linting and formatting
 uv run ruff check .
 uv run ruff format --check .
@@ -171,9 +208,47 @@ make pre-commit
 
 The Makefile provides convenient shortcuts for development tasks, but pre-commit hooks are the primary quality assurance mechanism:
 
+#### Cross-Platform Testing Support
+
+DeepCritical supports both cross-platform (GitHub contributors) and Windows-specific testing:
+
+**For GitHub Contributors (Cross-Platform):**
 ```bash
 # Show all available commands
 make help
+
+# Basic tests (works on all platforms)
+make test-unit
+make test-pydantic-ai
+make test-performance
+
+# Containerized tests (works when Docker available)
+DOCKER_TESTS=true make test-containerized
+DOCKER_TESTS=true make test-docker
+DOCKER_TESTS=true make test-bioinformatics
+
+# Quick development cycle (when not using pre-commit)
+make dev
+
+# Manual quality validation (redundant with pre-commit, but available)
+make quality
+
+# Research application testing
+make examples
+```
+
+**For Windows Development:**
+```bash
+# Basic tests (always available)
+make test-unit-win
+make test-pydantic-ai-win
+make test-performance-win
+
+# Containerized tests (requires Docker)
+$env:DOCKER_TESTS = "true"
+make test-containerized-win
+make test-docker-win
+make test-bioinformatics-win
 
 # Quick development cycle (when not using pre-commit)
 make dev

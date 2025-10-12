@@ -1,0 +1,21 @@
+# Fastp Docker container for FASTQ preprocessing
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    fastp \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create working directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV FASTP_VERSION=0.23.4
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD fastp --version || exit 1
+
+# Default command
+CMD ["fastp", "--help"]

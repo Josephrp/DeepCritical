@@ -15,7 +15,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # Optional import for pydantic_graph - may not be available in all environments
 try:
@@ -481,15 +481,7 @@ class InteractionConfig(BaseModel):
     timeout: float = Field(300.0, description="Timeout in seconds")
     enable_monitoring: bool = Field(True, description="Enable execution monitoring")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "pattern": "collaborative",
-                "max_rounds": 10,
-                "consensus_threshold": 0.8,
-                "timeout": 300.0,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class AgentInteractionRequest(BaseModel):
@@ -504,14 +496,7 @@ class AgentInteractionRequest(BaseModel):
         None, description="Interaction configuration"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "agents": ["parser", "planner", "executor"],
-                "interaction_pattern": "sequential",
-                "input_data": {"question": "What is machine learning?"},
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class AgentInteractionResponse(BaseModel):
@@ -525,16 +510,7 @@ class AgentInteractionResponse(BaseModel):
         default_factory=list, description="Any errors encountered"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "success": True,
-                "result": "Machine learning is a subset of AI...",
-                "execution_time": 2.5,
-                "rounds_executed": 3,
-                "errors": [],
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 # Factory functions for creating interaction patterns

@@ -13,7 +13,7 @@ from collections.abc import AsyncGenerator
 from typing import Any, Dict, List, Optional
 
 import aiohttp
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from .rag import (
     EmbeddingModelType,
@@ -263,16 +263,17 @@ class VLLMServerConfig(BaseModel):
         8192, description="Max sequence length to capture"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "model_name": "microsoft/DialoGPT-medium",
+                "model_name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                 "host": "0.0.0.0",
                 "port": 8000,
                 "gpu_memory_utilization": 0.9,
                 "max_model_len": 4096,
             }
         }
+    )
 
 
 class VLLMEmbeddingServerConfig(BaseModel):
@@ -294,8 +295,8 @@ class VLLMEmbeddingServerConfig(BaseModel):
     max_paddings: int = Field(256, description="Maximum paddings")
     disable_log_stats: bool = Field(False, description="Disable log statistics")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "model_name": "sentence-transformers/all-MiniLM-L6-v2",
                 "host": "0.0.0.0",
@@ -304,6 +305,7 @@ class VLLMEmbeddingServerConfig(BaseModel):
                 "max_model_len": 512,
             }
         }
+    )
 
 
 class VLLMDeployment(BaseModel):
@@ -319,10 +321,13 @@ class VLLMDeployment(BaseModel):
     )
     max_retries: int = Field(3, description="Maximum retry attempts for health checks")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "llm_config": {"model_name": "microsoft/DialoGPT-medium", "port": 8000},
+                "llm_config": {
+                    "model_name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+                    "port": 8000,
+                },
                 "embedding_config": {
                     "model_name": "sentence-transformers/all-MiniLM-L6-v2",
                     "port": 8001,
@@ -330,6 +335,7 @@ class VLLMDeployment(BaseModel):
                 "auto_start": True,
             }
         }
+    )
 
     async def start_llm_server(self) -> bool:
         """Start the LLM server."""
@@ -418,5 +424,4 @@ class VLLMRAGSystem(BaseModel):
         )
         self.llm = VLLMLLMProvider(llm_config)
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)

@@ -1,0 +1,33 @@
+# BWA MCP Server Docker container
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    bwa \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    fastmcp>=2.12.4 \
+    pydantic>=2.0.0 \
+    typing-extensions>=4.0.0
+
+# Create app directory
+WORKDIR /app
+
+# Copy your MCP server
+COPY bwa_server.py /app/
+
+# Create workspace and output directories
+RUN mkdir -p /app/workspace /app/output
+
+# Make sure the server script is executable
+RUN chmod +x /app/bwa_server.py
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import fastmcp; print('FastMCP available')" || exit 1
+
+# Default command runs the MCP server via stdio
+CMD ["python", "/app/bwa_server.py"]

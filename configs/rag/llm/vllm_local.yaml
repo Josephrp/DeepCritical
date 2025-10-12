@@ -1,6 +1,6 @@
 # VLLM Local LLM Configuration
 model_type: "custom"
-model_name: "microsoft/DialoGPT-medium"
+model_name: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 host: "localhost"
 port: 8000
 api_key: null

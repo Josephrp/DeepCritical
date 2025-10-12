@@ -118,7 +118,7 @@ class InitializeRAG(BaseNode[RAGState]):  # type: ignore[unsupported-base]
         llm_cfg = rag_cfg.get("llm", {})
         llm_config = VLLMConfig(
             model_type=LLMModelType(llm_cfg.get("model_type", "huggingface")),
-            model_name=llm_cfg.get("model_name", "microsoft/DialoGPT-medium"),
+            model_name=llm_cfg.get("model_name", "TinyLlama/TinyLlama-1.1B-Chat-v1.0"),
             host=llm_cfg.get("host", "localhost"),
             port=llm_cfg.get("port", 8000),
             api_key=llm_cfg.get("api_key"),
@@ -563,4 +563,4 @@ def run_rag_workflow(question: str, config: DictConfig) -> str:
     """Run the complete RAG workflow."""
     state = RAGState(question=question, config=config)
     result = asyncio.run(rag_workflow_graph.run(InitializeRAG(), state=state))  # type: ignore
-    return result.output
+    return result.output or ""

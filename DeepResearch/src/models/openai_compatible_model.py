@@ -19,7 +19,7 @@ from omegaconf import DictConfig, OmegaConf
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.ollama import OllamaProvider
 
-from ..datatypes.llm_models import GenerationConfig, LLMModelConfig
+from ..datatypes.llm_models import GenerationConfig, LLMModelConfig, LLMProvider
 
 
 class OpenAICompatibleModel(OpenAIChatModel):
@@ -72,25 +72,36 @@ class OpenAICompatibleModel(OpenAIChatModel):
                 raise ValueError(f"Expected dict or DictConfig, got {type(config)}")
 
             # Build config dict with fallbacks for validation
+            provider_value = config.get("provider", "custom")
+            model_name_value = (
+                model_name
+                or config.get("model_name")
+                or config.get("model", {}).get("name", "gpt-3.5-turbo")
+            )
+            base_url_value = (
+                base_url or config.get("base_url") or os.getenv("LLM_BASE_URL", "")
+            )
+            timeout_value = config.get("timeout", 60.0) or 60.0
+            max_retries_value = config.get("max_retries", 3) or 3
+            retry_delay_value = config.get("retry_delay", 1.0) or 1.0
+
             config_dict = {
-                "provider": config.get("provider", "custom"),
-                "model_name": (
-                    model_name
-                    or config.get("model_name")
-                    or config.get("model", {}).get("name", "gpt-3.5-turbo")
-                ),
-                "base_url": base_url
-                or config.get("base_url")
-                or os.getenv("LLM_BASE_URL", ""),
+                "provider": LLMProvider(provider_value)
+                if provider_value
+                else LLMProvider.CUSTOM,
+                "model_name": str(model_name_value)
+                if model_name_value
+                else "gpt-3.5-turbo",
+                "base_url": str(base_url_value) if base_url_value else "",
                 "api_key": api_key or config.get("api_key") or os.getenv("LLM_API_KEY"),
-                "timeout": config.get("timeout", 60.0),
-                "max_retries": config.get("max_retries", 3),
-                "retry_delay": config.get("retry_delay", 1.0),
+                "timeout": float(timeout_value),
+                "max_retries": int(max_retries_value),
+                "retry_delay": float(retry_delay_value),
             }
 
             # Validate using Pydantic model
             try:
-                validated_config = LLMModelConfig(**config_dict)
+                validated_config = LLMModelConfig(**config_dict)  # type: ignore
             except Exception as e:
                 raise ValueError(f"Invalid LLM model configuration: {e}")
 
