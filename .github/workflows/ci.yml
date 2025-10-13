@@ -35,16 +35,16 @@ jobs:
         # For dev branch: exclude optional tests (docker, llm, performance, pydantic_ai)
         if [ "${{ github.ref }}" = "refs/heads/main" ]; then
           echo "Running all tests including optional tests for main branch"
-          pytest tests/ -m "not containerized" --cov=DeepResearch --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy junit_logging=all junit_duration_report=call junit_suite_name="DeepCritical Main Tests"
+          pytest tests/ -m "not containerized" --cov=DeepResearch --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy junit_duration_report=call junit_suite_name="DeepCritical Main Tests"
         else
           echo "Running tests excluding optional tests for dev branch"
-          pytest tests/ -m "not optional and not containerized" --cov=DeepResearch --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy junit_logging=all junit_duration_report=call junit_suite_name="DeepCritical Dev Tests"
+          pytest tests/ -m "not optional and not containerized" --cov=DeepResearch --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy junit_duration_report=call junit_suite_name="DeepCritical Dev Tests"
         fi
 
     - name: Run bioinformatics unit tests (all branches)
       run: |
         echo "Running bioinformatics unit tests..."
-        pytest tests/test_bioinformatics_tools/ -m "not containerized" --cov=DeepResearch --cov-append --cov-report=xml --cov-report=term-missing --junitxml=junit-bioinformatics.xml -o junit_family=legacy junit_logging=all junit_duration_report=call junit_suite_name="DeepCritical Bioinformatics Tests"
+        pytest tests/test_bioinformatics_tools/ -m "not containerized" --cov=DeepResearch --cov-append --cov-report=xml --cov-report=term-missing --junitxml=junit-bioinformatics.xml -o junit_family=legacy junit_duration_report=call junit_suite_name="DeepCritical Bioinformatics Tests"
 
     - name: Run bioinformatics containerized tests (main branch only)
       if: github.ref == 'refs/heads/docker'
@@ -70,8 +70,6 @@ jobs:
         echo "🔗 Repository URL: https://github.com/${{ github.repository }}"
         echo "📈 Coverage reports will be uploaded to Codecov"
 
-        # Set repository slug for Codecov (use the actual repository name)
-        echo "CODECOV_SLUG=${{ github.repository }}" >> "$GITHUB_ENV"
 
         # Ensure uploads are enabled
         echo "✅ Codecov uploads enabled for this run"
@@ -99,9 +97,6 @@ jobs:
         fail_ci_if_error: false
         verbose: true
         slug: ${{ github.repository }}
-        commit_parent: ${{ github.event.pull_request.head.sha || github.sha }}
-        override_branch: ${{ github.head_ref || github.ref_name }}
-        override_commit: ${{ github.sha }}
 
     - name: Upload test results to Codecov
       if: ${{ !cancelled() }}
@@ -111,8 +106,6 @@ jobs:
         files: ./junit.xml
         verbose: true
         slug: ${{ github.repository }}
-        override_commit: ${{ github.sha }}
-        override_branch: ${{ github.head_ref || github.ref_name }}
       continue-on-error: true
 
     - name: Upload bioinformatics test results to Codecov
@@ -123,8 +116,6 @@ jobs:
         files: ./junit-bioinformatics.xml
         verbose: true
         slug: ${{ github.repository }}
-        override_commit: ${{ github.sha }}
-        override_branch: ${{ github.head_ref || github.ref_name }}
       continue-on-error: true
 
     - name: Run VLLM tests (optional, manual trigger only)
