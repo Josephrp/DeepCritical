@@ -68,7 +68,7 @@ jobs:
     - name: Configure Codecov repository setup
       run: |
         # Check if CODECOV_TOKEN is available
-        if [ -n "${{ secrets.CODECOV_TOKEN }}" ]; then
+        if [ -n "${CODECOV_TOKEN}" ]; then
           echo "📊 Codecov token found - uploads will be enabled"
           echo "🔗 Repository: ${{ github.repository }}"
           echo "📈 Coverage reports will be uploaded to Codecov"
@@ -81,6 +81,8 @@ jobs:
           echo "   3. Add it as CODECOV_TOKEN secret in repository settings"
           echo "   4. Repository will be auto-detected on first upload"
         fi
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Display coverage summary
       run: |
@@ -98,7 +100,7 @@ jobs:
         echo "💡 To view detailed coverage: python -m coverage html && open htmlcov/index.html"
 
     - name: Upload coverage to Codecov
-      if: ${{ secrets.CODECOV_TOKEN != '' }}
+      if: ${{ secrets.CODECOV_TOKEN }}
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -110,7 +112,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload test results to Codecov
-      if: ${{ secrets.CODECOV_TOKEN != '' && !cancelled() }}
+      if: ${{ secrets.CODECOV_TOKEN && !cancelled() }}
       uses: codecov/test-results-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -121,7 +123,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload bioinformatics test results to Codecov
-      if: ${{ secrets.CODECOV_TOKEN != '' && !cancelled() }}
+      if: ${{ secrets.CODECOV_TOKEN && !cancelled() }}
       uses: codecov/test-results-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -132,7 +134,7 @@ jobs:
       continue-on-error: true
 
     - name: Codecov upload summary
-      if: ${{ secrets.CODECOV_TOKEN == '' }}
+      if: ${{ !secrets.CODECOV_TOKEN }}
       run: |
         echo "ℹ️ Codecov uploads were skipped because CODECOV_TOKEN is not configured"
         echo ""
