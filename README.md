@@ -1,6 +1,8 @@
 # 🚀 DeepCritical: Building a Highly Configurable Deep Research Agent Ecosystem
 
-[![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)][![(https://deepcritical.github.io/DeepCritical)]
+[![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://deepcritical.github.io/DeepCritical)
+
+
 https://codecov.io/gh/DeepCritical/DeepCritical/branch/dev/graph/badge.svg?token=N8H1DOUXQL]
 
 ## Vision: From Single Questions to Research Field Generation
