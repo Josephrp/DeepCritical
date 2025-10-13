@@ -63,16 +63,24 @@ jobs:
         ls -la coverage.xml junit.xml junit-bioinformatics.xml || echo "Some files missing"
         head -20 coverage.xml || echo "Coverage file not readable"
 
+    # Codecov upload steps - These steps will NOT fail the CI even if uploads fail
+    # Tests will pass regardless of Codecov upload status
     - name: Configure Codecov repository setup
       run: |
-        # Configure Codecov for this repository (works for both original repo and forks)
-        echo "📊 Setting up Codecov upload for repository: ${{ github.repository }}"
-        echo "🔗 Repository URL: https://github.com/${{ github.repository }}"
-        echo "📈 Coverage reports will be uploaded to Codecov"
-
-
-        # Ensure uploads are enabled
-        echo "✅ Codecov uploads enabled for this run"
+        # Check if CODECOV_TOKEN is available
+        if [ -n "${{ secrets.CODECOV_TOKEN }}" ]; then
+          echo "📊 Codecov token found - uploads will be enabled"
+          echo "🔗 Repository: ${{ github.repository }}"
+          echo "📈 Coverage reports will be uploaded to Codecov"
+          echo "✅ Codecov uploads enabled for this run"
+        else
+          echo "⚠️ CODECOV_TOKEN not found - uploads will be skipped"
+          echo "💡 To enable Codecov uploads:"
+          echo "   1. Go to https://codecov.io/gh/${{ github.repository }}/settings"
+          echo "   2. Generate a repository upload token"
+          echo "   3. Add it as CODECOV_TOKEN secret in repository settings"
+          echo "   4. Repository will be auto-detected on first upload"
+        fi
 
     - name: Display coverage summary
       run: |
@@ -90,6 +98,7 @@ jobs:
         echo "💡 To view detailed coverage: python -m coverage html && open htmlcov/index.html"
 
     - name: Upload coverage to Codecov
+      if: ${{ secrets.CODECOV_TOKEN != '' }}
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -97,26 +106,50 @@ jobs:
         fail_ci_if_error: false
         verbose: true
         slug: ${{ github.repository }}
+        name: "${{ github.ref_name }} - Python ${{ matrix.python-version || '3.11' }}"
+      continue-on-error: true
 
     - name: Upload test results to Codecov
-      if: ${{ !cancelled() }}
+      if: ${{ secrets.CODECOV_TOKEN != '' && !cancelled() }}
       uses: codecov/test-results-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./junit.xml
         verbose: true
         slug: ${{ github.repository }}
+        name: "${{ github.ref_name }} - Test Results"
       continue-on-error: true
 
     - name: Upload bioinformatics test results to Codecov
-      if: ${{ !cancelled() }}
+      if: ${{ secrets.CODECOV_TOKEN != '' && !cancelled() }}
       uses: codecov/test-results-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./junit-bioinformatics.xml
         verbose: true
         slug: ${{ github.repository }}
+        name: "${{ github.ref_name }} - Bioinformatics Tests"
       continue-on-error: true
+
+    - name: Codecov upload summary
+      if: ${{ secrets.CODECOV_TOKEN == '' }}
+      run: |
+        echo "ℹ️ Codecov uploads were skipped because CODECOV_TOKEN is not configured"
+        echo ""
+        echo "📋 Setup Instructions:"
+        echo "======================"
+        echo "1. Visit: https://codecov.io/gh/${{ github.repository }}"
+        echo "2. Sign in with GitHub"
+        echo "3. Repository should auto-appear"
+        echo "4. Go to Settings → Repository Upload Token"
+        echo "5. Generate and copy the token"
+        echo "6. Go to GitHub repo Settings → Secrets and variables → Actions"
+        echo "7. Add new repository secret: CODECOV_TOKEN"
+        echo "8. Paste the token value"
+        echo "9. Codecov uploads will work on next run"
+        echo ""
+        echo "✅ CI will pass regardless of Codecov upload status"
+        echo "📊 Coverage reports were still generated locally for inspection"
 
     - name: Run VLLM tests (optional, manual trigger only)
       if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[vllm-tests]')
