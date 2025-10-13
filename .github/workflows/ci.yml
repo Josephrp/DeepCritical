@@ -67,12 +67,13 @@ jobs:
     # Tests will pass regardless of Codecov upload status
     - name: Configure Codecov repository setup
       run: |
-        # Check if CODECOV_TOKEN is available
+        # Check if CODECOV_TOKEN is available and set HAS_CODECOV_TOKEN flag
         if [ -n "${CODECOV_TOKEN}" ]; then
           echo "📊 Codecov token found - uploads will be enabled"
           echo "🔗 Repository: ${{ github.repository }}"
           echo "📈 Coverage reports will be uploaded to Codecov"
           echo "✅ Codecov uploads enabled for this run"
+          echo "HAS_CODECOV_TOKEN=true" >> $GITHUB_ENV
         else
           echo "⚠️ CODECOV_TOKEN not found - uploads will be skipped"
           echo "💡 To enable Codecov uploads:"
@@ -80,6 +81,7 @@ jobs:
           echo "   2. Generate a repository upload token"
           echo "   3. Add it as CODECOV_TOKEN secret in repository settings"
           echo "   4. Repository will be auto-detected on first upload"
+          echo "HAS_CODECOV_TOKEN=false" >> $GITHUB_ENV
         fi
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -100,7 +102,7 @@ jobs:
         echo "💡 To view detailed coverage: python -m coverage html && open htmlcov/index.html"
 
     - name: Upload coverage to Codecov
-      if: ${{ secrets.CODECOV_TOKEN }}
+      if: env.HAS_CODECOV_TOKEN == 'true'
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -112,7 +114,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload test results to Codecov
-      if: ${{ secrets.CODECOV_TOKEN && !cancelled() }}
+      if: env.HAS_CODECOV_TOKEN == 'true' && !cancelled()
       uses: codecov/test-results-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -123,7 +125,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload bioinformatics test results to Codecov
-      if: ${{ secrets.CODECOV_TOKEN && !cancelled() }}
+      if: env.HAS_CODECOV_TOKEN == 'true' && !cancelled()
       uses: codecov/test-results-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -134,7 +136,7 @@ jobs:
       continue-on-error: true
 
     - name: Codecov upload summary
-      if: ${{ !secrets.CODECOV_TOKEN }}
+      if: env.HAS_CODECOV_TOKEN == 'false'
       run: |
         echo "ℹ️ Codecov uploads were skipped because CODECOV_TOKEN is not configured"
         echo ""
