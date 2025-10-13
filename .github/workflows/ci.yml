@@ -63,6 +63,34 @@ jobs:
         ls -la coverage.xml junit.xml junit-bioinformatics.xml || echo "Some files missing"
         head -20 coverage.xml || echo "Coverage file not readable"
 
+    - name: Configure Codecov repository setup
+      run: |
+        # Configure Codecov for this repository (works for both original repo and forks)
+        echo "📊 Setting up Codecov upload for repository: ${{ github.repository }}"
+        echo "🔗 Repository URL: https://github.com/${{ github.repository }}"
+        echo "📈 Coverage reports will be uploaded to Codecov"
+
+        # Set repository slug for Codecov (use the actual repository name)
+        echo "CODECOV_SLUG=${{ github.repository }}" >> "$GITHUB_ENV"
+
+        # Ensure uploads are enabled
+        echo "✅ Codecov uploads enabled for this run"
+
+    - name: Display coverage summary
+      run: |
+        echo "📈 Local Coverage Summary:"
+        echo "=========================="
+        if command -v coverage >/dev/null 2>&1; then
+          python -m coverage report --include="DeepResearch/*" --omit="*/tests/*,*/test_*" || echo "Coverage report generation failed"
+        else
+          echo "Coverage.py not available for summary"
+        fi
+        echo ""
+        echo "📁 Coverage files generated:"
+        ls -lh *.xml 2>/dev/null || echo "No XML coverage files found"
+        echo ""
+        echo "💡 To view detailed coverage: python -m coverage html && open htmlcov/index.html"
+
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v5
       with:
@@ -70,7 +98,10 @@ jobs:
         files: ./coverage.xml
         fail_ci_if_error: false
         verbose: true
-        slug: DeepCritical/DeepCritical
+        slug: ${{ github.repository }}
+        commit_parent: ${{ github.event.pull_request.head.sha || github.sha }}
+        override_branch: ${{ github.head_ref || github.ref_name }}
+        override_commit: ${{ github.sha }}
 
     - name: Upload test results to Codecov
       if: ${{ !cancelled() }}
@@ -79,7 +110,9 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./junit.xml
         verbose: true
-        slug: DeepCritical/DeepCritical
+        slug: ${{ github.repository }}
+        override_commit: ${{ github.sha }}
+        override_branch: ${{ github.head_ref || github.ref_name }}
       continue-on-error: true
 
     - name: Upload bioinformatics test results to Codecov
@@ -89,7 +122,9 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./junit-bioinformatics.xml
         verbose: true
-        slug: DeepCritical/DeepCritical
+        slug: ${{ github.repository }}
+        override_commit: ${{ github.sha }}
+        override_branch: ${{ github.head_ref || github.ref_name }}
       continue-on-error: true
 
     - name: Run VLLM tests (optional, manual trigger only)
