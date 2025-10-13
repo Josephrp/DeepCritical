@@ -61,7 +61,7 @@ jobs:
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        slug: Josephrp/DeepCritical
+        slug: DeepCritical/DeepCritical
         files: ./coverage.xml
         fail_ci_if_error: true
         verbose: true
