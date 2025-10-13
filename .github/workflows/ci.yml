@@ -44,7 +44,7 @@ jobs:
     - name: Run bioinformatics unit tests (all branches)
       run: |
         echo "🧬 Running bioinformatics unit tests..."
-        pytest tests/test_bioinformatics_tools/ -m "not containerized" --cov=DeepResearch --cov-append --cov-report=xml --cov-report=term-missing
+        pytest tests/test_bioinformatics_tools/ -m "not containerized" --cov=DeepResearch --cov-append --cov-report=xml --cov-report=term-missing --junitxml=junit-bioinformatics.xml -o junit_family=legacy
 
     - name: Run bioinformatics containerized tests (main branch only)
       if: github.ref == 'refs/heads/docker'
@@ -58,12 +58,29 @@ jobs:
         fi
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+        slug: deepcritical/deepcritical
         files: ./coverage.xml
         fail_ci_if_error: true
         verbose: true
+
+    - name: Upload test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: deepcritical/deepcritical
+        files: ./junit.xml
+
+    - name: Upload bioinformatics test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: deepcritical/deepcritical
+        files: ./junit-bioinformatics.xml
 
     - name: Run VLLM tests (optional, manual trigger only)
       if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[vllm-tests]')
