@@ -38,7 +38,7 @@ jobs:
           pytest tests/ -m "not containerized" --cov=DeepResearch --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy
         else
           echo "Running tests excluding optional tests for dev branch"
-          pytest tests/ -m "not optional and not containerized" --cov=DeepResearch --cov-report=xml --cov-report=term-missing --junitxml=junit.xml -o junit_family=legacy
+          pytest tests/ -m "not optional and not containerized" --cov=DeepResearch --cov-report=xml --cov-report=term-missing
         fi
 
     - name: Run bioinformatics unit tests (all branches)
