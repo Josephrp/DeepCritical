@@ -61,7 +61,7 @@ jobs:
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        slug: DeepCritical/DeepCritical
+        slug: deepcritical/deepcritical
         files: ./coverage.xml
         fail_ci_if_error: true
         verbose: true
@@ -71,7 +71,7 @@ jobs:
       uses: codecov/test-results-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        slug: DeepCritical/DeepCritical
+        slug: deepcritical/deepcritical
         files: ./junit.xml
 
     - name: Upload bioinformatics test results to Codecov
@@ -79,7 +79,7 @@ jobs:
       uses: codecov/test-results-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        slug: DeepCritical/DeepCritical
+        slug: deepcritical/deepcritical
         files: ./junit-bioinformatics.xml
 
     - name: Run VLLM tests (optional, manual trigger only)
