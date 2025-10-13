@@ -83,13 +83,13 @@ jobs:
 
     - name: Upload coverage to Codecov
       run: |
-        ./codecov upload-process -t ${{ secrets.CODECOV_TOKEN }} -f coverage.xml --fail-on-error -r DeepCritical/DeepCritical
+        ./codecov upload-process -t ${{ secrets.CODECOV_TOKEN }} -f coverage.xml --fail-on-error -r deepcritical/deepcritical
 
     - name: Upload test results to Codecov
       if: ${{ !cancelled() }}
       run: |
         if [ -f junit.xml ]; then
-          ./codecov upload-process -t ${{ secrets.CODECOV_TOKEN }} -f junit.xml --fail-on-error -F test-results -r DeepCritical/DeepCritical
+          ./codecov upload-process -t ${{ secrets.CODECOV_TOKEN }} -f junit.xml --fail-on-error -F test-results -r deepcritical/deepcritical
         else
           echo "⚠️  junit.xml not found, skipping test results upload"
         fi
@@ -97,7 +97,7 @@ jobs:
     - name: Upload bioinformatics test results to Codecov
       if: ${{ !cancelled() }}
       run: |
-        ./codecov upload-process -t ${{ secrets.CODECOV_TOKEN }} -f junit-bioinformatics.xml --fail-on-error -F bioinformatics-test-results -r DeepCritical/DeepCritical
+        ./codecov upload-process -t ${{ secrets.CODECOV_TOKEN }} -f junit-bioinformatics.xml --fail-on-error -F bioinformatics-test-results -r deepcritical/deepcritical
 
     - name: Run VLLM tests (optional, manual trigger only)
       if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[vllm-tests]')
