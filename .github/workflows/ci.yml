@@ -71,7 +71,16 @@ jobs:
       uses: codecov/test-results-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        slug: Josephrp/DeepCritical
+        slug: DeepCritical/DeepCritical
+        files: ./junit.xml
+
+    - name: Upload bioinformatics test results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: DeepCritical/DeepCritical
+        files: ./junit-bioinformatics.xml
 
     - name: Run VLLM tests (optional, manual trigger only)
       if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[vllm-tests]')
