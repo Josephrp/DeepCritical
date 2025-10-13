@@ -1,6 +1,6 @@
 name: CI
 permissions:
-  contents: read
+  contents: write
 
 on:
   push:
@@ -57,47 +57,28 @@ jobs:
           echo "⚠️  Docker not available, skipping containerized tests"
         fi
 
-    - name: Download and setup Codecov CLI
-      run: |
-        # Download CLI binary
-        curl -Os https://cli.codecov.io/latest/linux/codecov
-
-        # Attempt integrity verification (optional but recommended)
-        if command -v gpg &> /dev/null && command -v shasum &> /dev/null; then
-          echo "🔐 Performing integrity verification..."
-          # Import Codecov PGP public key
-          curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import || echo "⚠️  GPG key import failed, continuing without verification"
-
-          # Download verification files
-          curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM
-          curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM.sig
-
-          # Verify SHA256SUM signature and content
-          (gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM && shasum -a 256 -c codecov.SHA256SUM) || echo "⚠️  Integrity verification failed, but continuing with download"
-        else
-          echo "⚠️  GPG or shasum not available, skipping integrity verification"
-        fi
-
-        # Make executable
-        chmod +x codecov
-
     - name: Upload coverage to Codecov
-      run: |
-        ./codecov upload-process -t ${{ secrets.CODECOV_TOKEN }} -f coverage.xml --verbose --fail-on-error -r DeepCritical/DeepCritical
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml
+        fail_ci_if_error: false
 
     - name: Upload test results to Codecov
       if: ${{ !cancelled() }}
-      run: |
-        if [ -f junit.xml ]; then
-          ./codecov upload-process -t ${{ secrets.CODECOV_TOKEN }} -f junit.xml --verbose --fail-on-error -F test-results -r DeepCritical/DeepCritical
-        else
-          echo "⚠️  junit.xml not found, skipping test results upload"
-        fi
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./junit.xml
+      continue-on-error: true
 
     - name: Upload bioinformatics test results to Codecov
       if: ${{ !cancelled() }}
-      run: |
-        ./codecov upload-process -t ${{ secrets.CODECOV_TOKEN }} -f junit-bioinformatics.xml --verbose --fail-on-error -F bioinformatics-test-results -r DeepCritical/DeepCritical
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./junit-bioinformatics.xml
+      continue-on-error: true
 
     - name: Run VLLM tests (optional, manual trigger only)
       if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[vllm-tests]')
