@@ -1,28 +1,30 @@
 """
-Docker Compose Deployer for MCP Servers.
+Docker Compose Deployer for MCP Servers with AG2 Code Execution Integration.
 
 This module provides deployment functionality for MCP servers using Docker Compose
-for production-like deployments.
+for production-like deployments, now integrated with AG2-style code execution.
 """
+
 # type: ignore  # Template file with dynamic variable substitution
 
 from __future__ import annotations
 
-import asyncio
-import json
 import logging
 import os
-import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..datatypes.bioinformatics_mcp import (
+from DeepResearch.src.datatypes.bioinformatics_mcp import (
     MCPServerConfig,
     MCPServerDeployment,
+)
+from DeepResearch.src.datatypes.mcp import (
     MCPServerStatus,
 )
+from DeepResearch.src.utils.coding import CodeBlock, DockerCommandLineCodeExecutor
+from DeepResearch.src.utils.python_code_execution import PythonCodeExecutionTool
 
 logger = logging.getLogger(__name__)
 
@@ -59,11 +61,13 @@ class DockerComposeConfig(BaseModel):
 
 
 class DockerComposeDeployer:
-    """Deployer for MCP servers using Docker Compose."""
+    """Deployer for MCP servers using Docker Compose with integrated code execution."""
 
     def __init__(self):
         self.deployments: dict[str, MCPServerDeployment] = {}
         self.compose_files: dict[str, str] = {}  # server_name -> compose_file_path
+        self.code_executors: dict[str, DockerCommandLineCodeExecutor] = {}
+        self.python_execution_tools: dict[str, PythonCodeExecutionTool] = {}
 
     def create_compose_config(
         self, servers: list[MCPServerConfig]
@@ -141,7 +145,8 @@ class DockerComposeDeployer:
             result = subprocess.run(cmd, check=False, capture_output=True, text=True)
 
             if result.returncode != 0:
-                raise RuntimeError(f"Docker Compose deployment failed: {result.stderr}")
+                msg = f"Docker Compose deployment failed: {result.stderr}"
+                raise RuntimeError(msg)
 
             # Create deployment records
             for server_config in server_configs:
@@ -156,11 +161,11 @@ class DockerComposeDeployer:
                 deployments.append(deployment)
 
             logger.info(
-                f"Deployed {len(server_configs)} MCP servers using Docker Compose"
+                "Deployed %d MCP servers using Docker Compose", len(server_configs)
             )
 
         except Exception as e:
-            logger.error(f"Failed to deploy MCP servers: {e}")
+            logger.exception("Failed to deploy MCP servers")
             # Create failed deployment records
             for server_config in server_configs:
                 deployment = MCPServerDeployment(
@@ -206,15 +211,17 @@ class DockerComposeDeployer:
 
                         if result.returncode == 0:
                             deployment.status = "stopped"
-                            logger.info(f"Stopped MCP server '{server_name}'")
+                            logger.info("Stopped MCP server '%s'", server_name)
                         else:
                             logger.error(
-                                f"Failed to stop server '{server_name}': {result.stderr}"
+                                "Failed to stop server '%s': %s",
+                                server_name,
+                                result.stderr,
                             )
                             success = False
 
-                except Exception as e:
-                    logger.error(f"Error stopping server '{server_name}': {e}")
+                except Exception:
+                    logger.exception("Error stopping server '%s'", server_name)
                     success = False
 
         return success
@@ -252,15 +259,17 @@ class DockerComposeDeployer:
                             deployment.status = "stopped"
                             del self.deployments[server_name]
                             del self.compose_files[server_name]
-                            logger.info(f"Removed MCP server '{server_name}'")
+                            logger.info("Removed MCP server '%s'", server_name)
                         else:
                             logger.error(
-                                f"Failed to remove server '{server_name}': {result.stderr}"
+                                "Failed to remove server '%s': %s",
+                                server_name,
+                                result.stderr,
                             )
                             success = False
 
-                except Exception as e:
-                    logger.error(f"Error removing server '{server_name}': {e}")
+                except Exception:
+                    logger.exception("Error removing server '%s'", server_name)
                     success = False
 
         return success
@@ -332,16 +341,18 @@ CMD ["python", "{server_name}_server.py"]
 
             if result.returncode == 0:
                 logger.info(
-                    f"Built Docker image '{image_tag}' for server '{server_name}'"
+                    "Built Docker image '%s' for server '%s'", image_tag, server_name
                 )
                 return True
             logger.error(
-                f"Failed to build Docker image for server '{server_name}': {result.stderr}"
+                "Failed to build Docker image for server '%s': %s",
+                server_name,
+                result.stderr,
             )
             return False
 
-        except Exception as e:
-            logger.error(f"Error building Docker image for server '{server_name}': {e}")
+        except Exception:
+            logger.exception("Error building Docker image for server '%s'", server_name)
             return False
 
     async def create_server_package(
@@ -386,11 +397,13 @@ CMD ["python", "{server_name}_server.py"]
 
             files_created.append(str(compose_file))
 
-            logger.info(f"Created server package for '{server_name}' in {server_dir}")
+            logger.info(
+                "Created server package for '%s' in %s", server_name, server_dir
+            )
             return files_created
 
-        except Exception as e:
-            logger.error(f"Failed to create server package for '{server_name}': {e}")
+        except Exception:
+            logger.exception("Failed to create server package for '%s'", server_name)
             return files_created
 
     def _generate_server_code(self, server_name: str, server_implementation) -> str:
@@ -398,7 +411,7 @@ CMD ["python", "{server_name}_server.py"]
         module_path = server_implementation.__module__
         class_name = server_implementation.__class__.__name__
 
-        code = f'''"""
+        return f'''"""
 Auto-generated MCP server for {server_name}.
 """
 
@@ -409,8 +422,6 @@ mcp_server = {class_name}()
 
 # Template file - main execution logic is handled by deployment system
 '''
-
-        return code
 
     def _generate_requirements(self, server_name: str) -> str:
         """Generate requirements file for server deployment."""
@@ -467,6 +478,113 @@ mcp_server = {class_name}()
         compose_config.volumes[f"mcp-{server_name}-data"] = {"driver": "local"}
 
         return compose_config
+
+    async def execute_code(
+        self,
+        server_name: str,
+        code: str,
+        language: str = "python",
+        timeout: int = 60,
+        max_retries: int = 3,
+        **kwargs,
+    ) -> dict[str, Any]:
+        """Execute code using the deployed server's Docker Compose environment.
+
+        Args:
+            server_name: Name of the deployed server to use for execution
+            code: Code to execute
+            language: Programming language of the code
+            timeout: Execution timeout in seconds
+            max_retries: Maximum number of retry attempts
+            **kwargs: Additional execution parameters
+
+        Returns:
+            Dictionary containing execution results
+        """
+        deployment = self.deployments.get(server_name)
+        if not deployment:
+            raise ValueError(f"Server '{server_name}' not deployed")
+
+        if deployment.status != "running":
+            raise ValueError(
+                f"Server '{server_name}' is not running (status: {deployment.status})"
+            )
+
+        # Get or create Python execution tool for this server
+        if server_name not in self.python_execution_tools:
+            try:
+                self.python_execution_tools[server_name] = PythonCodeExecutionTool(
+                    timeout=timeout,
+                    work_dir=f"/tmp/{server_name}_code_exec_compose",
+                    use_docker=True,
+                )
+            except Exception:
+                logger.exception(
+                    "Failed to create Python execution tool for server '%s'",
+                    server_name,
+                )
+                raise
+
+        # Execute the code
+        tool = self.python_execution_tools[server_name]
+        result = tool.run(
+            {
+                "code": code,
+                "timeout": timeout,
+                "max_retries": max_retries,
+                "language": language,
+                **kwargs,
+            }
+        )
+
+        return {
+            "server_name": server_name,
+            "success": result.success,
+            "output": result.data.get("output", ""),
+            "error": result.data.get("error", ""),
+            "exit_code": result.data.get("exit_code", -1),
+            "execution_time": result.data.get("execution_time", 0.0),
+            "retries_used": result.data.get("retries_used", 0),
+        }
+
+    async def execute_code_blocks(
+        self, server_name: str, code_blocks: list[CodeBlock], **kwargs
+    ) -> dict[str, Any]:
+        """Execute multiple code blocks using the deployed server's Docker Compose environment.
+
+        Args:
+            server_name: Name of the deployed server to use for execution
+            code_blocks: List of code blocks to execute
+            **kwargs: Additional execution parameters
+
+        Returns:
+            Dictionary containing execution results for all blocks
+        """
+        deployment = self.deployments.get(server_name)
+        if not deployment:
+            raise ValueError(f"Server '{server_name}' not deployed")
+
+        if server_name not in self.code_executors:
+            # Create code executor if it doesn't exist
+            self.code_executors[server_name] = DockerCommandLineCodeExecutor(
+                image=deployment.configuration.image
+                if hasattr(deployment.configuration, "image")
+                else "python:3.11-slim",
+                timeout=kwargs.get("timeout", 60),
+                work_dir=f"/tmp/{server_name}_code_blocks_compose",
+            )
+
+        executor = self.code_executors[server_name]
+        result = executor.execute_code_blocks(code_blocks)
+
+        return {
+            "server_name": server_name,
+            "success": result.exit_code == 0,
+            "output": result.output,
+            "exit_code": result.exit_code,
+            "command": getattr(result, "command", ""),
+            "image": getattr(result, "image", None),
+        }
 
 
 # Global deployer instance
