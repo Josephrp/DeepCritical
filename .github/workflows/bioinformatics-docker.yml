@@ -1,0 +1,161 @@
+name: Bioinformatics Docker Build
+
+permissions:
+  contents: read
+  packages: write
+
+on:
+  push:
+    branches: [ docker ]
+    paths:
+      - 'docker/bioinformatics/**'
+      - 'scripts/publish_docker_images.py'
+      - '.github/workflows/bioinformatics-docker.yml'
+  workflow_dispatch:
+    inputs:
+      publish_images:
+        description: 'Publish images to Docker Hub'
+        required: false
+        default: 'false'
+        type: boolean
+      tools_to_build:
+        description: 'Comma-separated list of tools to build (empty for all)'
+        required: false
+        default: ''
+        type: string
+
+env:
+  DOCKER_HUB_USERNAME: tonic01
+  DOCKER_HUB_REPO: deepcritical-bioinformatics
+  DOCKER_TAG: ${{ github.sha }}
+
+jobs:
+  build-and-test-bioinformatics:
+    name: Build and Test Bioinformatics Docker Images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: github.event_name == 'push' || github.event.inputs.publish_images == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+
+      - name: Install Python for publishing script
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install publishing dependencies
+        run: |
+          pip install requests
+
+      - name: Build bioinformatics Docker images
+        run: |
+          echo "🐳 Building bioinformatics Docker images..."
+          make docker-build-bioinformatics
+
+      - name: Test bioinformatics Docker images
+        run: |
+          echo "🧪 Testing bioinformatics Docker images..."
+          make docker-test-bioinformatics
+
+      - name: Run containerized bioinformatics tests
+        run: |
+          echo "🧬 Running containerized bioinformatics tests..."
+          pip install uv
+          uv sync --dev
+          make test-bioinformatics-containerized
+
+      - name: Publish bioinformatics Docker images
+        if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event.inputs.publish_images == 'true'
+        env:
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_REPO: ${{ env.DOCKER_HUB_REPO }}
+          DOCKER_TAG: ${{ env.DOCKER_TAG }}
+        run: |
+          echo "🚀 Publishing bioinformatics Docker images..."
+          make docker-publish-bioinformatics
+
+      - name: Generate build report
+        if: always()
+        run: |
+          echo "## Bioinformatics Docker Build Report" > build_report.md
+          echo "- **Status:** ${{ job.status }}" >> build_report.md
+          echo "- **Branch:** ${{ github.ref }}" >> build_report.md
+          echo "- **Commit:** ${{ github.sha }}" >> build_report.md
+          echo "- **Published:** ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event.inputs.publish_images == 'true' }}" >> build_report.md
+          echo "" >> build_report.md
+          echo "### Build Details" >> build_report.md
+          echo "- Docker Hub Repo: ${{ env.DOCKER_HUB_USERNAME }}/${{ env.DOCKER_HUB_REPO }}" >> build_report.md
+          echo "- Tag: ${{ env.DOCKER_TAG }}" >> build_report.md
+
+      - name: Upload build report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bioinformatics-docker-report
+          path: build_report.md
+
+  validate-bioinformatics-configs:
+    name: Validate Bioinformatics Configurations
+    runs-on: ubuntu-latest
+    needs: build-and-test-bioinformatics
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install uv
+          uv sync --dev
+
+      - name: Validate bioinformatics server configurations
+        run: |
+          echo "🔍 Validating bioinformatics server configurations..."
+          python -c "
+          import yaml
+          import os
+          from pathlib import Path
+
+          config_dir = Path('DeepResearch/src/tools/bioinformatics')
+          valid_configs = 0
+          invalid_configs = 0
+
+          for config_file in config_dir.glob('*_server.py'):
+              try:
+                  # Basic syntax check by importing
+                  module_name = config_file.stem
+                  exec(f'from DeepResearch.src.tools.bioinformatics.{module_name} import *')
+                  print(f'✅ {module_name}')
+                  valid_configs += 1
+              except Exception as e:
+                  print(f'❌ {module_name}: {e}')
+                  invalid_configs += 1
+
+          print(f'\\n📊 Validation Summary:')
+          print(f'✅ Valid configs: {valid_configs}')
+          print(f'❌ Invalid configs: {invalid_configs}')
+
+          if invalid_configs > 0:
+              exit(1)
+          "
+
+      - name: Check Docker Hub images exist
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          echo "🔍 Checking Docker Hub images exist..."
+          python scripts/publish_docker_images.py --check-only || echo "⚠️  Some images may not be published yet"

@@ -19,7 +19,7 @@ rag:
   # LLM model settings
   llm:
     model_type: "custom"  # openai, custom
-    model_name: "microsoft/DialoGPT-medium"
+    model_name: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
     host: "localhost"
     port: 8000
     api_key: null
@@ -74,7 +74,7 @@ vllm_deployment:
 
   # LLM server settings
   llm_server:
-    model_name: "microsoft/DialoGPT-medium"
+    model_name: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
     host: "0.0.0.0"
     port: 8000
     gpu_memory_utilization: 0.9

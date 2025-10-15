@@ -9,9 +9,9 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from pydantic import BaseModel, Field, HttpUrl, field_validator
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
 
 class EvidenceCode(str, Enum):
@@ -53,15 +53,7 @@ class GOTerm(BaseModel):
     synonyms: list[str] = Field(default_factory=list, description="Alternative names")
     is_obsolete: bool = Field(False, description="Whether the term is obsolete")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "id": "GO:0006977",
-                "name": "DNA damage response",
-                "namespace": "biological_process",
-                "definition": "A cellular process that results in the detection and repair of DNA damage.",
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class GOAnnotation(BaseModel):
@@ -82,23 +74,7 @@ class GOAnnotation(BaseModel):
         None, ge=0.0, le=1.0, description="Confidence score"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "pmid": "12345678",
-                "title": "p53 mediates the DNA damage response in mammalian cells",
-                "abstract": "DNA damage induces p53 stabilization, leading to cell cycle arrest and apoptosis.",
-                "gene_id": "P04637",
-                "gene_symbol": "TP53",
-                "go_term": {
-                    "id": "GO:0006977",
-                    "name": "DNA damage response",
-                    "namespace": "biological_process",
-                },
-                "evidence_code": "IDA",
-                "annotation_note": "Curated based on experimental results in Figure 3.",
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class PubMedPaper(BaseModel):
@@ -117,17 +93,7 @@ class PubMedPaper(BaseModel):
     is_open_access: bool = Field(False, description="Whether paper is open access")
     full_text_url: HttpUrl | None = Field(None, description="URL to full text")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "pmid": "12345678",
-                "title": "p53 mediates the DNA damage response in mammalian cells",
-                "abstract": "DNA damage induces p53 stabilization, leading to cell cycle arrest and apoptosis.",
-                "authors": ["Smith, J.", "Doe, A."],
-                "journal": "Nature",
-                "doi": "10.1038/nature12345",
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class GEOPlatform(BaseModel):
@@ -314,16 +280,7 @@ class FusedDataset(BaseModel):
                 total += len(info.data[field_name])
         return total
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "dataset_id": "bio_fusion_001",
-                "name": "GO + PubMed Reasoning Dataset",
-                "description": "Fused dataset combining GO annotations with PubMed papers for reasoning tasks",
-                "source_databases": ["GO", "PubMed", "UniProt"],
-                "total_entities": 1500,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class ReasoningTask(BaseModel):
@@ -342,16 +299,7 @@ class ReasoningTask(BaseModel):
         default_factory=list, description="Supporting data identifiers"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "task_id": "reasoning_001",
-                "task_type": "gene_function_prediction",
-                "question": "What is the likely function of gene X based on its GO annotations and expression profile?",
-                "difficulty_level": "hard",
-                "required_evidence": ["IDA", "EXP"],
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class DataFusionRequest(BaseModel):
@@ -383,16 +331,7 @@ class DataFusionRequest(BaseModel):
             **kwargs,
         )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "request_id": "fusion_001",
-                "fusion_type": "GO+PubMed",
-                "source_databases": ["GO", "PubMed", "UniProt"],
-                "filters": {"evidence_codes": ["IDA"], "year_min": 2022},
-                "quality_threshold": 0.9,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class BioinformaticsAgentDeps(BaseModel):

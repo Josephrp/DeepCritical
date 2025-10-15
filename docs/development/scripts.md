@@ -95,7 +95,7 @@ Base class for VLLM prompt testing with common functionality.
 
 **Usage:**
 ```python
-from scripts.prompt_testing.test_prompts_vllm_base import VLLMPromptTestBase
+from .test_prompts_vllm_base import VLLMPromptTestBase
 
 class MyPromptTests(VLLMPromptTestBase):
     def test_my_prompt(self):
@@ -260,7 +260,7 @@ python scripts/run_vllm_tests.py --cfg job
 ```bash
 # Use smaller models
 model:
-  name: "microsoft/DialoGPT-medium"
+  name: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
 
 # Reduce resource limits
 container:
@@ -334,4 +334,4 @@ docker stats
 htop
 ```
 
-For more detailed information about VLLM testing, see the [VLLM Tests README](scripts/prompt_testing/VLLM_TESTS_README.md).
+For more detailed information about VLLM testing, see the [Testing Guide](../development/testing.md).

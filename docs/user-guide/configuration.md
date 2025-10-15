@@ -408,7 +408,7 @@ orchestrators:
 ```yaml
 # configs/vllm/default.yaml
 vllm:
-  model: "microsoft/DialoGPT-medium"
+  model: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
   tensor_parallel_size: 1
   dtype: "auto"
 

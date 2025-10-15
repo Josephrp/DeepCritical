@@ -8,9 +8,9 @@ types that align with DeepCritical's Pydantic AI architecture.
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Protocol
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # Import existing DeepCritical types
 
@@ -60,15 +60,7 @@ class ModelConfig(BaseModel):
     max_tokens: int = Field(2048, gt=0, description="Maximum tokens to generate")
     timeout: float = Field(30.0, gt=0, description="Request timeout in seconds")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "provider": "anthropic",
-                "model_name": "claude-sonnet-4-0",
-                "temperature": 0.7,
-                "max_tokens": 2048,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class ToolConfig(BaseModel):
@@ -81,15 +73,7 @@ class ToolConfig(BaseModel):
     )
     enabled: bool = Field(True, description="Whether tool is enabled")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "name": "web_search",
-                "description": "Search the web for information",
-                "parameters": {"max_results": 10},
-                "enabled": True,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class SubAgent(BaseModel):
@@ -113,34 +97,19 @@ class SubAgent(BaseModel):
     @classmethod
     def validate_name(cls, v):
         if not v or not v.strip():
-            raise ValueError("Subagent name cannot be empty")
+            msg = "Subagent name cannot be empty"
+            raise ValueError(msg)
         return v.strip()
 
     @field_validator("description", mode="before")
     @classmethod
     def validate_description(cls, v):
         if not v or not v.strip():
-            raise ValueError("Subagent description cannot be empty")
+            msg = "Subagent description cannot be empty"
+            raise ValueError(msg)
         return v.strip()
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "name": "research-analyst",
-                "description": "Conducts thorough research on complex topics",
-                "prompt": "You are a research analyst...",
-                "capabilities": ["search", "analysis", "rag"],
-                "tools": [
-                    {
-                        "name": "web_search",
-                        "description": "Search the web",
-                        "enabled": True,
-                    }
-                ],
-                "max_iterations": 10,
-                "timeout": 300.0,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class CustomSubAgent(BaseModel):
@@ -159,30 +128,19 @@ class CustomSubAgent(BaseModel):
     @classmethod
     def validate_name(cls, v):
         if not v or not v.strip():
-            raise ValueError("Custom subagent name cannot be empty")
+            msg = "Custom subagent name cannot be empty"
+            raise ValueError(msg)
         return v.strip()
 
     @field_validator("description", mode="before")
     @classmethod
     def validate_description(cls, v):
         if not v or not v.strip():
-            raise ValueError("Custom subagent description cannot be empty")
+            msg = "Custom subagent description cannot be empty"
+            raise ValueError(msg)
         return v.strip()
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "name": "bioinformatics-pipeline",
-                "description": "Executes bioinformatics analysis pipeline",
-                "graph_config": {
-                    "nodes": ["parse", "analyze", "report"],
-                    "edges": [["parse", "analyze"], ["analyze", "report"]],
-                },
-                "entry_point": "parse",
-                "capabilities": ["bioinformatics", "data_processing"],
-                "timeout": 600.0,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class AgentOrchestrationConfig(BaseModel):
@@ -199,17 +157,7 @@ class AgentOrchestrationConfig(BaseModel):
     )
     enable_failure_recovery: bool = Field(True, description="Enable failure recovery")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "max_concurrent_agents": 5,
-                "default_timeout": 300.0,
-                "retry_attempts": 3,
-                "retry_delay": 1.0,
-                "enable_parallel_execution": True,
-                "enable_failure_recovery": True,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class TaskRequest(BaseModel):
@@ -231,24 +179,11 @@ class TaskRequest(BaseModel):
     @classmethod
     def validate_description(cls, v):
         if not v or not v.strip():
-            raise ValueError("Task description cannot be empty")
+            msg = "Task description cannot be empty"
+            raise ValueError(msg)
         return v.strip()
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "task_id": "task_001",
-                "description": "Research the latest developments in CRISPR technology",
-                "subagent_type": "research-analyst",
-                "parameters": {
-                    "depth": "comprehensive",
-                    "sources": ["pubmed", "arxiv"],
-                },
-                "priority": 1,
-                "dependencies": [],
-                "timeout": 600.0,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class TaskResult(BaseModel):
@@ -264,20 +199,7 @@ class TaskResult(BaseModel):
         default_factory=dict, description="Additional metadata"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "task_id": "task_001",
-                "success": True,
-                "result": {
-                    "summary": "CRISPR technology has advanced significantly...",
-                    "sources": ["pubmed:123456", "arxiv:2023.12345"],
-                },
-                "execution_time": 45.2,
-                "subagent_used": "research-analyst",
-                "metadata": {"tokens_used": 1500, "sources_found": 12},
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class AgentContext(BaseModel):
@@ -298,23 +220,7 @@ class AgentContext(BaseModel):
         default_factory=list, description="Completed task IDs"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "session_id": "session_123",
-                "user_id": "user_456",
-                "conversation_history": [
-                    {"role": "user", "content": "Research CRISPR technology"},
-                    {
-                        "role": "assistant",
-                        "content": "I'll help you research CRISPR...",
-                    },
-                ],
-                "shared_state": {"research_focus": "CRISPR applications"},
-                "active_tasks": ["task_001"],
-                "completed_tasks": [],
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class AgentMetrics(BaseModel):
@@ -335,18 +241,7 @@ class AgentMetrics(BaseModel):
             return 0.0
         return self.successful_tasks / self.total_tasks
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "agent_name": "research-analyst",
-                "total_tasks": 100,
-                "successful_tasks": 95,
-                "failed_tasks": 5,
-                "average_execution_time": 45.2,
-                "total_tokens_used": 150000,
-                "last_activity": "2024-01-15T10:30:00Z",
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 # Protocol for agent execution

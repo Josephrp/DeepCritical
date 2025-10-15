@@ -8,15 +8,19 @@ planning, filesystem, subagent orchestration, summarization, and prompt caching.
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
-from typing import Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel, Field
-from pydantic_ai import Agent, RunContext
+from pydantic import BaseModel, ConfigDict, Field
 
 # Import existing DeepCritical types
-from .deep_agent_state import DeepAgentState
 from .deep_agent_types import CustomSubAgent, SubAgent, TaskRequest, TaskResult
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from pydantic_ai import Agent, RunContext
+
+    from .deep_agent_state import DeepAgentState
 
 
 class MiddlewareConfig(BaseModel):
@@ -30,16 +34,7 @@ class MiddlewareConfig(BaseModel):
     retry_attempts: int = Field(3, ge=0, description="Number of retry attempts")
     retry_delay: float = Field(1.0, gt=0, description="Delay between retries")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "enabled": True,
-                "priority": 0,
-                "timeout": 30.0,
-                "retry_attempts": 3,
-                "retry_delay": 1.0,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class MiddlewareResult(BaseModel):
@@ -106,7 +101,7 @@ class PlanningMiddleware(BaseMiddleware):
     def __init__(self, config: MiddlewareConfig | None = None):
         super().__init__(config)
         # Import here to avoid circular imports
-        from ..tools.deep_agent_tools import write_todos_tool
+        from DeepResearch.src.tools.deep_agent_tools import write_todos_tool
 
         self.tools = [write_todos_tool]
 
@@ -142,7 +137,7 @@ class FilesystemMiddleware(BaseMiddleware):
     def __init__(self, config: MiddlewareConfig | None = None):
         super().__init__(config)
         # Import here to avoid circular imports
-        from ..tools.deep_agent_tools import (
+        from DeepResearch.src.tools.deep_agent_tools import (
             edit_file_tool,
             list_files_tool,
             read_file_tool,
@@ -192,7 +187,7 @@ class SubAgentMiddleware(BaseMiddleware):
         self.subagents = subagents or []
         self.default_tools = default_tools or []
         # Import here to avoid circular imports
-        from ..tools.deep_agent_tools import task_tool
+        from DeepResearch.src.tools.deep_agent_tools import task_tool
 
         self.tools = [task_tool]
         self._agent_registry: dict[str, Agent] = {}
@@ -235,8 +230,8 @@ class SubAgentMiddleware(BaseMiddleware):
                 # Create agent instance for subagent
                 agent = await self._create_subagent(subagent)
                 self._agent_registry[subagent.name] = agent
-            except Exception as e:
-                print(f"Warning: Failed to initialize subagent {subagent.name}: {e}")
+            except Exception:
+                pass
 
     async def _create_subagent(self, subagent: SubAgent | CustomSubAgent) -> Agent:
         """Create an agent instance for a subagent."""
@@ -349,7 +344,7 @@ class SummarizationMiddleware(BaseMiddleware):
                 }
 
                 # Update conversation history
-                ctx.deps.conversation_history = [summary] + recent_messages
+                ctx.deps.conversation_history = [summary, *recent_messages]
 
                 return {
                     "modified_state": True,

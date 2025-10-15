@@ -1,0 +1,35 @@
+# Flye Docker container for long-read genome assembly
+FROM python:3.11-slim
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    numpy
+
+# Install Flye via conda
+RUN apt-get update && apt-get install -y \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh && \
+    bash /tmp/miniconda.sh -b -p /opt/conda && \
+    rm /tmp/miniconda.sh && \
+    /opt/conda/bin/conda config --set auto_update_conda false && \
+    /opt/conda/bin/conda config --set safety_checks disabled && \
+    /opt/conda/bin/conda config --set channel_priority strict && \
+    /opt/conda/bin/conda config --add channels bioconda && \
+    /opt/conda/bin/conda config --add channels conda-forge && \
+    /opt/conda/bin/conda install -c bioconda -c conda-forge flye -y && \
+    ln -s /opt/conda/bin/flye /usr/local/bin/flye
+
+# Create working directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV FLYE_VERSION=2.9.2
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import flye; print('Flye installed')" || exit 1
+
+# Default command
+CMD ["flye", "--help"]

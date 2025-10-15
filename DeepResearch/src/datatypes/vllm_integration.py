@@ -9,11 +9,10 @@ from __future__ import annotations
 
 import asyncio
 import json
-from collections.abc import AsyncGenerator
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 import aiohttp
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from .rag import (
     EmbeddingModelType,
@@ -23,6 +22,9 @@ from .rag import (
     LLMProvider,
     VLLMConfig,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 
 class VLLMEmbeddings(Embeddings):
@@ -87,9 +89,8 @@ class VLLMEmbeddings(Embeddings):
                 batch_embeddings = [item["embedding"] for item in response["data"]]
                 embeddings.extend(batch_embeddings)
             except Exception as e:
-                raise RuntimeError(
-                    f"Failed to generate embeddings for batch {i // batch_size}: {e}"
-                )
+                msg = f"Failed to generate embeddings for batch {i // batch_size}: {e}"
+                raise RuntimeError(msg)
 
         return embeddings
 
@@ -172,7 +173,8 @@ class VLLMLLMProvider(LLMProvider):
             response = await self._make_request("chat/completions", payload)
             return response["choices"][0]["message"]["content"]
         except Exception as e:
-            raise RuntimeError(f"Failed to generate text: {e}")
+            msg = f"Failed to generate text: {e}"
+            raise RuntimeError(msg)
 
     async def generate_stream(
         self, prompt: str, context: str | None = None, **kwargs: Any
@@ -229,7 +231,8 @@ class VLLMLLMProvider(LLMProvider):
                         except json.JSONDecodeError:
                             continue
         except Exception as e:
-            raise RuntimeError(f"Failed to generate streaming text: {e}")
+            msg = f"Failed to generate streaming text: {e}"
+            raise RuntimeError(msg)
 
 
 class VLLMServerConfig(BaseModel):
@@ -254,7 +257,6 @@ class VLLMServerConfig(BaseModel):
     code_revision: str | None = Field(None, description="Code revision")
     tokenizer: str | None = Field(None, description="Tokenizer name")
     tokenizer_mode: str = Field("auto", description="Tokenizer mode")
-    trust_remote_code: bool = Field(False, description="Trust remote code")
     skip_tokenizer_init: bool = Field(
         False, description="Skip tokenizer initialization"
     )
@@ -263,16 +265,17 @@ class VLLMServerConfig(BaseModel):
         8192, description="Max sequence length to capture"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "model_name": "microsoft/DialoGPT-medium",
+                "model_name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                 "host": "0.0.0.0",
                 "port": 8000,
                 "gpu_memory_utilization": 0.9,
                 "max_model_len": 4096,
             }
         }
+    )
 
 
 class VLLMEmbeddingServerConfig(BaseModel):
@@ -294,8 +297,8 @@ class VLLMEmbeddingServerConfig(BaseModel):
     max_paddings: int = Field(256, description="Maximum paddings")
     disable_log_stats: bool = Field(False, description="Disable log statistics")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "model_name": "sentence-transformers/all-MiniLM-L6-v2",
                 "host": "0.0.0.0",
@@ -304,6 +307,7 @@ class VLLMEmbeddingServerConfig(BaseModel):
                 "max_model_len": 512,
             }
         }
+    )
 
 
 class VLLMDeployment(BaseModel):
@@ -319,10 +323,13 @@ class VLLMDeployment(BaseModel):
     )
     max_retries: int = Field(3, description="Maximum retry attempts for health checks")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "llm_config": {"model_name": "microsoft/DialoGPT-medium", "port": 8000},
+                "llm_config": {
+                    "model_name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+                    "port": 8000,
+                },
                 "embedding_config": {
                     "model_name": "sentence-transformers/all-MiniLM-L6-v2",
                     "port": 8001,
@@ -330,6 +337,7 @@ class VLLMDeployment(BaseModel):
                 "auto_start": True,
             }
         }
+    )
 
     async def start_llm_server(self) -> bool:
         """Start the LLM server."""
@@ -418,5 +426,4 @@ class VLLMRAGSystem(BaseModel):
         )
         self.llm = VLLMLLMProvider(llm_config)
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)

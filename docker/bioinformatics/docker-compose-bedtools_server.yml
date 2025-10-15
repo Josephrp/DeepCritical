@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  bedtools-server:
+    build:
+      context: ..
+      dockerfile: bioinformatics/Dockerfile.bedtools_server
+    image: bedtools-server:latest
+    container_name: bedtools-server
+    ports:
+      - "8000:8000"
+    environment:
+      - MCP_SERVER_NAME=bedtools-server
+      - BEDTOOLS_VERSION=2.30.0
+    volumes:
+      - ./workspace:/app/workspace
+      - ./output:/app/output
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s

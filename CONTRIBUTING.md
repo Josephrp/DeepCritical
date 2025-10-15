@@ -100,26 +100,61 @@ git checkout -b bugfix/issue-number
 
 ### 3. Test Your Changes
 
+#### Cross-Platform Testing
+
+DeepCritical supports comprehensive testing across multiple platforms with Windows-specific PowerShell integration.
+
+**For Windows Development:**
 ```bash
-# Run all tests
-uv run pytest tests/ -v
+# Basic tests (always available)
+make test-unit-win
+make test-pydantic-ai-win
+make test-performance-win
 
-# Run specific test categories
-uv run pytest tests/unit/ -v
-uv run pytest tests/integration/ -v
+# Containerized tests (requires Docker)
+$env:DOCKER_TESTS = "true"
+make test-containerized-win
+make test-docker-win
+make test-bioinformatics-win
+```
 
+**For GitHub Contributors (Cross-Platform):**
+```bash
+# Basic tests (works on all platforms)
+make test-unit
+make test-pydantic-ai
+make test-performance
+
+# Containerized tests (works when Docker available)
+DOCKER_TESTS=true make test-containerized
+DOCKER_TESTS=true make test-docker
+DOCKER_TESTS=true make test-bioinformatics
+```
+
+#### Test Categories
+
+DeepCritical includes comprehensive test coverage:
+
+- **Unit Tests**: Basic functionality testing
+- **Pydantic AI Tests**: Agent workflows and tool integration
+- **Performance Tests**: Response time and memory usage testing
+- **LLM Framework Tests**: VLLM and LLaMACPP containerized testing
+- **Bioinformatics Tests**: BWA, SAMtools, BEDTools, STAR, HISAT2, FreeBayes testing
+- **Docker Sandbox Tests**: Container isolation and security testing
+
+#### Quality Checks
+
+```bash
 # Run linting and formatting
 uv run ruff check .
 uv run ruff format --check .
 
-# Run Black formatting check
-uv run black --check .
 
 # Run type checking
 uvx ty check
 
 # Run all quality checks
-uv run ruff check . && uv run ruff format --check . && uv run black --check . && uvx ty check
+uv run ruff check . && uv run ruff format --check . && uvx ty check
 
 # Show all available commands
 make help
@@ -154,7 +189,6 @@ make pre-commit
 
 # What pre-commit hooks do automatically:
 # ✅ Ruff linting and formatting (fast Python linter)
-# ✅ Black code formatting (opinionated formatter)
 # ✅ Type checking with ty (catches type errors)
 # ❌ Security scanning with bandit (disabled in pre-commit; run manually via `make security`)
 # ✅ YAML/TOML validation (config file integrity)
@@ -171,9 +205,47 @@ make pre-commit
 
 The Makefile provides convenient shortcuts for development tasks, but pre-commit hooks are the primary quality assurance mechanism:
 
+#### Cross-Platform Testing Support
+
+DeepCritical supports both cross-platform (GitHub contributors) and Windows-specific testing:
+
+**For GitHub Contributors (Cross-Platform):**
 ```bash
 # Show all available commands
 make help
+
+# Basic tests (works on all platforms)
+make test-unit
+make test-pydantic-ai
+make test-performance
+
+# Containerized tests (works when Docker available)
+DOCKER_TESTS=true make test-containerized
+DOCKER_TESTS=true make test-docker
+DOCKER_TESTS=true make test-bioinformatics
+
+# Quick development cycle (when not using pre-commit)
+make dev
+
+# Manual quality validation (redundant with pre-commit, but available)
+make quality
+
+# Research application testing
+make examples
+```
+
+**For Windows Development:**
+```bash
+# Basic tests (always available)
+make test-unit-win
+make test-pydantic-ai-win
+make test-performance-win
+
+# Containerized tests (requires Docker)
+$env:DOCKER_TESTS = "true"
+make test-containerized-win
+make test-docker-win
+make test-bioinformatics-win
 
 # Quick development cycle (when not using pre-commit)
 make dev
@@ -197,11 +269,10 @@ Then create a pull request on GitHub.
 
 ### Python Style
 
-We use multiple tools to ensure code quality:
+We use these tools to ensure code quality:
 
 - **[Ruff](https://github.com/astral-sh/ruff)**: Fast Python linter and formatter
-- **[Black](https://github.com/psf/black)**: Opinionated code formatter
-- **[ty](https://github.com/palantir/ty)**: Type checker for Python
+- **[ty](https://github.com/astral-sh/ty)**: Type checker for Python
 
 ```bash
 # Check code style (Ruff)
@@ -209,9 +280,6 @@ uv run ruff check .
 
 # Format code (Ruff)
 uv run ruff format .
-
-# Format code (Black)
-uv run black .
 
 # Check type annotations
 uvx ty check
@@ -221,9 +289,6 @@ uv run ruff check . --fix
 
 # Auto-fix formatting (Ruff)
 uv run ruff format .
-
-# Auto-fix formatting (Black)
-uv run black .
 ```
 
 ### Code Guidelines
@@ -239,13 +304,11 @@ uv run black .
 We use a comprehensive set of tools to ensure code quality:
 
 - **Ruff**: Fast linter and formatter that catches common mistakes and enforces consistent style
-- **Black**: Opinionated code formatter that ensures consistent formatting across the codebase
 - **ty**: Type checker that validates type annotations and catches type-related errors
 - **pytest**: Testing framework for running unit and integration tests
 
 These tools complement each other:
-- Ruff provides fast feedback on code issues
-- Black ensures consistent formatting
+- Ruff provides fast feedback on code issues and ensures consistent formatting
 - ty catches type-related bugs before runtime
 - pytest ensures functionality works as expected
 

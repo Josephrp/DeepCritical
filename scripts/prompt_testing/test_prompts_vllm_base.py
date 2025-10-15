@@ -9,7 +9,7 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import pytest
 from omegaconf import DictConfig
@@ -47,7 +47,7 @@ class VLLMPromptTestBase:
 
         with VLLMPromptTester(
             config=config,
-            model_name=model_config.get("name", "microsoft/DialoGPT-medium"),
+            model_name=model_config.get("name", "TinyLlama/TinyLlama-1.1B-Chat-v1.0"),
             container_timeout=performance_config.get("max_container_startup_time", 120),
             max_tokens=model_config.get("generation", {}).get("max_tokens", 256),
             temperature=model_config.get("generation", {}).get("temperature", 0.7),
@@ -73,7 +73,7 @@ class VLLMPromptTestBase:
                 with initialize_config_dir(
                     config_dir=str(config_dir), version_base=None
                 ):
-                    config = compose(
+                    return compose(
                         config_name="vllm_tests",
                         overrides=[
                             "model=local_model",
@@ -82,7 +82,6 @@ class VLLMPromptTestBase:
                             "output=structured",
                         ],
                     )
-                    return config
             else:
                 logger.warning(
                     "Config directory not found, using default configuration"
@@ -124,7 +123,7 @@ class VLLMPromptTestBase:
                 },
             },
             "model": {
-                "name": "microsoft/DialoGPT-medium",
+                "name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                 "generation": {
                     "max_tokens": 256,
                     "temperature": 0.7,
@@ -361,7 +360,7 @@ class VLLMPromptTestBase:
                     time.sleep(delay_between_tests)
 
             except Exception as e:
-                logger.error(f"Error testing prompt {prompt_name}: {e}")
+                logger.exception(f"Error testing prompt {prompt_name}")
 
                 # Handle errors based on configuration
                 if error_config.get("graceful_degradation", True):

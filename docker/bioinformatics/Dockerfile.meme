@@ -1,0 +1,33 @@
+# MEME Docker container for motif discovery - based on BioinfoMCP example
+FROM condaforge/miniforge3:latest
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    default-jre \
+    wget \
+    curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /app
+
+# Copy environment file first (for better Docker layer caching)
+COPY docker/bioinformatics/environment.meme.yaml /tmp/environment.yaml
+
+# Install MEME Suite via conda
+RUN conda env update -f /tmp/environment.yaml && conda clean -a
+
+# Create workspace and output directories
+RUN mkdir -p /app/workspace /app/output
+
+# Set environment variables
+ENV MEME_VERSION=5.5.4
+ENV PATH="/opt/conda/envs/mcp-meme-env/bin:$PATH"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD meme --version || exit 1
+
+# Default command
+CMD ["meme", "--help"]

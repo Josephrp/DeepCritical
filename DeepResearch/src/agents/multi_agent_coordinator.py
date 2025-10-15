@@ -11,11 +11,11 @@ import asyncio
 import time
 from dataclasses import field
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any
 
 from pydantic_ai import Agent, RunContext
 
-from ..datatypes.multi_agent import (
+from DeepResearch.src.datatypes.multi_agent import (
     AgentRole,
     AgentState,
     CoordinationMessage,
@@ -23,12 +23,12 @@ from ..datatypes.multi_agent import (
     CoordinationRound,
     CoordinationStrategy,
 )
-from ..datatypes.workflow_orchestration import (
+from DeepResearch.src.datatypes.workflow_orchestration import (
     AgentConfig,
     MultiAgentSystemConfig,
     WorkflowStatus,
 )
-from ..prompts.multi_agent_coordinator import (
+from DeepResearch.src.prompts.multi_agent_coordinator import (
     get_instructions,
     get_system_prompt,
 )
@@ -152,7 +152,7 @@ class MultiAgentCoordinator:
         try:
             # Initialize agent states
             agent_states = {}
-            for agent_id, agent in self.agents.items():
+            for agent_id in self.agents:
                 agent_states[agent_id] = AgentState(
                     agent_id=agent_id,
                     role=self._get_agent_role(agent_id),
@@ -224,9 +224,8 @@ class MultiAgentCoordinator:
                     coordination_id, task_description, agent_states, max_rounds
                 )
             else:
-                raise ValueError(
-                    f"Unknown coordination strategy: {self.system_config.coordination_strategy}"
-                )
+                msg = f"Unknown coordination strategy: {self.system_config.coordination_strategy}"
+                raise ValueError(msg)
 
             result.execution_time = time.time() - start_time
             return result
@@ -286,7 +285,9 @@ class MultiAgentCoordinator:
                     agent_states[agent_id].status = WorkflowStatus.FAILED
                     agent_states[agent_id].error_message = str(result)
                 else:
-                    agent_states[agent_id].output_data = result
+                    agent_states[agent_id].output_data = (
+                        result if isinstance(result, dict) else {"result": result}
+                    )
                     agent_states[agent_id].status = WorkflowStatus.COMPLETED
 
             # Check for consensus
@@ -351,7 +352,9 @@ class MultiAgentCoordinator:
                             agent_states[agent_id],
                             round_num,
                         )
-                        agent_states[agent_id].output_data = result
+                        agent_states[agent_id].output_data = (
+                            result if isinstance(result, dict) else {"result": result}
+                        )
                         agent_states[agent_id].status = WorkflowStatus.COMPLETED
                     except Exception as e:
                         agent_states[agent_id].status = WorkflowStatus.FAILED
@@ -403,7 +406,8 @@ class MultiAgentCoordinator:
                 break
 
         if not coordinator_id:
-            raise ValueError("No coordinator agent found for hierarchical coordination")
+            msg = "No coordinator agent found for hierarchical coordination"
+            raise ValueError(msg)
 
         # Execute coordinator first
         coordinator = self.agents[coordinator_id]
@@ -431,7 +435,9 @@ class MultiAgentCoordinator:
                     result = await self._execute_agent_round(
                         agent_id, agent, agent_task, agent_states[agent_id], 1
                     )
-                    agent_states[agent_id].output_data = result
+                    agent_states[agent_id].output_data = (
+                        result if isinstance(result, dict) else {"result": result}
+                    )
                     agent_states[agent_id].status = WorkflowStatus.COMPLETED
                 except Exception as e:
                     agent_states[agent_id].status = WorkflowStatus.FAILED
@@ -491,7 +497,7 @@ class MultiAgentCoordinator:
 
         current_data = {
             "task": task_description,
-            "input": agent_states[list(agent_states.keys())[0]].input_data,
+            "input": agent_states[next(iter(agent_states.keys()))].input_data,
         }
 
         for agent_id in pipeline_order:
@@ -505,7 +511,9 @@ class MultiAgentCoordinator:
                         agent_states[agent_id],
                         0,
                     )
-                    agent_states[agent_id].output_data = result
+                    agent_states[agent_id].output_data = (
+                        result if isinstance(result, dict) else {"result": result}
+                    )
                     agent_states[agent_id].status = WorkflowStatus.COMPLETED
                     current_data = result  # Pass output to next agent
                 except Exception as e:
@@ -573,7 +581,9 @@ class MultiAgentCoordinator:
                             round_num,
                         )
                         opinions[agent_id] = result
-                        agent_states[agent_id].output_data = result
+                        agent_states[agent_id].output_data = (
+                            result if isinstance(result, dict) else {"result": result}
+                        )
                     except Exception as e:
                         agent_states[agent_id].status = WorkflowStatus.FAILED
                         agent_states[agent_id].error_message = str(e)
@@ -650,7 +660,7 @@ class MultiAgentCoordinator:
             agent_state.status = WorkflowStatus.FAILED
             agent_state.error_message = str(e)
             agent_state.end_time = datetime.now()
-            raise e
+            raise
 
     def _get_agent_role(self, agent_id: str) -> AgentRole:
         """Get the role of an agent."""
@@ -673,12 +683,10 @@ class MultiAgentCoordinator:
             AgentRole.JUDGE: 5,
         }
 
-        sorted_agents = sorted(
+        return sorted(
             agent_states.keys(),
             key=lambda x: role_priority.get(AgentRole(agent_states[x].role), 10),
         )
-
-        return sorted_agents
 
     def _calculate_consensus(self, agent_states: dict[str, AgentState]) -> float:
         """Calculate consensus score from agent states."""
@@ -754,7 +762,7 @@ class MultiAgentCoordinator:
             # In group chat, agents can speak when they have something to contribute
             # This is more flexible than strict turn-taking
             active_agents = []
-            for agent_id, agent in self.agents.items():
+            for agent_id in self.agents:
                 if agent_states[agent_id].status != WorkflowStatus.FAILED:
                     # Check if agent wants to contribute (simplified logic)
                     if self._agent_wants_to_contribute(
@@ -784,7 +792,9 @@ class MultiAgentCoordinator:
                         agent_states[agent_id].status = WorkflowStatus.FAILED
                         agent_states[agent_id].error_message = str(result)
                     else:
-                        agent_states[agent_id].output_data = result
+                        agent_states[agent_id].output_data = (
+                            result if isinstance(result, dict) else {"result": result}
+                        )
                         agent_states[agent_id].status = WorkflowStatus.COMPLETED
 
             # Check for natural conversation end
@@ -851,7 +861,11 @@ class MultiAgentCoordinator:
                                 task_description,
                                 agent_states[agent_id],
                             )
-                            agent_states[agent_id].output_data = result
+                            agent_states[agent_id].output_data = (
+                                result
+                                if isinstance(result, dict)
+                                else {"result": result}
+                            )
                             agent_states[agent_id].status = WorkflowStatus.COMPLETED
                         except Exception as e:
                             agent_states[agent_id].status = WorkflowStatus.FAILED
@@ -914,7 +928,11 @@ class MultiAgentCoordinator:
                     # Update agent states with subgraph results
                     for agent_id, result in subgraph_result.items():
                         if agent_id in agent_states:
-                            agent_states[agent_id].output_data = result
+                            agent_states[agent_id].output_data = (
+                                result
+                                if isinstance(result, dict)
+                                else {"result": result}
+                            )
                             agent_states[agent_id].status = WorkflowStatus.COMPLETED
 
                 except Exception as e:

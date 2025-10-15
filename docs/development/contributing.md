@@ -23,7 +23,7 @@ uv sync --dev
 make pre-install
 
 # Verify setup
-make test
+make test-unit  # or make test-unit-win on Windows
 make quality
 ```
 
@@ -45,13 +45,59 @@ git checkout -b fix/issue-description
 - Ensure all tests pass
 
 ### 2. Test Your Changes
+
+#### Cross-Platform Testing
+
+DeepCritical supports comprehensive testing across multiple platforms with Windows-specific PowerShell integration.
+
+**For Windows Development:**
+```bash
+# Basic tests (always available)
+make test-unit-win
+make test-pydantic-ai-win
+make test-performance-win
+
+# Containerized tests (requires Docker)
+$env:DOCKER_TESTS = "true"
+make test-containerized-win
+make test-docker-win
+make test-bioinformatics-win
+```
+
+**For GitHub Contributors (Cross-Platform):**
+```bash
+# Basic tests (works on all platforms)
+make test-unit
+make test-pydantic-ai
+make test-performance
+
+# Containerized tests (works when Docker available)
+DOCKER_TESTS=true make test-containerized
+DOCKER_TESTS=true make test-docker
+DOCKER_TESTS=true make test-bioinformatics
+```
+
+#### Test Categories
+
+DeepCritical includes comprehensive test coverage:
+
+- **Unit Tests**: Basic functionality testing
+- **Pydantic AI Tests**: Agent workflows and tool integration
+- **Performance Tests**: Response time and memory usage testing
+- **LLM Framework Tests**: VLLM and LLaMACPP containerized testing
+- **Bioinformatics Tests**: BWA, SAMtools, BEDTools, STAR, HISAT2, FreeBayes testing
+- **Docker Sandbox Tests**: Container isolation and security testing
+
+#### Test Commands
+
 ```bash
 # Run all tests
 make test
 
 # Run specific test categories
-make test unit_tests
-make test integration_tests
+make test-unit          # or make test-unit-win on Windows
+make test-pydantic-ai   # or make test-pydantic-ai-win on Windows
+make test-performance   # or make test-performance-win on Windows
 
 # Run tests with coverage
 make test-cov
@@ -71,8 +117,14 @@ make lint
 # Type checking
 make type-check
 
-# Overall quality check
+# Overall quality check (includes formatting, linting, and type checking)
 make quality
+
+# Windows-specific quality checks
+make format  # Same commands work on Windows
+make lint    # Same commands work on Windows
+make type-check  # Same commands work on Windows
+make quality     # Same commands work on Windows
 ```
 
 ### 4. Commit Changes
@@ -110,10 +162,55 @@ git push origin feature/amazing-new-feature
 - Use meaningful variable and function names
 
 ### Testing Requirements
-- Add unit tests for new functionality
-- Include integration tests for complex workflows
-- Ensure test coverage meets project standards
-- Test error conditions and edge cases
+
+DeepCritical has comprehensive testing requirements for all new features:
+
+#### Test Categories Required
+- **Unit Tests**: Test individual functions and classes (`make test-unit` or `make test-unit-win`)
+- **Integration Tests**: Test component interactions and workflows
+- **Performance Tests**: Ensure no performance regressions (`make test-performance` or `make test-performance-win`)
+- **Error Handling Tests**: Test failure scenarios and error conditions
+
+#### Cross-Platform Testing
+- Ensure tests pass on both Windows (using PowerShell targets) and Linux/macOS
+- Test containerized functionality when Docker is available
+- Verify Windows-specific PowerShell integration works correctly
+
+#### Test Structure
+```python
+# Example test structure for new features
+def test_new_feature_basic():
+    """Test basic functionality."""
+    # Test implementation
+    assert feature_works()
+
+def test_new_feature_edge_cases():
+    """Test edge cases and error conditions."""
+    # Test error handling
+    with pytest.raises(ValueError):
+        feature_with_invalid_input()
+
+def test_new_feature_integration():
+    """Test integration with existing components."""
+    # Test component interactions
+    result = feature_with_dependencies()
+    assert result.successful
+```
+
+#### Running Tests
+```bash
+# Windows
+make test-unit-win
+make test-pydantic-ai-win
+
+# Cross-platform
+make test-unit
+make test-pydantic-ai
+
+# Performance testing
+make test-performance-win  # Windows
+make test-performance      # Cross-platform
+```
 
 ### Documentation Updates
 - Update docstrings for API changes
@@ -165,10 +262,26 @@ test(tools): add comprehensive tool tests
 - **RAG**: Retrieval-augmented generation systems
 
 ### Infrastructure
-- **Testing**: Test framework and quality assurance
+- **Testing**: Comprehensive test framework with Windows PowerShell integration
 - **Documentation**: Documentation generation and maintenance
 - **CI/CD**: Build, test, and deployment automation
 - **Performance**: Monitoring, profiling, and optimization
+
+#### Testing Framework
+
+DeepCritical implements a comprehensive testing framework with multiple test categories:
+
+- **Unit Tests**: Basic functionality testing (`make test-unit` or `make test-unit-win`)
+- **Pydantic AI Tests**: Agent workflows and tool integration (`make test-pydantic-ai` or `make test-pydantic-ai-win`)
+- **Performance Tests**: Response time and memory usage testing (`make test-performance` or `make test-performance-win`)
+- **LLM Framework Tests**: VLLM and LLaMACPP containerized testing
+- **Bioinformatics Tests**: BWA, SAMtools, BEDTools, STAR, HISAT2, FreeBayes testing
+- **Docker Sandbox Tests**: Container isolation and security testing
+
+**Windows Integration:**
+- Windows-specific Makefile targets using PowerShell scripts
+- Environment variable control for optional test execution
+- Cross-platform compatibility maintained for GitHub contributors
 
 ## Adding New Features
 
@@ -255,6 +368,114 @@ def new_function(param: str) -> Dict[str, Any]:
 - [ ] Version bumped
 - [ ] Changelog updated
 - [ ] Release notes prepared
+
+## Tools {#tools}
+
+### Tool Development
+
+DeepCritical supports extending the tool ecosystem with custom tools:
+
+#### Tool Categories
+- **Knowledge Query**: Information retrieval and search tools
+- **Sequence Analysis**: Bioinformatics sequence analysis tools
+- **Structure Prediction**: Protein structure prediction tools
+- **Molecular Docking**: Drug-target interaction tools
+- **De Novo Design**: Novel molecule design tools
+- **Function Prediction**: Biological function annotation tools
+- **RAG**: Retrieval-augmented generation tools
+- **Search**: Web and document search tools
+- **Analytics**: Data analysis and visualization tools
+- **Code Execution**: Code execution and sandboxing tools
+
+#### Creating Custom Tools
+```python
+from deepresearch.src.tools.base import ToolRunner, ToolSpec, ToolCategory
+
+class CustomTool(ToolRunner):
+    """Custom tool for specific analysis."""
+
+    def __init__(self):
+        super().__init__(ToolSpec(
+            name="custom_analysis",
+            description="Performs custom data analysis",
+            category=ToolCategory.ANALYTICS,
+            inputs={
+                "data": "dict",
+                "method": "str",
+                "parameters": "dict"
+            },
+            outputs={
+                "result": "dict",
+                "statistics": "dict"
+            }
+        ))
+
+    def run(self, parameters: Dict[str, Any]) -> ExecutionResult:
+        """Execute the analysis."""
+        # Implementation here
+        return ExecutionResult(success=True, data={"result": "analysis_complete"})
+```
+
+#### Tool Registration
+```python
+from deepresearch.src.utils.tool_registry import ToolRegistry
+
+# Register custom tool
+registry = ToolRegistry.get_instance()
+registry.register_tool(
+    tool_spec=CustomTool().get_spec(),
+    tool_runner=CustomTool()
+)
+```
+
+#### Tool Testing
+```python
+def test_custom_tool():
+    """Test custom tool functionality."""
+    tool = CustomTool()
+    result = tool.run({
+        "data": {"key": "value"},
+        "method": "analysis",
+        "parameters": {"confidence": 0.95}
+    })
+
+    assert result.success
+    assert "result" in result.data
+```
+
+### MCP Server Development
+
+#### MCP Server Framework
+DeepCritical includes an enhanced MCP (Model Context Protocol) server framework:
+
+```python
+from deepresearch.src.tools.mcp_server_base import MCPServerBase
+
+class CustomMCPServer(MCPServerBase):
+    """Custom MCP server with Pydantic AI integration."""
+
+    def __init__(self, config):
+        super().__init__(config)
+        self.server_type = "custom"
+        self.name = "custom-server"
+
+    @mcp_tool
+    async def custom_analysis(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Perform custom analysis."""
+        # Tool implementation with Pydantic AI reasoning
+        result = await self.pydantic_ai_agent.run(
+            f"Analyze this data: {data}",
+            message_history=[]
+        )
+        return {"analysis": result.data}
+```
+
+#### Containerized Deployment
+```python
+# Deploy MCP server with testcontainers
+deployment = await server.deploy_with_testcontainers()
+result = await server.execute_tool("custom_analysis", {"data": test_data})
+```
 
 ## Community Guidelines
 

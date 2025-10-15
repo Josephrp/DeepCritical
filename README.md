@@ -1,6 +1,7 @@
 # 🚀 DeepCritical: Building a Highly Configurable Deep Research Agent Ecosystem
 
 [![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://deepcritical.github.io/DeepCritical)
+[![codecov](https://codecov.io/gh/DeepCritical/DeepCritical/branch/dev/graph/badge.svg)](https://codecov.io/gh/DeepCritical/DeepCritical)
 
 ## Vision: From Single Questions to Research Field Generation
 
@@ -477,6 +478,12 @@ python -m deepresearch.app flows.prime.params.adaptive_replanning=false
 ### Integrative Reasoning
 - **Non-Reductionist Approach**: Multi-source evidence integration beyond structural similarity
 - **Evidence Code Prioritization**: IDA (gold standard) > EXP > computational predictions
+
+### MCP Server Ecosystem
+- **18 Vendored Bioinformatics Tools**: FastQC, Samtools, Bowtie2, MACS3, HOMER, HISAT2, BEDTools, STAR, BWA, MultiQC, Salmon, StringTie, FeatureCounts, TrimGalore, Kallisto, HTSeq, TopHat, Picard
+- **Pydantic AI Integration**: Strongly-typed tool decorators with automatic agent registration
+- **Testcontainers Deployment**: Isolated execution environments for reproducible research
+- **Bioinformatics Pipeline Support**: Complete RNA-seq, ChIP-seq, and genomics analysis workflows
 - **Cross-Database Validation**: Consistency checks and temporal relevance
 - **Human Curation Integration**: Leverages existing curation expertise
 
@@ -610,6 +617,34 @@ Prompt templates in `configs/prompts/`:
 - `configs/prompts/prime_evaluator.yaml` - Result evaluation prompts
 
 ## 🔧 Development
+
+### Development
+
+### Codecov Setup
+
+To enable coverage reporting with Codecov:
+
+1. **Set up the repository in Codecov:**
+   - Visit [https://app.codecov.io/gh/DeepCritical/DeepCritical](https://app.codecov.io/gh/DeepCritical/DeepCritical)
+   - Click "Add new repository" or "Setup repo" if prompted
+   - Follow the setup wizard to connect your GitHub repository
+
+2. **Generate a Codecov token:**
+   - In Codecov, go to your repository settings
+   - Navigate to "Repository Settings" > "Tokens"
+   - Generate a new token with "upload" permissions
+
+3. **Add the token as a GitHub secret:**
+   - In your GitHub repository, go to Settings > Secrets and variables > Actions
+   - Click "New repository secret"
+   - Name: `CODECOV_TOKEN`
+   - Value: Your Codecov token from step 2
+
+4. **Verify setup:**
+   - Push a commit to trigger the CI pipeline
+   - Check that coverage reports appear in Codecov
+
+The CI workflow will automatically upload coverage reports once the repository is configured in Codecov and the token is added as a secret.
 
 ### Development with uv
 
@@ -799,3 +834,13 @@ print(f"Tools used: {summary['tools_used']}")
 - [PRIME Paper](https://doi.org/10.1101/2025.09.22.677756) - Original research paper
 - [Bioinformatics Integration](docs/bioinformatics_integration.md) - Multi-source data fusion guide
 - [Protein Engineering Tools](https://github.com/facebookresearch/hydra) - Tool ecosystem reference
+
+## License
+
+DeepCritical uses dual licensing to maximize open, non-commercial use while reserving rights for commercial applications:
+
+- **Source Code**: Licensed under [GNU General Public License v3 (GPLv3)](LICENSE.md), allowing broad non-commercial use including copying, modification, distribution, and collaboration for personal, educational, research, or non-profit purposes.
+
+- **AI Models and Application**: Licensed under [DeepCritical RAIL-AMS License](RAIL.md), permitting non-commercial use subject to use restrictions (no discrimination, military applications, disinformation, or privacy violations), but prohibiting distribution and derivative creation for sharing.
+
+For commercial use or permissions beyond these licenses, contact us to discuss alternative commercial licensing options.

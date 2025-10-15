@@ -3,7 +3,7 @@
 
 # Model settings
 model:
-  name: "microsoft/DialoGPT-small"
+  name: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
   type: "conversational"
   capabilities:
     - text_generation
@@ -50,6 +50,6 @@ generation:
 # Alternative models
 alternative_models:
   tiny_model:
-    name: "microsoft/DialoGPT-small"
+    name: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
     max_tokens: 64
     temperature: 0.3

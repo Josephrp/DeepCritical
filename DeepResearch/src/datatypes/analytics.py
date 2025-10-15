@@ -7,9 +7,9 @@ request tracking, data retrieval, and metrics collection.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AnalyticsRequest(BaseModel):
@@ -18,8 +18,9 @@ class AnalyticsRequest(BaseModel):
     duration: float | None = Field(None, description="Request duration in seconds")
     num_results: int | None = Field(None, description="Number of results processed")
 
-    class Config:
-        json_schema_extra = {"example": {"duration": 2.5, "num_results": 4}}
+    model_config = ConfigDict(
+        json_schema_extra={"example": {"duration": 2.5, "num_results": 4}}
+    )
 
 
 class AnalyticsResponse(BaseModel):
@@ -29,14 +30,7 @@ class AnalyticsResponse(BaseModel):
     message: str = Field(..., description="Operation result message")
     error: str | None = Field(None, description="Error message if operation failed")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "success": True,
-                "message": "Request recorded successfully",
-                "error": None,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class AnalyticsDataRequest(BaseModel):
@@ -44,8 +38,7 @@ class AnalyticsDataRequest(BaseModel):
 
     days: int = Field(30, description="Number of days to retrieve data for")
 
-    class Config:
-        json_schema_extra = {"example": {"days": 30}}
+    model_config = ConfigDict(json_schema_extra={"example": {"days": 30}})
 
 
 class AnalyticsDataResponse(BaseModel):
@@ -55,14 +48,4 @@ class AnalyticsDataResponse(BaseModel):
     success: bool = Field(..., description="Whether the operation was successful")
     error: str | None = Field(None, description="Error message if operation failed")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "data": [
-                    {"date": "Jan 15", "count": 25, "full_date": "2024-01-15"},
-                    {"date": "Jan 16", "count": 30, "full_date": "2024-01-16"},
-                ],
-                "success": True,
-                "error": None,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})

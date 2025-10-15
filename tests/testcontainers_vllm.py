@@ -9,13 +9,24 @@ import json
 import logging
 import re
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, TypedDict
 
 try:
     from testcontainers.vllm import VLLMContainer  # type: ignore
 except ImportError:
     VLLMContainer = None  # type: ignore
 from omegaconf import DictConfig
+
+
+class ReasoningData(TypedDict):
+    """Type definition for reasoning data extracted from LLM responses."""
+
+    has_reasoning: bool
+    reasoning_steps: list[str]
+    tool_calls: list[dict[str, Any]]
+    final_answer: str
+    reasoning_format: str
+
 
 # Set up logging for test artifacts
 logging.basicConfig(
@@ -71,7 +82,7 @@ class VLLMPromptTester:
                             ],
                         )
                 except Exception as e:
-                    logger.warning(f"Could not load Hydra config, using defaults: {e}")
+                    logger.warning("Could not load Hydra config, using defaults: %s", e)
                     config = self._create_default_config()
 
         self.config = config
@@ -83,13 +94,13 @@ class VLLMPromptTester:
 
         # Apply configuration with overrides
         self.model_name = model_name or model_config.get(
-            "name", "microsoft/DialoGPT-medium"
+            "name", "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
         )
         self.container_timeout = container_timeout or performance_config.get(
             "max_container_startup_time", 120
         )
         self.max_tokens = max_tokens or model_config.get("generation", {}).get(
-            "max_tokens", 256
+            "max_tokens", 56
         )
         self.temperature = temperature or model_config.get("generation", {}).get(
             "temperature", 0.7
@@ -119,7 +130,7 @@ class VLLMPromptTester:
         self.retry_failed_prompts = error_config.get("retry_failed_prompts", True)
         self.max_retries_per_prompt = error_config.get("max_retries_per_prompt", 2)
 
-        logger.info(f"VLLMPromptTester initialized with model: {self.model_name}")
+        logger.info("VLLMPromptTester initialized with model: %s", self.model_name)
 
     def _create_default_config(self) -> DictConfig:
         """Create default configuration when Hydra config is not available."""
@@ -152,9 +163,9 @@ class VLLMPromptTester:
                 },
             },
             "model": {
-                "name": "microsoft/DialoGPT-medium",
+                "name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
                 "generation": {
-                    "max_tokens": 256,
+                    "max_tokens": 56,
                     "temperature": 0.7,
                 },
             },
@@ -176,7 +187,7 @@ class VLLMPromptTester:
 
     def start_container(self):
         """Start VLLM container with configuration-based settings."""
-        logger.info(f"Starting VLLM container with model: {self.model_name}")
+        logger.info("Starting VLLM container with model: %s", self.model_name)
 
         # Get container configuration from config
         model_config = self.config.get("model", {})
@@ -218,13 +229,13 @@ class VLLMPromptTester:
             self.container.with_memory_limit(resources["memory_limit"])
 
         # Start the container
-        logger.info(f"Starting container with timeout: {self.container_timeout}s")
+        logger.info("Starting container with timeout: %ds", self.container_timeout)
         self.container.start()
 
         # Wait for container to be ready with configured timeout
         self._wait_for_ready(self.container_timeout)
 
-        logger.info(f"VLLM container started at {self.container.get_connection_url()}")
+        logger.info("VLLM container started at %s", self.container.get_connection_url())
 
     def stop_container(self):
         """Stop VLLM container."""
@@ -261,7 +272,7 @@ class VLLMPromptTester:
                     logger.info("VLLM container is ready")
                     return
             except Exception as e:
-                logger.debug(f"Health check failed (attempt {retry_count + 1}): {e}")
+                logger.debug("Health check failed (attempt %d): %s", retry_count + 1, e)
                 retry_count += 1
                 if retry_count < max_retries:
                     time.sleep(interval)
@@ -295,11 +306,11 @@ class VLLMPromptTester:
         try:
             formatted_prompt = prompt.format(**dummy_data)
         except KeyError as e:
-            logger.warning(f"Missing placeholder in prompt {prompt_name}: {e}")
+            logger.warning("Missing placeholder in prompt %s: %s", prompt_name, e)
             # Use the prompt as-is if formatting fails
             formatted_prompt = prompt
 
-        logger.info(f"Testing prompt: {prompt_name}")
+        logger.info("Testing prompt: %s", prompt_name)
 
         # Get generation configuration
         generation_config = self.config.get("model", {}).get("generation", {})
@@ -337,11 +348,12 @@ class VLLMPromptTester:
                         time.sleep(1)  # Brief delay before retry
                         continue
                 else:
-                    logger.error(f"All retries failed for prompt {prompt_name}: {e}")
+                    logger.error("All retries failed for prompt %s: %s", prompt_name, e)
                     raise
 
         if response is None:
-            raise RuntimeError(f"Failed to generate response for prompt {prompt_name}")
+            msg = f"Failed to generate response for prompt {prompt_name}"
+            raise RuntimeError(msg)
 
         # Parse reasoning from response
         reasoning_data = self._parse_reasoning(response)
@@ -414,12 +426,12 @@ class VLLMPromptTester:
         result = response.json()
         return result["choices"][0]["text"].strip()
 
-    def _parse_reasoning(self, response: str) -> dict[str, Any]:
+    def _parse_reasoning(self, response: str) -> ReasoningData:
         """Parse reasoning and tool calls from response.
 
         This implements basic reasoning parsing based on VLLM reasoning outputs.
         """
-        reasoning_data = {
+        reasoning_data: ReasoningData = {
             "has_reasoning": False,
             "reasoning_steps": [],
             "tool_calls": [],
@@ -471,7 +483,7 @@ class VLLMPromptTester:
         if reasoning_data["has_reasoning"]:
             # Remove reasoning sections from final answer
             final_answer = response
-            for step in reasoning_data["reasoning_steps"]:
+            for step in reasoning_data["reasoning_steps"]:  # type: ignore
                 final_answer = final_answer.replace(step, "").strip()
 
             # Clean up extra whitespace
@@ -548,7 +560,7 @@ class VLLMPromptTester:
         with open(artifact_path, "w", encoding="utf-8") as f:
             json.dump(result, f, indent=2, ensure_ascii=False)
 
-        logger.info(f"Saved artifact: {artifact_path}")
+        logger.info("Saved artifact: %s", artifact_path)
 
     def get_container_info(self) -> dict[str, Any]:
         """Get information about the VLLM container."""
@@ -871,7 +883,7 @@ def get_all_prompts_with_modules() -> list[tuple[str, str, str]]:
                             )
 
         except ImportError as e:
-            logger.warning(f"Could not import module {module_name}: {e}")
+            logger.warning("Could not import module %s: %s", module_name, e)
             continue
 
     return all_prompts

@@ -7,11 +7,12 @@ dependencies, and related data structures.
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
-from ..utils.vllm_client import VLLMClient
+if TYPE_CHECKING:
+    from DeepResearch.src.utils.vllm_client import VLLMClient
 
 
 class VLLMAgentDependencies(BaseModel):
@@ -19,12 +20,11 @@ class VLLMAgentDependencies(BaseModel):
 
     vllm_client: VLLMClient = Field(..., description="VLLM client instance")
     default_model: str = Field(
-        "microsoft/DialoGPT-medium", description="Default model name"
+        "TinyLlama/TinyLlama-1.1B-Chat-v1.0", description="Default model name"
     )
     embedding_model: str | None = Field(None, description="Embedding model name")
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class VLLMAgentConfig(BaseModel):
@@ -33,7 +33,9 @@ class VLLMAgentConfig(BaseModel):
     client_config: dict[str, Any] = Field(
         default_factory=dict, description="VLLM client configuration"
     )
-    default_model: str = Field("microsoft/DialoGPT-medium", description="Default model")
+    default_model: str = Field(
+        "TinyLlama/TinyLlama-1.1B-Chat-v1.0", description="Default model"
+    )
     embedding_model: str | None = Field(None, description="Embedding model")
     system_prompt: str = Field(
         "You are a helpful AI assistant powered by VLLM. You can perform various tasks including text generation, conversation, and analysis.",

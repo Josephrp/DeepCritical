@@ -10,9 +10,9 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class WorkflowType(str, Enum):
@@ -99,21 +99,7 @@ class WorkflowConfig(BaseModel):
     )
     output_format: str = Field("default", description="Expected output format")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "workflow_type": "rag_workflow",
-                "name": "scientific_papers_rag",
-                "enabled": True,
-                "priority": 1,
-                "max_retries": 3,
-                "parameters": {
-                    "collection_name": "scientific_papers",
-                    "chunk_size": 1000,
-                    "top_k": 5,
-                },
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class AgentConfig(BaseModel):
@@ -128,16 +114,7 @@ class AgentConfig(BaseModel):
     temperature: float = Field(0.7, description="Model temperature")
     enabled: bool = Field(True, description="Whether agent is enabled")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "agent_id": "hypothesis_generator_001",
-                "role": "hypothesis_generator",
-                "model_name": "anthropic:claude-sonnet-4-0",
-                "tools": ["web_search", "rag_query", "reasoning"],
-                "max_iterations": 5,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class DataLoaderConfig(BaseModel):
@@ -153,19 +130,7 @@ class DataLoaderConfig(BaseModel):
     chunk_size: int = Field(1000, description="Chunk size for documents")
     chunk_overlap: int = Field(200, description="Chunk overlap")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "loader_type": "scientific_paper_loader",
-                "name": "pubmed_loader",
-                "parameters": {
-                    "query": "machine learning",
-                    "max_papers": 100,
-                    "include_abstracts": True,
-                },
-                "output_collection": "scientific_papers",
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class WorkflowExecution(BaseModel):
@@ -204,16 +169,7 @@ class WorkflowExecution(BaseModel):
         """Check if execution failed."""
         return self.status == WorkflowStatus.FAILED
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "execution_id": "exec_123",
-                "workflow_config": {},
-                "status": "running",
-                "input_data": {"query": "What is machine learning?"},
-                "output_data": {},
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class MultiAgentSystemConfig(BaseModel):
@@ -230,16 +186,7 @@ class MultiAgentSystemConfig(BaseModel):
     consensus_threshold: float = Field(0.8, description="Consensus threshold")
     enabled: bool = Field(True, description="Whether system is enabled")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "system_id": "hypothesis_system_001",
-                "name": "Hypothesis Generation and Testing System",
-                "agents": [],
-                "coordination_strategy": "collaborative",
-                "max_rounds": 5,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class JudgeConfig(BaseModel):
@@ -252,15 +199,7 @@ class JudgeConfig(BaseModel):
     scoring_scale: str = Field("1-10", description="Scoring scale")
     enabled: bool = Field(True, description="Whether judge is enabled")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "judge_id": "quality_judge_001",
-                "name": "Quality Assessment Judge",
-                "evaluation_criteria": ["accuracy", "completeness", "clarity"],
-                "scoring_scale": "1-10",
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class WorkflowOrchestrationConfig(BaseModel):
@@ -293,23 +232,11 @@ class WorkflowOrchestrationConfig(BaseModel):
         """Validate sub-workflow configurations."""
         names = [w.name for w in v]
         if len(names) != len(set(names)):
-            raise ValueError("Sub-workflow names must be unique")
+            msg = "Sub-workflow names must be unique"
+            raise ValueError(msg)
         return v
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "primary_workflow": {
-                    "workflow_type": "primary_react",
-                    "name": "main_research_workflow",
-                    "enabled": True,
-                },
-                "sub_workflows": [],
-                "data_loaders": [],
-                "multi_agent_systems": [],
-                "judges": [],
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class WorkflowResult(BaseModel):
@@ -328,17 +255,7 @@ class WorkflowResult(BaseModel):
         None, description="Error details if failed"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "execution_id": "exec_123",
-                "workflow_name": "rag_workflow",
-                "status": "completed",
-                "output_data": {"answer": "Machine learning is..."},
-                "quality_score": 8.5,
-                "execution_time": 15.2,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class HypothesisDataset(BaseModel):
@@ -360,21 +277,7 @@ class HypothesisDataset(BaseModel):
         default_factory=list, description="Source workflow names"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "dataset_id": "hyp_001",
-                "name": "ML Research Hypotheses",
-                "description": "Hypotheses about machine learning applications",
-                "hypotheses": [
-                    {
-                        "hypothesis": "Deep learning improves protein structure prediction",
-                        "confidence": 0.85,
-                        "evidence": ["AlphaFold2 results", "ESMFold improvements"],
-                    }
-                ],
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class HypothesisTestingEnvironment(BaseModel):
@@ -392,21 +295,7 @@ class HypothesisTestingEnvironment(BaseModel):
     results: dict[str, Any] | None = Field(None, description="Test results")
     status: WorkflowStatus = Field(WorkflowStatus.PENDING, description="Test status")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "environment_id": "test_001",
-                "name": "Protein Structure Prediction Test",
-                "hypothesis": {
-                    "hypothesis": "Deep learning improves protein structure prediction",
-                    "confidence": 0.85,
-                },
-                "test_configuration": {
-                    "test_proteins": ["P04637", "P53"],
-                    "metrics": ["RMSD", "GDT_TS"],
-                },
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class ReasoningResult(BaseModel):
@@ -426,20 +315,7 @@ class ReasoningResult(BaseModel):
         default_factory=dict, description="Reasoning metadata"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "reasoning_id": "reason_001",
-                "question": "Why does AlphaFold2 outperform traditional methods?",
-                "answer": "AlphaFold2 uses deep learning to predict protein structures...",
-                "reasoning_chain": [
-                    "Analyze traditional methods limitations",
-                    "Identify deep learning advantages",
-                    "Compare performance metrics",
-                ],
-                "confidence": 0.92,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class WorkflowComposition(BaseModel):
@@ -459,23 +335,7 @@ class WorkflowComposition(BaseModel):
     )
     composition_strategy: str = Field("adaptive", description="Composition strategy")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "composition_id": "comp_001",
-                "user_input": "Analyze protein-protein interactions in cancer",
-                "selected_workflows": [
-                    "bioinformatics_workflow",
-                    "rag_workflow",
-                    "reasoning_workflow",
-                ],
-                "execution_order": [
-                    "rag_workflow",
-                    "bioinformatics_workflow",
-                    "reasoning_workflow",
-                ],
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class OrchestrationState(BaseModel):
@@ -590,25 +450,7 @@ class JudgeEvaluationResult(BaseModel):
         default_factory=list, description="Improvement recommendations"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                # "state_id": "state_001",
-                # "active_executions": [],
-                # "completed_executions": [],
-                # "system_metrics": {
-                #     "total_executions": 0,
-                #     "success_rate": 0.0,
-                #     "average_execution_time": 0.0,
-                # },
-                "success": True,
-                "judge_id": "quality_judge_001",
-                "overall_score": 8.5,
-                "criterion_scores": {"quality": 8.5, "accuracy": 8.0, "clarity": 9.0},
-                "feedback": "Good quality output with room for improvement",
-                "recommendations": ["Add more detail", "Improve clarity"],
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class MultiStateMachineMode(str, Enum):
@@ -868,5 +710,6 @@ class WorkflowOrchestrationState(BaseModel):
         """Validate sub-workflows structure."""
         for workflow in v:
             if not isinstance(workflow, dict):
-                raise ValueError("Each sub-workflow must be a dictionary")
+                msg = "Each sub-workflow must be a dictionary"
+                raise ValueError(msg)
         return v

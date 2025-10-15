@@ -10,20 +10,22 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic_ai import Agent
 
 # Import existing DeepCritical types
-from ..datatypes.deep_agent_state import DeepAgentState
-from ..datatypes.deep_agent_types import (
+from DeepResearch.src.datatypes.deep_agent_state import DeepAgentState
+from DeepResearch.src.datatypes.deep_agent_types import (
     AgentOrchestrationConfig,
     CustomSubAgent,
     SubAgent,
 )
-from ..tools.deep_agent_middleware import create_default_middleware_pipeline
-from ..tools.deep_agent_tools import (
+from DeepResearch.src.tools.deep_agent_middleware import (
+    create_default_middleware_pipeline,
+)
+from DeepResearch.src.tools.deep_agent_tools import (
     edit_file_tool,
     list_files_tool,
     read_file_tool,
@@ -51,17 +53,11 @@ class AgentBuilderConfig(BaseModel):
     max_concurrent_agents: int = Field(5, gt=0, description="Maximum concurrent agents")
     timeout: float = Field(300.0, gt=0, description="Default timeout")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "model_name": "anthropic:claude-sonnet-4-0",
-                "instructions": "You are a helpful research assistant",
-                "tools": ["write_todos", "read_file", "web_search"],
-                "enable_parallel_execution": True,
-                "max_concurrent_agents": 5,
-                "timeout": 300.0,
-            }
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {"max_agents": 10, "max_concurrent_agents": 5, "timeout": 300.0}
         }
+    )
 
 
 class AgentGraphNode(BaseModel):
@@ -81,19 +77,21 @@ class AgentGraphNode(BaseModel):
     @classmethod
     def validate_name(cls, v):
         if not v or not v.strip():
-            raise ValueError("Node name cannot be empty")
+            msg = "Node name cannot be empty"
+            raise ValueError(msg)
         return v.strip()
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "name": "research_agent",
-                "agent_type": "research",
-                "config": {"depth": "comprehensive"},
-                "dependencies": ["planning_agent"],
+                "name": "search_node",
+                "agent_type": "SearchAgent",
+                "config": {"max_results": 10},
+                "dependencies": ["plan_node"],
                 "timeout": 300.0,
             }
         }
+    )
 
 
 class AgentGraphEdge(BaseModel):
@@ -108,18 +106,21 @@ class AgentGraphEdge(BaseModel):
     @classmethod
     def validate_node_names(cls, v):
         if not v or not v.strip():
-            raise ValueError("Node name cannot be empty")
+            msg = "Node name cannot be empty"
+            raise ValueError(msg)
         return v.strip()
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "source": "planning_agent",
-                "target": "research_agent",
-                "condition": "plan_completed",
-                "weight": 1.0,
+                "name": "search_node",
+                "agent_type": "SearchAgent",
+                "config": {"max_results": 10},
+                "dependencies": ["plan_node"],
+                "timeout": 300.0,
             }
         }
+    )
 
 
 class AgentGraph(BaseModel):
@@ -136,7 +137,8 @@ class AgentGraph(BaseModel):
         if info.data and "nodes" in info.data:
             node_names = [node.name for node in info.data["nodes"]]
             if v not in node_names:
-                raise ValueError(f"Entry point '{v}' not found in nodes")
+                msg = f"Entry point '{v}' not found in nodes"
+                raise ValueError(msg)
         return v
 
     @field_validator("exit_points")
@@ -146,7 +148,8 @@ class AgentGraph(BaseModel):
             node_names = [node.name for node in info.data["nodes"]]
             for exit_point in v:
                 if exit_point not in node_names:
-                    raise ValueError(f"Exit point '{exit_point}' not found in nodes")
+                    msg = f"Exit point '{exit_point}' not found in nodes"
+                    raise ValueError(msg)
         return v
 
     def get_node(self, name: str) -> AgentGraphNode | None:
@@ -171,26 +174,17 @@ class AgentGraph(BaseModel):
             return node.dependencies
         return []
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
-                "nodes": [
-                    {
-                        "name": "planning_agent",
-                        "agent_type": "planner",
-                        "dependencies": [],
-                    },
-                    {
-                        "name": "research_agent",
-                        "agent_type": "researcher",
-                        "dependencies": ["planning_agent"],
-                    },
-                ],
-                "edges": [{"source": "planning_agent", "target": "research_agent"}],
-                "entry_point": "planning_agent",
-                "exit_points": ["research_agent"],
+                "name": "search_node",
+                "agent_type": "SearchAgent",
+                "config": {"max_results": 10},
+                "dependencies": ["plan_node"],
+                "timeout": 300.0,
             }
         }
+    )
 
 
 class AgentGraphExecutor:
@@ -470,11 +464,11 @@ class AgentBuilder:
                 # Add tool if method exists
                 if hasattr(agent, "add_tool") and callable(agent.add_tool):
                     add_tool_method = agent.add_tool
-                    add_tool_method(tool_map[tool_name])
+                    add_tool_method(tool_map[tool_name])  # type: ignore
                 elif hasattr(agent, "tools") and hasattr(agent.tools, "append"):
                     tools_attr = agent.tools
                     if hasattr(tools_attr, "append") and callable(tools_attr.append):
-                        tools_attr.append(tool_map[tool_name])
+                        tools_attr.append(tool_map[tool_name])  # type: ignore
 
     def _add_middleware(self, agent: Agent) -> None:
         """Add middleware to the agent."""

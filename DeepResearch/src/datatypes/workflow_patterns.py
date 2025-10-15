@@ -9,13 +9,12 @@ Pydantic AI and Pydantic Graph integration.
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # Optional import for pydantic_graph - may not be available in all environments
 try:
@@ -48,9 +47,13 @@ except ImportError:
 
 
 # Import existing DeepCritical types
-from ..utils.execution_status import ExecutionStatus
+from DeepResearch.src.utils.execution_status import ExecutionStatus
+
 from .agents import AgentStatus, AgentType
 from .deep_agent_state import DeepAgentState
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class InteractionPattern(str, Enum):
@@ -205,9 +208,7 @@ class AgentInteractionState:
             return False
         if self.consensus_reached:
             return False
-        if self.execution_status == ExecutionStatus.FAILED:
-            return False
-        return True
+        return self.execution_status != ExecutionStatus.FAILED
 
     def next_round(self) -> None:
         """Move to the next round."""
@@ -439,13 +440,13 @@ class WorkflowOrchestrator:
             return 0.0
 
         # Simple confidence calculation
-        unique_results = len(set(str(r) for r in results))
+        unique_results = len({str(r) for r in results})
         total_results = len(results)
 
         return 1.0 - (unique_results - 1) / total_results
 
     def _execute_hierarchical_subordinates(
-        self, coordinator_data: Any
+        self, _coordinator_data: Any
     ) -> dict[str, Any]:
         """Execute subordinate agents in hierarchical pattern."""
         # This would implement hierarchical execution logic
@@ -468,7 +469,7 @@ class WorkflowOrchestrator:
         """Get the coordinator agent in hierarchical pattern."""
         # In a real implementation, this would identify the coordinator
         # For now, return the first agent
-        return list(self.state.agents.keys())[0] if self.state.agents else None
+        return next(iter(self.state.agents.keys())) if self.state.agents else None
 
 
 # Pydantic models for type safety
@@ -481,15 +482,7 @@ class InteractionConfig(BaseModel):
     timeout: float = Field(300.0, description="Timeout in seconds")
     enable_monitoring: bool = Field(True, description="Enable execution monitoring")
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "pattern": "collaborative",
-                "max_rounds": 10,
-                "consensus_threshold": 0.8,
-                "timeout": 300.0,
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class AgentInteractionRequest(BaseModel):
@@ -504,14 +497,7 @@ class AgentInteractionRequest(BaseModel):
         None, description="Interaction configuration"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "agents": ["parser", "planner", "executor"],
-                "interaction_pattern": "sequential",
-                "input_data": {"question": "What is machine learning?"},
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 class AgentInteractionResponse(BaseModel):
@@ -525,16 +511,7 @@ class AgentInteractionResponse(BaseModel):
         default_factory=list, description="Any errors encountered"
     )
 
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "success": True,
-                "result": "Machine learning is a subset of AI...",
-                "execution_time": 2.5,
-                "rounds_executed": 3,
-                "errors": [],
-            }
-        }
+    model_config = ConfigDict(json_schema_extra={})
 
 
 # Factory functions for creating interaction patterns
@@ -642,7 +619,7 @@ class SequentialPatternNode(WorkflowPatternNode):
 
 # Utility functions for integration
 def create_pattern_graph(
-    pattern: InteractionPattern, agents: list[str]
+    pattern: InteractionPattern, _agents: list[str]
 ) -> Graph[DeepAgentState]:
     """Create a Pydantic Graph for the given interaction pattern."""
 
@@ -659,9 +636,9 @@ def create_pattern_graph(
 
 async def execute_interaction_pattern(
     pattern: InteractionPattern,
-    agents: list[str],
-    input_data: dict[str, Any],
-    agent_executors: dict[str, Callable],
+    _agents: list[str],
+    _input_data: dict[str, Any],
+    _agent_executors: dict[str, Callable],
 ) -> AgentInteractionResponse:
     """Execute an interaction pattern with the given agents and data."""
 
@@ -671,11 +648,11 @@ async def execute_interaction_pattern(
         # Create interaction state
         interaction_state = create_interaction_state(
             pattern=pattern,
-            agents=agents,
+            agents=_agents,
         )
 
         # Create orchestrator
-        orchestrator = create_workflow_orchestrator(interaction_state, agent_executors)
+        orchestrator = create_workflow_orchestrator(interaction_state, _agent_executors)
 
         # Execute based on pattern
         if pattern == InteractionPattern.COLLABORATIVE:
@@ -685,7 +662,8 @@ async def execute_interaction_pattern(
         elif pattern == InteractionPattern.HIERARCHICAL:
             result = await orchestrator.execute_hierarchical_pattern()
         else:
-            raise ValueError(f"Unsupported pattern: {pattern}")
+            msg = f"Unsupported pattern: {pattern}"
+            raise ValueError(msg)
 
         execution_time = time.time() - start_time
 
