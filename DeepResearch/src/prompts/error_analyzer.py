@@ -15,5 +15,14 @@ SYSTEM = (
 )
 
 
+ERROR_ANALYZER_PROMPTS: dict[str, str] = {
+    "system": SYSTEM,
+    "analyze_error": "Analyze the following error sequence and provide improvement suggestions: {error_sequence}",
+}
 
 
+class ErrorAnalyzerPrompts:
+    """Prompt templates for error analysis."""
+
+    SYSTEM = SYSTEM
+    PROMPTS = ERROR_ANALYZER_PROMPTS

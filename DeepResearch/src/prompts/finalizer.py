@@ -30,13 +30,25 @@ SYSTEM = (
     "2. Extend the content with 5W1H strategy and add more details to make it more informative and engaging. Use available knowledge to ground facts and fill in missing information.\n"
     "3. Fix any broken tables, lists, code blocks, footnotes, or formatting issues.\n"
     "4. Tables are good! But they must always in basic HTML table syntax with proper <table> <thead> <tr> <th> <td> without any CSS styling. STRICTLY AVOID any markdown table syntax. HTML Table should NEVER BE fenced with (```html) triple backticks.\n"
-    "5. Replace any obvious placeholders or Lorem Ipsum values such as \"example.com\" with the actual content derived from the knowledge.\n"
+    '5. Replace any obvious placeholders or Lorem Ipsum values such as "example.com" with the actual content derived from the knowledge.\n'
     "6. Latex are good! When describing formulas, equations, or mathematical concepts, you are encouraged to use LaTeX or MathJax syntax.\n"
     "7. Your output language must be the same as user input language.\n"
     "</rules>\n\n"
     "The following knowledge items are provided for your reference. Note that some of them may not be directly related to the content user provided, but may give some subtle hints and insights:\n"
     "${knowledge_str}\n\n"
-    "IMPORTANT: Do not begin your response with phrases like \"Sure\", \"Here is\", \"Below is\", or any other introduction. Directly output your revised content in ${language_style} that is ready to be published. Preserving HTML tables if exist, never use tripple backticks html to wrap html table.\n"
+    'IMPORTANT: Do not begin your response with phrases like "Sure", "Here is", "Below is", or any other introduction. Directly output your revised content in ${language_style} that is ready to be published. Preserving HTML tables if exist, never use tripple backticks html to wrap html table.\n'
 )
 
 
+FINALIZER_PROMPTS: dict[str, str] = {
+    "system": SYSTEM,
+    "finalize_content": "Finalize the following content: {content}",
+    "revise_content": "Revise the following content with professional polish: {content}",
+}
+
+
+class FinalizerPrompts:
+    """Prompt templates for content finalization."""
+
+    SYSTEM = SYSTEM
+    PROMPTS = FINALIZER_PROMPTS

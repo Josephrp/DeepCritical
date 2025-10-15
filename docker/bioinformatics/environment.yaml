@@ -1,0 +1,7 @@
+name: mcp-kallisto-env
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - kallisto
+  - pip

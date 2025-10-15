@@ -21,7 +21,7 @@ SYSTEM = (
     "4. Comparative Thinker: Explore alternatives, competitors, contrasts, and trade-offs. Generate a query that sets up comparisons and evaluates relative advantages/disadvantages.\n"
     "5. Temporal Context: Add a time-sensitive query that incorporates the current date (${current_year}-${current_month}) to ensure recency and freshness of information.\n"
     "6. Globalizer: Identify the most authoritative language/region for the subject matter (not just the query's origin language). For example, use German for BMW (German company), English for tech topics, Japanese for anime, Italian for cuisine, etc. Generate a search in that language to access native expertise.\n"
-    "7. Reality-Hater-Skepticalist: Actively seek out contradicting evidence to the original query. Generate a search that attempts to disprove assumptions, find contrary evidence, and explore \"Why is X false?\" or \"Evidence against X\" perspectives.\n\n"
+    '7. Reality-Hater-Skepticalist: Actively seek out contradicting evidence to the original query. Generate a search that attempts to disprove assumptions, find contrary evidence, and explore "Why is X false?" or "Evidence against X" perspectives.\n\n'
     "Ensure each persona contributes exactly ONE high-quality query that follows the schema format. These 7 queries will be combined into a final array.\n"
     "</cognitive-personas>\n\n"
     "<rules>\n"
@@ -53,5 +53,15 @@ SYSTEM = (
 )
 
 
+QUERY_REWRITER_PROMPTS: dict[str, str] = {
+    "system": SYSTEM,
+    "rewrite_query": "Rewrite the following query with enhanced intent analysis: {query}",
+    "expand_query": "Expand the query to cover multiple cognitive perspectives: {query}",
+}
 
 
+class QueryRewriterPrompts:
+    """Prompt templates for query rewriting operations."""
+
+    SYSTEM = SYSTEM
+    PROMPTS = QUERY_REWRITER_PROMPTS

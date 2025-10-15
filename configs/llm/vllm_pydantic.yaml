@@ -1,0 +1,25 @@
+# vLLM server configuration for Pydantic AI models
+# This config is specifically for use with OpenAICompatibleModel wrapper
+
+# Basic connection settings
+provider: "vllm"
+model_name: "meta-llama/Llama-3-8B"
+base_url: "http://localhost:8000/v1"
+api_key: null  # vLLM uses "EMPTY" by default if auth is disabled
+
+# Model configuration
+model:
+  name: "meta-llama/Llama-3-8B"
+
+# Generation parameters
+generation:
+  temperature: 0.7
+  max_tokens: 512
+  top_p: 0.9
+  frequency_penalty: 0.0
+  presence_penalty: 0.0
+
+# Connection settings
+timeout: 60.0
+max_retries: 3
+retry_delay: 1.0

@@ -1,0 +1,19 @@
+# Fast VLLM configuration for quick inference
+# Override defaults with faster settings
+
+vllm:
+  performance:
+    gpu_memory_utilization: 0.95  # Use more GPU memory for speed
+    tensor_parallel_size: 2        # Enable tensor parallelism if multiple GPUs
+    max_num_seqs: 128             # Reduce for lower latency
+    max_num_batched_tokens: 4096  # Smaller batches for speed
+
+  generation:
+    temperature: 0.1              # Lower temperature for deterministic output
+    top_p: 0.1                    # More focused sampling
+    max_tokens: 256               # Shorter responses for speed
+
+  features:
+    enable_streaming: true        # Keep streaming for responsiveness
+    enable_embeddings: false      # Disable embeddings for speed
+    enable_batch_processing: false # Disable batching for single requests

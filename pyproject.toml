@@ -10,11 +10,28 @@ authors = [
 ]
 dependencies = [
   "beautifulsoup4>=4.14.2",
+  "gradio>=5.47.2",
   "hydra-core>=1.3.2",
+  "limits>=5.6.0",
+  "mkdocs>=1.6.1",
+  "mkdocs-git-revision-date-localized-plugin>=1.4.7",
+  "mkdocs-material>=9.6.21",
+  "mkdocs-mermaid2-plugin>=1.2.2",
+  "mkdocs-minify-plugin>=0.8.0",
+  "mkdocstrings>=0.30.1",
+  "mkdocstrings-python>=1.18.2",
+  "omegaconf>=2.3.0",
   "pydantic>=2.7",
   "pydantic-ai>=0.0.16",
   "pydantic-graph>=0.2.0",
-  "testcontainers>=4.8.0",
+  "python-dateutil>=2.9.0.post0",
+  "testcontainers",
+  "trafilatura>=2.0.0",
+  "psutil>=5.9.0",
+  "fastmcp>=2.12.4",
+  "neo4j>=6.0.2",
+  "sentence-transformers>=5.1.1",
+  "numpy>=2.2.6",
 ]
 
 [project.optional-dependencies]
@@ -22,6 +39,9 @@ dev = [
   "ruff>=0.6.0",
   "pytest>=7.0.0",
   "pytest-asyncio>=0.21.0",
+  "pytest-cov>=4.0.0",
+  "requests-mock>=1.12.1",
+  "pytest-mock>=3.15.1",
 ]
 
 [project.scripts]
@@ -34,11 +54,178 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["DeepResearch"]
 
-[tool.uv]
-dev-dependencies = [
+[tool.uv.sources]
+testcontainers = { git = "https://github.com/josephrp/testcontainers-python.git", rev = "vllm" }
+
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# Assume Python 3.10+
+target-version = "py310"
+
+[tool.ruff.lint]
+# Enable only essential linting rules to avoid conflicts
+select = ["E", "F", "I", "N", "UP", "B", "A", "C4", "DTZ", "T10", "EM", "EXE", "FA", "ISC", "ICN", "G", "INP", "PIE", "T20", "PYI", "PT", "Q", "RSE", "RET", "SLF", "SIM", "TID", "TCH", "ARG", "PTH", "ERA", "PD", "PGH", "PL", "TRY", "FLY", "NPY", "AIR", "PERF", "FURB", "LOG", "RUF"]
+ignore = [
+    # Allow non-abstract empty methods in abstract base classes
+    "B027",
+    # Allow boolean positional values in function calls, like `dict.get(... True)`
+    "FBT003",
+    # Ignore checks for possible passwords
+    "S105", "S106", "S107",
+    # Ignore complexity
+    "C901", "PLR0911", "PLR0912", "PLR0913", "PLR0915",
+    # Allow magic values
+    "PLR2004",
+    # Ignore long lines
+    "E501",
+    # Allow print statements
+    "T201",
+    # Allow relative imports
+    "TID252",
+    # Allow unused imports in __init__.py files
+    "F401",
+    # Ignore f-string in logging (common pattern)
+    "G004",
+    # Ignore try/except patterns that are acceptable
+    "TRY300", "TRY400", "TRY003", "TRY004", "TRY301",
+    # Ignore exception message patterns
+    "EM101", "EM102",
+    # Ignore performance warnings in loops
+    "PERF203", "PERF102", "PERF403", "PERF401",
+    # Ignore pathlib suggestions
+    "PTH123", "PTH110", "PTH103", "PTH118", "PTH117", "PTH120",
+    # Ignore type checking issues
+    "PGH003", "TCH001", "TCH002", "TCH003",
+    # Ignore deprecated typing
+    "UP035", "UP038", "UP007",
+    # Ignore import namespace issues
+    "INP001",
+    # Ignore simplification suggestions
+    "SIM102", "SIM105", "SIM108", "SIM118", "SIM103",
+    # Ignore unused arguments
+    "ARG002", "ARG005", "ARG001", "ARG003",
+    # Ignore return patterns
+    "RET504",
+    # Ignore commented code
+    "ERA001",
+    # Ignore mutable class attributes
+    "RUF012", "RUF001", "RUF006", "RUF015", "RUF005",
+    # Ignore loop variable overwrites
+    "PLW2901",
+    # Ignore startswith optimization
+    "PIE810",
+    # Ignore datetime timezone
+    "DTZ005",
+    # Ignore unused loop variables
+    "B007",
+    # Ignore variable naming
+    "N806", "N814", "N999", "N802",
+    # Ignore assertion patterns
+    "B011", "PT015",
+    # Ignore list comprehension suggestions
+    "PERF401", "C416", "C401",
+    # Ignore pandas DataFrame naming
+    "PD901",
+    # Ignore imports outside top-level (common in test files)
+    "PLC0415",
+    # Ignore private member access
+    "SLF001",
+    # Ignore builtin shadowing
+    "A001", "A002",
+    # Ignore function naming
+    "N802",
+    # Ignore type annotations
+    "PYI034",
+    # Ignore import organization
+    "ISC001",
+    # Ignore exception handling
+    "B904",
+    # Ignore raise patterns
+    "TRY201",
+    # Ignore lambda arguments
+    "ARG005",
+    # Ignore docstring formatting
+    "RUF002",
+    # Ignore exception naming
+    "N818",
+    # Ignore duplicate field definitions
+    "PIE794",
+    # Ignore nested with statements
+    "SIM117",
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"
+
+# Enable auto-formatting of code examples in docstrings. Markdown,
+# reStructuredText code/literal blocks and doctests are all supported.
+docstring-code-format = false
+
+# Set the line length limit used when formatting code snippets in
+# docstrings.
+docstring-code-line-length = "dynamic"
+
+[dependency-groups]
+dev = [
   "ruff>=0.6.0",
   "pytest>=7.0.0",
   "pytest-asyncio>=0.21.0",
+  "pytest-cov>=4.0.0",
+  "bandit>=1.7.0",
+  "ty>=0.0.1a21",
+  "mkdocs>=1.5.0",
+  "mkdocs-material>=9.4.0",
+  "mkdocs-mermaid2-plugin>=1.1.0",
+  "mkdocs-git-revision-date-localized-plugin>=1.2.0",
+  "mkdocs-minify-plugin>=0.7.0",
+  "mkdocstrings>=0.24.0",
+  "mkdocstrings-python>=1.7.0",
+  "testcontainers>=4.13.1",
+  "requests-mock>=1.11.0",
+  "pytest-mock>=3.12.0",
 ]
-
-

@@ -7,13 +7,14 @@ using Pydantic AI patterns that align with DeepCritical's architecture.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel, Field, validator
 from enum import Enum
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class PromptType(str, Enum):
     """Types of prompts."""
+
     SYSTEM = "system"
     USER = "user"
     ASSISTANT = "assistant"
@@ -23,39 +24,37 @@ class PromptType(str, Enum):
 
 class PromptTemplate(BaseModel):
     """Template for prompts with variable substitution."""
+
     name: str = Field(..., description="Prompt template name")
     template: str = Field(..., description="Prompt template string")
-    variables: List[str] = Field(default_factory=list, description="Required variables")
+    variables: list[str] = Field(default_factory=list, description="Required variables")
     prompt_type: PromptType = Field(PromptType.SYSTEM, description="Type of prompt")
-    
-    @validator('name')
+
+    @field_validator("name")
+    @classmethod
     def validate_name(cls, v):
         if not v or not v.strip():
-            raise ValueError("Prompt template name cannot be empty")
+            msg = "Prompt template name cannot be empty"
+            raise ValueError(msg)
         return v.strip()
-    
-    @validator('template')
+
+    @field_validator("template")
+    @classmethod
     def validate_template(cls, v):
         if not v or not v.strip():
-            raise ValueError("Prompt template cannot be empty")
+            msg = "Prompt template cannot be empty"
+            raise ValueError(msg)
         return v.strip()
-    
+
     def format(self, **kwargs) -> str:
         """Format the template with provided variables."""
         try:
             return self.template.format(**kwargs)
         except KeyError as e:
-            raise ValueError(f"Missing required variable: {e}")
-    
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "name": "write_todos_system",
-                "template": "You have access to the write_todos tool...",
-                "variables": ["other_agents"],
-                "prompt_type": "system"
-            }
-        }
+            msg = f"Missing required variable: {e}"
+            raise ValueError(msg)
+
+    model_config = ConfigDict(json_schema_extra={})
 
 
 # Tool descriptions
@@ -119,7 +118,7 @@ It is important to skip using this tool when:
 Being proactive with task management demonstrates attentiveness and ensures you complete all requirements successfully
 Remember: If you only need to make a few tool calls to complete a task, and it is clear what you need to do, it is better to just do the task directly and NOT call this tool at all."""
 
-TASK_TOOL_DESCRIPTION = """Launch an ephemeral subagent to handle complex, multi-step independent tasks with isolated context windows. 
+TASK_TOOL_DESCRIPTION = """Launch an ephemeral subagent to handle complex, multi-step independent tasks with isolated context windows.
 
 Available agent types and the tools they have access to:
 - general-purpose: General-purpose agent for researching complex questions, searching for files and content, and executing multi-step tasks. When you are searching for a keyword or file and are not confident that you will find the right match in the first few tries use this agent to perform the search for you. This agent has access to all tools as the main agent.
@@ -210,7 +209,7 @@ function isPrime(n) {{
 Since significant content was created and the task was completed, now use the content-reviewer agent to review the work
 </commentary>
 assistant: Now let me use the content-reviewer agent to review the code
-assistant: Uses the Task tool to launch with the content-reviewer agent 
+assistant: Uses the Task tool to launch with the content-reviewer agent
 </example>
 
 <example>
@@ -246,18 +245,18 @@ Usage:
 - You can optionally specify a line offset and limit (especially handy for long files), but it's recommended to read the whole file by not providing these parameters
 - Any lines longer than 2000 characters will be truncated
 - Results are returned using cat -n format, with line numbers starting at 1
-- You have the capability to call multiple tools in a single response. It is always better to speculatively read multiple files as a batch that are potentially useful. 
+- You have the capability to call multiple tools in a single response. It is always better to speculatively read multiple files as a batch that are potentially useful.
 - If you read a file that exists but has empty contents you will receive a system reminder warning in place of file contents.
 - You should ALWAYS make sure a file has been read before editing it."""
 
-EDIT_FILE_TOOL_DESCRIPTION = """Performs exact string replacements in files. 
+EDIT_FILE_TOOL_DESCRIPTION = """Performs exact string replacements in files.
 
 Usage:
-- You must use your `Read` tool at least once in the conversation before editing. This tool will error if you attempt an edit without reading the file. 
+- You must use your `Read` tool at least once in the conversation before editing. This tool will error if you attempt an edit without reading the file.
 - When editing text from Read tool output, ensure you preserve the exact indentation (tabs/spaces) as it appears AFTER the line number prefix. The line number prefix format is: spaces + line number + tab. Everything after that tab is the actual file content to match. Never include any part of the line number prefix in the old_string or new_string.
 - ALWAYS prefer editing existing files. NEVER write new files unless explicitly required.
 - Only use emojis if the user explicitly requests it. Avoid adding emojis to files unless asked.
-- The edit will FAIL if `old_string` is not unique in the file. Either provide a larger string with more surrounding context to make it unique or use `replace_all` to change every instance of `old_string`. 
+- The edit will FAIL if `old_string` is not unique in the file. Either provide a larger string with more surrounding context to make it unique or use `replace_all` to change every instance of `old_string`.
 - Use `replace_all` for replacing and renaming strings across the file. This parameter is useful if you want to rename a variable for instance."""
 
 WRITE_FILE_TOOL_DESCRIPTION = """Writes to a file in the local filesystem.
@@ -271,7 +270,7 @@ Usage:
 # System prompts
 WRITE_TODOS_SYSTEM_PROMPT = """## `write_todos`
 
-You have access to the `write_todos` tool to help you manage and plan complex objectives. 
+You have access to the `write_todos` tool to help you manage and plan complex objectives.
 Use this tool for complex objectives to ensure that you are tracking each necessary step and giving the user visibility into your progress.
 This tool is very helpful for planning complex objectives, and for breaking down these larger complex objectives into smaller steps.
 
@@ -328,45 +327,45 @@ WRITE_TODOS_SYSTEM_TEMPLATE = PromptTemplate(
     name="write_todos_system",
     template=WRITE_TODOS_SYSTEM_PROMPT,
     variables=[],
-    prompt_type=PromptType.SYSTEM
+    prompt_type=PromptType.SYSTEM,
 )
 
 TASK_SYSTEM_TEMPLATE = PromptTemplate(
     name="task_system",
     template=TASK_SYSTEM_PROMPT,
     variables=[],
-    prompt_type=PromptType.SYSTEM
+    prompt_type=PromptType.SYSTEM,
 )
 
 FILESYSTEM_SYSTEM_TEMPLATE = PromptTemplate(
     name="filesystem_system",
     template=FILESYSTEM_SYSTEM_PROMPT,
     variables=[],
-    prompt_type=PromptType.SYSTEM
+    prompt_type=PromptType.SYSTEM,
 )
 
 BASE_AGENT_TEMPLATE = PromptTemplate(
     name="base_agent",
     template=BASE_AGENT_PROMPT,
     variables=[],
-    prompt_type=PromptType.SYSTEM
+    prompt_type=PromptType.SYSTEM,
 )
 
 TASK_TOOL_DESCRIPTION_TEMPLATE = PromptTemplate(
     name="task_tool_description",
     template=TASK_TOOL_DESCRIPTION,
     variables=["other_agents"],
-    prompt_type=PromptType.TOOL
+    prompt_type=PromptType.TOOL,
 )
 
 
 class PromptManager:
     """Manager for prompt templates and system messages."""
-    
+
     def __init__(self):
-        self.templates: Dict[str, PromptTemplate] = {}
+        self.templates: dict[str, PromptTemplate] = {}
         self._register_default_templates()
-    
+
     def _register_default_templates(self) -> None:
         """Register default prompt templates."""
         default_templates = [
@@ -374,57 +373,57 @@ class PromptManager:
             TASK_SYSTEM_TEMPLATE,
             FILESYSTEM_SYSTEM_TEMPLATE,
             BASE_AGENT_TEMPLATE,
-            TASK_TOOL_DESCRIPTION_TEMPLATE
+            TASK_TOOL_DESCRIPTION_TEMPLATE,
         ]
-        
+
         for template in default_templates:
             self.register_template(template)
-    
+
     def register_template(self, template: PromptTemplate) -> None:
         """Register a prompt template."""
         self.templates[template.name] = template
-    
-    def get_template(self, name: str) -> Optional[PromptTemplate]:
+
+    def get_template(self, name: str) -> PromptTemplate | None:
         """Get a prompt template by name."""
         return self.templates.get(name)
-    
+
     def format_template(self, name: str, **kwargs) -> str:
         """Format a prompt template with variables."""
         template = self.get_template(name)
         if not template:
-            raise ValueError(f"Template '{name}' not found")
+            msg = f"Template '{name}' not found"
+            raise ValueError(msg)
         return template.format(**kwargs)
-    
-    def get_system_prompt(self, components: List[str] = None) -> str:
+
+    def get_system_prompt(self, components: list[str] | None = None) -> str:
         """Get a system prompt combining multiple components."""
         if not components:
             components = ["base_agent"]
-        
+
         prompt_parts = []
         for component in components:
             if component in self.templates:
                 template = self.templates[component]
                 if template.prompt_type == PromptType.SYSTEM:
                     prompt_parts.append(template.template)
-        
+
         return "\n\n".join(prompt_parts)
-    
+
     def get_tool_description(self, tool_name: str, **kwargs) -> str:
         """Get a tool description with variable substitution."""
         if tool_name == "write_todos":
             return WRITE_TODOS_TOOL_DESCRIPTION
-        elif tool_name == "task":
+        if tool_name == "task":
             return self.format_template("task_tool_description", **kwargs)
-        elif tool_name == "list_files":
+        if tool_name == "list_files":
             return LIST_FILES_TOOL_DESCRIPTION
-        elif tool_name == "read_file":
+        if tool_name == "read_file":
             return READ_FILE_TOOL_DESCRIPTION
-        elif tool_name == "write_file":
+        if tool_name == "write_file":
             return WRITE_FILE_TOOL_DESCRIPTION
-        elif tool_name == "edit_file":
+        if tool_name == "edit_file":
             return EDIT_FILE_TOOL_DESCRIPTION
-        else:
-            return f"Tool: {tool_name}"
+        return f"Tool: {tool_name}"
 
 
 # Global prompt manager instance
@@ -435,19 +434,16 @@ prompt_manager = PromptManager()
 def create_prompt_template(
     name: str,
     template: str,
-    variables: List[str] = None,
-    prompt_type: PromptType = PromptType.SYSTEM
+    variables: list[str] | None = None,
+    prompt_type: PromptType = PromptType.SYSTEM,
 ) -> PromptTemplate:
     """Create a prompt template."""
     return PromptTemplate(
-        name=name,
-        template=template,
-        variables=variables or [],
-        prompt_type=prompt_type
+        name=name, template=template, variables=variables or [], prompt_type=prompt_type
     )
 
 
-def get_system_prompt(components: List[str] = None) -> str:
+def get_system_prompt(components: list[str] | None = None) -> str:
     """Get a system prompt combining multiple components."""
     return prompt_manager.get_system_prompt(components)
 
@@ -464,43 +460,51 @@ def format_template(name: str, **kwargs) -> str:
 
 # Export all components
 __all__ = [
-    # Enums
-    "PromptType",
-    
-    # Models
-    "PromptTemplate",
-    "PromptManager",
-    
-    # Tool descriptions
-    "WRITE_TODOS_TOOL_DESCRIPTION",
-    "TASK_TOOL_DESCRIPTION",
+    "BASE_AGENT_PROMPT",
+    "BASE_AGENT_TEMPLATE",
+    # Prompt constants and classes
+    "DEEP_AGENT_PROMPTS",
+    "EDIT_FILE_TOOL_DESCRIPTION",
+    "FILESYSTEM_SYSTEM_PROMPT",
+    "FILESYSTEM_SYSTEM_TEMPLATE",
     "LIST_FILES_TOOL_DESCRIPTION",
     "READ_FILE_TOOL_DESCRIPTION",
-    "EDIT_FILE_TOOL_DESCRIPTION",
+    "TASK_SYSTEM_PROMPT",
+    "TASK_SYSTEM_TEMPLATE",
+    "TASK_TOOL_DESCRIPTION",
+    "TASK_TOOL_DESCRIPTION_TEMPLATE",
     "WRITE_FILE_TOOL_DESCRIPTION",
-    
     # System prompts
     "WRITE_TODOS_SYSTEM_PROMPT",
-    "TASK_SYSTEM_PROMPT",
-    "FILESYSTEM_SYSTEM_PROMPT",
-    "BASE_AGENT_PROMPT",
-    
     # Templates
     "WRITE_TODOS_SYSTEM_TEMPLATE",
-    "TASK_SYSTEM_TEMPLATE",
-    "FILESYSTEM_SYSTEM_TEMPLATE",
-    "BASE_AGENT_TEMPLATE",
-    "TASK_TOOL_DESCRIPTION_TEMPLATE",
-    
-    # Global instance
-    "prompt_manager",
-    
+    # Tool descriptions
+    "WRITE_TODOS_TOOL_DESCRIPTION",
+    "DeepAgentPrompts",
+    "PromptManager",
+    # Models
+    "PromptTemplate",
+    # Enums
+    "PromptType",
     # Factory functions
     "create_prompt_template",
+    "format_template",
     "get_system_prompt",
     "get_tool_description",
-    "format_template"
+    # Global instance
+    "prompt_manager",
 ]
 
 
+# Prompt constants for DeepAgent operations
+DEEP_AGENT_PROMPTS = {
+    "system": "You are a DeepAgent for complex reasoning and task execution.",
+    "task_execution": "Execute the following task: {task_description}",
+    "reasoning": "Reason step by step about: {query}",
+}
 
+
+class DeepAgentPrompts:
+    """Prompt templates for DeepAgent operations."""
+
+    PROMPTS = DEEP_AGENT_PROMPTS

@@ -1,0 +1,18 @@
+# HISAT2 Docker container for RNA-seq alignment using condaforge like the example
+FROM condaforge/miniforge3:latest
+
+# Install HISAT2 using conda
+RUN conda install -c bioconda hisat2
+
+# Create working directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV HISAT2_VERSION=2.2.1
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD hisat2 --version || exit 1
+
+# Default command
+CMD ["hisat2", "--help"]

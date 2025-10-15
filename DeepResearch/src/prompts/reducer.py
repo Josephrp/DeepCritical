@@ -35,5 +35,15 @@ SYSTEM = (
 )
 
 
+REDUCER_PROMPTS: dict[str, str] = {
+    "system": SYSTEM,
+    "reduce_content": "Reduce and merge the following content: {content}",
+    "aggregate_articles": "Aggregate multiple articles into a coherent piece: {articles}",
+}
 
 
+class ReducerPrompts:
+    """Prompt templates for content reduction operations."""
+
+    SYSTEM = SYSTEM
+    PROMPTS = REDUCER_PROMPTS

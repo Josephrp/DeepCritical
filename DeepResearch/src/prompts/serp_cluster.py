@@ -4,5 +4,15 @@ SYSTEM = (
 )
 
 
+SERP_CLUSTER_PROMPTS: dict[str, str] = {
+    "system": SYSTEM,
+    "cluster_results": "Cluster the following search results: {results}",
+    "analyze_serp": "Analyze SERP results and create meaningful clusters: {serp_data}",
+}
 
 
+class SerpClusterPrompts:
+    """Prompt templates for SERP clustering operations."""
+
+    SYSTEM = SYSTEM
+    PROMPTS = SERP_CLUSTER_PROMPTS
