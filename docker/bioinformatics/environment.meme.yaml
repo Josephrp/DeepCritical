@@ -1,0 +1,7 @@
+name: mcp-meme-env
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - meme
+  - pip

@@ -1,0 +1,28 @@
+# Development environment test configuration
+defaults:
+  - _self_
+
+# Development-specific settings
+test:
+  environment: development
+  debug: true
+  verbose: true
+
+  # Development-friendly settings
+  execution:
+    timeout: 300
+    retries: 3
+    parallel: true
+    workers: 4
+
+  # Generous resource limits for development
+  resources:
+    memory_limit: "8G"
+    cpu_limit: 4.0
+    storage_limit: "20G"
+
+  # Development features
+  development:
+    hot_reload: true
+    interactive_debug: true
+    detailed_reporting: true

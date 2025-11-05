@@ -1,0 +1,21 @@
+# HTSeq Docker container for read counting
+FROM python:3.11-slim
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    htseq \
+    numpy \
+    pysam
+
+# Create working directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV HTSEQ_VERSION=2.0.5
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import HTSeq; print('HTSeq installed')" || exit 1
+
+# Default command
+CMD ["htseq-count", "--help"]

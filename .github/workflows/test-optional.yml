@@ -1,0 +1,107 @@
+name: Optional Tests
+permissions:
+  contents: read
+on:
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of optional tests to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+        - all
+        - docker
+        - bioinformatics
+        - llm
+        - performance
+        - pydantic_ai
+  push:
+    branches: [ main ]
+    paths:
+      - 'tests/test_docker_sandbox/**'
+      - 'tests/test_bioinformatics_tools/**'
+      - 'tests/test_llm_framework/**'
+      - 'tests/test_performance/**'
+      - 'tests/test_pydantic_ai/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'tests/test_docker_sandbox/**'
+      - 'tests/test_bioinformatics_tools/**'
+      - 'tests/test_llm_framework/**'
+      - 'tests/test_performance/**'
+      - 'tests/test_pydantic_ai/**'
+
+jobs:
+  test-optional:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # Optional tests are allowed to fail
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pydantic omegaconf hydra-core
+        pip install -e .
+        pip install -e ".[dev]"
+        pip install pytest pytest-cov
+
+    - name: Set up Docker for bioinformatics tests
+      if: github.event.inputs.test_type == 'bioinformatics' || github.event.inputs.test_type == 'all'
+      run: |
+          # Install Docker if not available
+          if ! command -v docker &> /dev/null; then
+            echo "Installing Docker..."
+            curl -fsSL https://get.docker.com | sh
+          fi
+
+    - name: Run optional tests
+      run: |
+        case "${{ github.event.inputs.test_type || 'all' }}" in
+          "docker")
+            echo "Running Docker sandbox tests"
+            pytest tests/test_docker_sandbox/ -v --cov=DeepResearch --cov-report=xml --cov-report=term
+            ;;
+          "bioinformatics")
+            echo "Running bioinformatics containerized tests"
+            pip install testcontainers
+            pytest tests/test_bioinformatics_tools/ -m "containerized" -v --cov=DeepResearch --cov-report=xml --cov-report=term
+            ;;
+          "llm")
+            echo "Running LLM framework tests"
+            pytest tests/test_llm_framework/ -v --cov=DeepResearch --cov-report=xml --cov-report=term
+            ;;
+          "performance")
+            echo "Running performance tests"
+            pytest tests/test_performance/ -v --cov=DeepResearch --cov-report=xml --cov-report=term
+            ;;
+          "pydantic_ai")
+            echo "Running Pydantic AI tests"
+            pytest tests/test_pydantic_ai/ -v --cov=DeepResearch --cov-report=xml --cov-report=term
+            ;;
+          "all")
+            echo "Running all optional tests"
+            pytest tests/ -m "optional" -v --cov=DeepResearch --cov-report=xml --cov-report=term
+            # Also run bioinformatics containerized tests
+            pip install testcontainers
+            pytest tests/test_bioinformatics_tools/ -m "containerized" -v --cov=DeepResearch --cov-report=xml --cov-report=term
+            ;;
+        esac
+
+    - name: Upload coverage to Codecov (optional tests)
+      if: always()
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml
+        fail_ci_if_error: false
+        verbose: true
+        slug: ${{ github.repository }}

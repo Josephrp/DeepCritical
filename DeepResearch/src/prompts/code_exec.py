@@ -6,5 +6,14 @@ SYSTEM = (
 )
 
 
+CODE_EXEC_PROMPTS: dict[str, str] = {
+    "system": SYSTEM,
+    "execute_code": "Execute the following code: {code}",
+}
 
 
+class CodeExecPrompts:
+    """Prompt templates for code execution."""
+
+    SYSTEM = SYSTEM
+    PROMPTS = CODE_EXEC_PROMPTS

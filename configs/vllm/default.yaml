@@ -1,0 +1,78 @@
+# Default VLLM configuration for DeepCritical
+defaults:
+  - override hydra/job_logging: default
+  - override hydra/hydra_logging: default
+
+# VLLM Client Configuration
+vllm:
+  # Basic connection settings
+  base_url: "http://localhost:8000"
+  api_key: null
+  timeout: 60.0
+  max_retries: 3
+  retry_delay: 1.0
+
+  # Model configuration
+  model:
+    name: "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+    embedding_model: null
+    trust_remote_code: false
+    max_model_len: null
+    quantization: null
+
+  # Performance settings
+  performance:
+    gpu_memory_utilization: 0.9
+    tensor_parallel_size: 1
+    pipeline_parallel_size: 1
+    max_num_seqs: 256
+    max_num_batched_tokens: 8192
+
+  # Generation parameters
+  generation:
+    temperature: 0.7
+    top_p: 0.9
+    top_k: -1
+    max_tokens: 512
+    repetition_penalty: 1.0
+    frequency_penalty: 0.0
+    presence_penalty: 0.0
+
+  # Advanced features
+  features:
+    enable_streaming: true
+    enable_embeddings: true
+    enable_batch_processing: true
+    enable_lora: false
+    enable_speculative_decoding: false
+
+  # LoRA configuration (if enabled)
+  lora:
+    max_lora_rank: 16
+    max_loras: 1
+    max_cpu_loras: 2
+    lora_extra_vocab_size: 256
+
+  # Speculative decoding (if enabled)
+  speculative:
+    mode: "small_model"
+    num_speculative_tokens: 5
+    speculative_model: null
+
+# Agent configuration
+agent:
+  system_prompt: "You are a helpful AI assistant powered by VLLM. You can perform various tasks including text generation, conversation, and analysis."
+  enable_tools: true
+  tool_timeout: 30.0
+
+# Logging configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: null  # Set to enable file logging
+
+# Health check settings
+health_check:
+  interval: 30
+  timeout: 5
+  max_retries: 3

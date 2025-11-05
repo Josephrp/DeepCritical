@@ -1,0 +1,37 @@
+# Default test configuration
+defaults:
+  - environment: development
+  - scenario: unit_tests
+  - resources: container_limits
+  - execution: parallel_execution
+
+# Global test settings
+test:
+  enabled: true
+  verbose: false
+  debug: false
+
+  # Test execution control
+  execution:
+    timeout: 300
+    retries: 3
+    parallel: true
+    workers: 4
+
+  # Resource management
+  resources:
+    memory_limit: "8G"
+    cpu_limit: 4.0
+    storage_limit: "20G"
+
+  # Artifact management
+  artifacts:
+    enabled: true
+    directory: "test_artifacts"
+    cleanup: true
+
+  # Logging configuration
+  logging:
+    level: "INFO"
+    format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    file: "test_artifacts/test.log"

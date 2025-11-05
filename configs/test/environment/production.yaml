@@ -1,0 +1,28 @@
+# Production environment test configuration
+defaults:
+  - _self_
+
+# Production-specific settings
+test:
+  environment: production
+  debug: false
+  verbose: false
+
+  # Production-optimized settings
+  execution:
+    timeout: 900  # Longer timeouts for production
+    retries: 1    # Minimal retries
+    parallel: true
+    workers: 2    # Conservative worker count
+
+  # Conservative resource limits for production
+  resources:
+    memory_limit: "2G"
+    cpu_limit: 1.0
+    storage_limit: "5G"
+
+  # Production features
+  production:
+    stability_checks: true
+    performance_monitoring: true
+    security_validation: true

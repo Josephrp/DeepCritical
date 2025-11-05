@@ -1,0 +1,13 @@
+name: bwa-mcp-server
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - bwa
+  - pip
+  - python>=3.11
+  - pip:
+    - fastmcp==2.12.4
+    - pydantic>=2.0.0
+    - typing-extensions>=4.0.0
+    - pathlib>=1.0.0

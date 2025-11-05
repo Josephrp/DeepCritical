@@ -1,7 +1,12 @@
 example
 .cursor
 outputs
-docs
+notes
+.claude/
+test_artifacts/
+bandit-report.json
+codecov.yml
+.ruff_cache
 
 # Python
 __pycache__/
@@ -69,6 +74,9 @@ multirun/
 outputs/
 *.log
 
+# Type checker outputs
+type-errors*.txt
+
 # OS
 .DS_Store
 .DS_Store?
@@ -77,3 +85,6 @@ outputs/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# MkDocs site
+site/

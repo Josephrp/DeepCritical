@@ -1,0 +1,29 @@
+# CI environment test configuration
+defaults:
+  - _self_
+
+# CI-specific settings
+test:
+  environment: ci
+  debug: false
+  verbose: false
+
+  # Optimized for CI performance
+  execution:
+    timeout: 600  # Longer timeouts for CI
+    retries: 2    # Fewer retries
+    parallel: true
+    workers: 2    # Fewer workers for CI
+
+  # Resource constraints for CI
+  resources:
+    memory_limit: "4G"
+    cpu_limit: 2.0
+    storage_limit: "10G"
+
+  # CI-specific features
+  ci:
+    collect_coverage: true
+    upload_artifacts: true
+    fail_fast: true
+    matrix_testing: true

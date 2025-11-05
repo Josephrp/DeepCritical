@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  mcp-deeptools:
+    build:
+      context: ..
+      dockerfile: docker/bioinformatics/Dockerfile.deeptools_server
+    image: mcp-deeptools:latest
+    container_name: mcp-deeptools
+    ports:
+      - "8000:8000"
+    environment:
+      - MCP_SERVER_NAME=deeptools-server
+      - DEEPTools_VERSION=3.5.1
+      - NUMEXPR_MAX_THREADS=1
+    volumes:
+      - ./workspace:/app/workspace
+      - ./output:/app/output
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s

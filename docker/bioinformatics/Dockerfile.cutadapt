@@ -1,0 +1,20 @@
+# Cutadapt Docker container for adapter trimming
+FROM python:3.11-slim
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    cutadapt \
+    numpy
+
+# Create working directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV CUTADAPT_VERSION=4.4
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import cutadapt; print('Cutadapt installed')" || exit 1
+
+# Default command
+CMD ["cutadapt", "--help"]

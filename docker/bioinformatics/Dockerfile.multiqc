@@ -1,0 +1,19 @@
+# MultiQC Docker container for report generation
+FROM python:3.11-slim
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    multiqc
+
+# Create working directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV MULTIQC_VERSION=1.14
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import multiqc; print('MultiQC installed')" || exit 1
+
+# Default command
+CMD ["multiqc", "--help"]

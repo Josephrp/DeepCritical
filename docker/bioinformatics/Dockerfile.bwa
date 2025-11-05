@@ -1,0 +1,21 @@
+# BWA Docker container for DNA sequence alignment
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    bwa \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create working directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV BWA_VERSION=0.7.17
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD bwa || exit 1
+
+# Default command
+CMD ["bwa"]

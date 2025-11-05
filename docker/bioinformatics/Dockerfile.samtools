@@ -1,0 +1,24 @@
+# Samtools Docker container for SAM/BAM processing
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    samtools \
+    libhts-dev \
+    zlib1g-dev \
+    libbz2-dev \
+    liblzma-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create working directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV SAMTOOLS_VERSION=1.17
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD samtools --version || exit 1
+
+# Default command
+CMD ["samtools", "--help"]

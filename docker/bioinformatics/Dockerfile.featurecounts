@@ -1,0 +1,20 @@
+# FeatureCounts Docker container for read counting
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    subread \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create working directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV SUBREAD_VERSION=2.0.3
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD featureCounts -v || exit 1
+
+# Default command
+CMD ["featureCounts", "--help"]

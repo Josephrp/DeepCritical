@@ -1,0 +1,31 @@
+# High quality VLLM configuration for best results
+# Override defaults with quality-focused settings
+
+vllm:
+  model:
+    quantization: "fp8"           # Use quantization for memory efficiency
+    trust_remote_code: true       # Enable for more models
+
+  performance:
+    gpu_memory_utilization: 0.85  # Reserve memory for quality
+    max_num_seqs: 64              # Fewer concurrent requests for quality
+    max_num_batched_tokens: 16384 # Larger batches for better throughput
+
+  generation:
+    temperature: 0.8              # Higher temperature for creativity
+    top_p: 0.95                   # Diverse sampling
+    top_k: 50                     # Limit vocabulary for coherence
+    max_tokens: 1024              # Longer responses
+    repetition_penalty: 1.1       # Penalize repetition
+    frequency_penalty: 0.1        # Slight frequency penalty
+    presence_penalty: 0.1         # Slight presence penalty
+
+  features:
+    enable_streaming: true        # Enable for real-time experience
+    enable_embeddings: true       # Enable for multimodal tasks
+    enable_batch_processing: true # Enable for batch operations
+    enable_lora: true             # Enable LoRA for fine-tuning
+    enable_speculative_decoding: true # Enable for faster generation
+
+  speculative:
+    num_speculative_tokens: 7     # More speculative tokens for speed

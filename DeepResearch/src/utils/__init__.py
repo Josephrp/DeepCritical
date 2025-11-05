@@ -1,30 +1,52 @@
-from .execution_history import ExecutionHistory, ExecutionItem, ExecutionTracker
-from .execution_status import ExecutionStatus
-from .tool_registry import ToolRegistry, ToolRunner, ExecutionResult, registry
-from .deepsearch_schemas import DeepSearchSchemas, EvaluationType, ActionType, deepsearch_schemas
-from .deepsearch_utils import (
-    SearchContext, KnowledgeManager, SearchOrchestrator, DeepSearchEvaluator,
-    create_search_context, create_search_orchestrator, create_deep_search_evaluator
+"""
+DeepCritical utilities module.
+
+This module provides various utilities including MCP server deployment,
+code execution environments, and Jupyter integration.
+"""
+
+from .coding import (
+    CodeBlock,
+    CodeExecutor,
+    CodeExtractor,
+    CodeResult,
+    CommandLineCodeResult,
+    DockerCommandLineCodeExecutor,
+    IPythonCodeResult,
+    LocalCommandLineCodeExecutor,
+    MarkdownCodeExtractor,
 )
+from .docker_compose_deployer import DockerComposeDeployer
+from .environments import PythonEnvironment, SystemPythonEnvironment, WorkingDirectory
+from .jupyter import (
+    JupyterClient,
+    JupyterCodeExecutor,
+    JupyterConnectable,
+    JupyterConnectionInfo,
+    JupyterKernelClient,
+)
+from .python_code_execution import PythonCodeExecutionTool
+from .testcontainers_deployer import TestcontainersDeployer
 
 __all__ = [
-    "ExecutionHistory",
-    "ExecutionItem", 
-    "ExecutionTracker",
-    "ExecutionStatus",
-    "ToolRegistry",
-    "ToolRunner",
-    "ExecutionResult",
-    "registry",
-    "DeepSearchSchemas",
-    "EvaluationType",
-    "ActionType",
-    "deepsearch_schemas",
-    "SearchContext",
-    "KnowledgeManager",
-    "SearchOrchestrator",
-    "DeepSearchEvaluator",
-    "create_search_context",
-    "create_search_orchestrator",
-    "create_deep_search_evaluator"
+    "CodeBlock",
+    "CodeExecutor",
+    "CodeExtractor",
+    "CodeResult",
+    "CommandLineCodeResult",
+    "DockerCommandLineCodeExecutor",
+    "DockerComposeDeployer",
+    "IPythonCodeResult",
+    "JupyterClient",
+    "JupyterCodeExecutor",
+    "JupyterConnectable",
+    "JupyterConnectionInfo",
+    "JupyterKernelClient",
+    "LocalCommandLineCodeExecutor",
+    "MarkdownCodeExtractor",
+    "PythonCodeExecutionTool",
+    "PythonEnvironment",
+    "SystemPythonEnvironment",
+    "TestcontainersDeployer",
+    "WorkingDirectory",
 ]
