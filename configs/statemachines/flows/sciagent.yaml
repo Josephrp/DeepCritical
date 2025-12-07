@@ -1,0 +1,54 @@
+# @package _global_
+# SciAgent: generic scientific research flow
+# High-level, domain-agnostic research pipeline:
+# Parse → Hypothesize → Search → Analyze → Synthesize → Dataset logging
+
+enabled: true
+
+params:
+  max_iterations: 8
+  max_hypotheses: 5
+  trace_reasoning: true
+  generate_datasets: true
+  require_verifiable_sources: true
+
+stages:
+  parse:
+    enabled: true
+    classify_intent: true        # classify: mechanistic, comparative, predictive, etc.
+    extract_entities: true       # genes, proteins, diseases, interventions, etc.
+    detect_domains: true         # e.g. bio, chem, clinical, methods
+
+  hypothesize:
+    enabled: true
+    generate_candidates: true    # generate multiple candidate hypotheses
+    rank_by_plausibility: true
+    ensure_falsifiable: true     # enforce falsifiability / testability constraints
+
+  literature_review:
+    enabled: true
+    use_deepsearch_flow: true    # delegate to deepsearch flow when available
+    use_rag_flow: true           # combine with RAG retrieval
+    min_primary_sources: 5
+    min_review_articles: 1
+
+  analysis:
+    enabled: true
+    aggregate_evidence: true     # combine evidence across sources
+    detect_conflicts: true       # detect conflicting findings/claims
+    assess_evidence_quality: true
+
+  synthesis:
+    enabled: true
+    write_answer: true           # final answer to the question
+    write_critical_review: true  # more systematic, structured review
+    write_methods_section: true  # methods-style description of how evidence was gathered
+
+  dataset_logging:
+    enabled: true
+    save_hypothesis_traces: true
+    save_review_traces: true
+    save_methods_traces: true
+    save_tool_calls: true
+    save_state_snapshots: true
+
