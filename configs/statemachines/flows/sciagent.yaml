@@ -11,6 +11,7 @@ params:
   trace_reasoning: true
   generate_datasets: true
   require_verifiable_sources: true
+  use_deepsearch: true
 
 stages:
   parse:

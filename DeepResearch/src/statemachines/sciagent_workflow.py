@@ -63,6 +63,7 @@ def _get_sciagent_cfg(cfg: Optional[DictConfig]) -> Dict[str, Any]:
           trace_reasoning: true
           generate_datasets: true
           require_verifiable_sources: true
+          use_deepsearch: true
     """
     if cfg is None:
         return {}
@@ -106,16 +107,16 @@ def _maybe_write_dataset(trace: SciAgentTrace, sci_cfg: Dict[str, Any]) -> None:
 
 def run_sciagent_workflow(question: str, cfg: Optional[DictConfig] = None) -> str:
     """
-    Minimal SciAgent workflow.
+    SciAgent workflow with DeepSearch integration.
 
     For now this is a lightweight, single-function orchestration that:
       - Builds a structured reasoning trace with placeholder steps
       - Populates structured hypotheses, evidence plan, and methods plan
+      - Optionally calls the DeepSearch workflow to gather external evidence
       - Optionally writes the trace as a dataset row
       - Returns a human-readable answer string
 
     This is intentionally simple and safe; future work can:
-      - Call DeepSearch / RAG flows
       - Integrate PRIME / Bioinformatics tools
       - Use Pydantic Graph for multi-node execution
     """
@@ -124,6 +125,7 @@ def run_sciagent_workflow(question: str, cfg: Optional[DictConfig] = None) -> st
     params = sci_cfg.get("params", {}) if isinstance(sci_cfg, dict) else {}
     max_iterations = params.get("max_iterations", 4)
     trace_reasoning = params.get("trace_reasoning", True)
+    use_deepsearch = params.get("use_deepsearch", True)
 
     steps: List[SciAgentStep] = []
 
@@ -198,13 +200,40 @@ def run_sciagent_workflow(question: str, cfg: Optional[DictConfig] = None) -> st
             description="Outlined a plan to gather evidence via DeepSearch / RAG and structured databases.",
             metadata={
                 "evidence_plan": [asdict(e) for e in evidence_plan],
-                "use_deepsearch_flow": True,
-                "use_rag_flow": True,
+                "use_deepsearch_flow": use_deepsearch,
             },
         )
     )
 
-    # --- Step 4: Methods-style plan (for SFT/DPO later) ---
+    # --- Optional Step 4: Call DeepSearch workflow ---
+    deepsearch_answer: Optional[str] = None
+    if use_deepsearch:
+        try:
+            # Local import to avoid any potential circular imports at module load time
+            from .deepsearch_workflow import run_deepsearch_workflow
+
+            deepsearch_answer = run_deepsearch_workflow(question, cfg)
+            steps.append(
+                SciAgentStep(
+                    name="deepsearch_execution",
+                    description="Executed DeepSearch workflow to collect and synthesize external evidence.",
+                    metadata={
+                        "deepsearch_answer": deepsearch_answer,
+                    },
+                )
+            )
+        except Exception as e:
+            steps.append(
+                SciAgentStep(
+                    name="deepsearch_error",
+                    description="Attempted to run DeepSearch workflow but it failed.",
+                    metadata={
+                        "error": str(e),
+                    },
+                )
+            )
+
+    # --- Step 5: Methods-style plan (for SFT/DPO later) ---
     methods_plan = (
         "1. Formulate the research question precisely and identify key entities.\n"
         "2. Generate multiple mechanistic hypotheses with explicit rationales and prior confidence.\n"
@@ -228,14 +257,24 @@ def run_sciagent_workflow(question: str, cfg: Optional[DictConfig] = None) -> st
         )
     )
 
-    # --- Step 5: Synthesis (placeholder text for now) ---
-    synthesized_answer = (
-        "SciAgent (minimal stub) analyzed your question and constructed a generic scientific "
-        "reasoning template. It generated structured hypotheses, an evidence collection plan, "
-        "and a methods-style evaluation procedure. Future versions will plug this plan into "
-        "tool-grounded flows (DeepSearch, RAG, PRIME, Bioinformatics) to produce fully "
-        "verifiable, data-backed conclusions."
-    )
+    # --- Step 6: Synthesis (DeepSearch-aware text for now) ---
+    if deepsearch_answer:
+        synthesized_answer = (
+            "SciAgent used the DeepSearch workflow to gather external evidence and produced the "
+            "following synthesized summary:\n\n"
+            f"{deepsearch_answer}\n\n"
+            "In addition, SciAgent constructed structured hypotheses, an evidence collection plan, "
+            "and a methods-style evaluation procedure that can be reused for dataset generation "
+            "and future tool-grounded reasoning."
+        )
+    else:
+        synthesized_answer = (
+            "SciAgent (minimal stub) analyzed your question and constructed a generic scientific "
+            "reasoning template. It generated structured hypotheses, an evidence collection plan, "
+            "and a methods-style evaluation procedure. Future versions will plug this plan into "
+            "tool-grounded flows (DeepSearch, RAG, PRIME, Bioinformatics) to produce fully "
+            "verifiable, data-backed conclusions."
+        )
 
     steps.append(
         SciAgentStep(
@@ -244,6 +283,7 @@ def run_sciagent_workflow(question: str, cfg: Optional[DictConfig] = None) -> st
             metadata={
                 "hypotheses_considered": len(hypotheses),
                 "trace_reasoning": trace_reasoning,
+                "used_deepsearch": bool(deepsearch_answer),
             },
         )
     )
