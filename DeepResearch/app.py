@@ -101,6 +101,12 @@ class Plan(BaseNode[ResearchState]):
         
         # Route to RAG flow if enabled
         rag_cfg = getattr(getattr(cfg, "flows", {}), "rag", None)
+        # Route to SciAgent flow if enabled
+        sciagent_cfg = getattr(getattr(cfg, "flows", {}), "sciagent", None)
+        if getattr(sciagent_cfg or {}, "enabled", False):
+            ctx.state.notes.append("SciAgent flow enabled")
+            return SciAgentParse()
+
         if getattr(rag_cfg or {}, "enabled", False):
             ctx.state.notes.append("RAG flow enabled")
             return RAGParse()
@@ -932,9 +938,17 @@ class RAGExecute(BaseNode[ResearchState]):
 def run_graph(question: str, cfg: DictConfig) -> str:
     state = ResearchState(question=question, config=cfg)
     # Include all nodes in runtime graph - instantiate them
-    nodes = (Plan(), Search(), Analyze(), Synthesize(), PrepareChallenge(), RunChallenge(), EvaluateChallenge(),
-             DSPlan(), DSExecute(), DSAnalyze(), DSSynthesize(), PrimeParse(), PrimePlan(), PrimeExecute(), PrimeEvaluate(),
-             BioinformaticsParse(), BioinformaticsFuse(), RAGParse(), RAGExecute(), PrimaryREACTWorkflow(), EnhancedREACTWorkflow())
+    nodes = (
+        Plan(), Search(), Analyze(), Synthesize(),
+        PrepareChallenge(), RunChallenge(), EvaluateChallenge(),
+        DSPlan(), DSExecute(), DSAnalyze(), DSSynthesize(),
+        PrimeParse(), PrimePlan(), PrimeExecute(), PrimeEvaluate(),
+        BioinformaticsParse(), BioinformaticsFuse(),
+        SciAgentParse(), SciAgentExecute(),
+        RAGParse(), RAGExecute(),
+        PrimaryREACTWorkflow(), EnhancedREACTWorkflow()
+    )
+
     g = Graph(nodes=nodes, state_type=ResearchState)
     result = asyncio.run(g.run(Plan(), state=state))
     return result.output
