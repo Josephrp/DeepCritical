@@ -1,7 +1,4 @@
-from __future__ import annotations
-
-import asyncio
-from dataclasses import dataclass, field
+dataclasses import dataclass, field
 from typing import Optional, Annotated, List, Dict, Any
 
 import hydra
@@ -104,6 +101,12 @@ class Plan(BaseNode[ResearchState]):
         
         # Route to RAG flow if enabled
         rag_cfg = getattr(getattr(cfg, "flows", {}), "rag", None)
+        # Route to SciAgent flow if enabled
+        sciagent_cfg = getattr(getattr(cfg, "flows", {}), "sciagent", None)
+        if getattr(sciagent_cfg or {}, "enabled", False):
+            ctx.state.notes.append("SciAgent flow enabled")
+            return SciAgentParse()
+
         if getattr(rag_cfg or {}, "enabled", False):
             ctx.state.notes.append("RAG flow enabled")
             return RAGParse()
@@ -827,6 +830,40 @@ class PrimeEvaluate(BaseNode[ResearchState]):
         
         return "\n".join(summary_parts) if summary_parts else "Analysis completed with available results."
 
+# --- SciAgent flow nodes ---
+@dataclass
+class SciAgentParse(BaseNode[ResearchState]):
+    async def run(self, ctx: GraphRunContext[ResearchState]) -> 'SciAgentExecute':
+        # Import here to avoid circular imports
+        from .src.statemachines.sciagent_workflow import run_sciagent_workflow
+
+        question = ctx.state.question
+        cfg = ctx.state.config
+
+        ctx.state.notes.append("Starting SciAgent workflow")
+
+        # Run the complete SciAgent workflow
+        try:
+            final_answer = run_sciagent_workflow(question, cfg)
+            ctx.state.answers.append(final_answer)
+            ctx.state.notes.append("SciAgent workflow completed successfully")
+        except Exception as e:
+            error_msg = f"SciAgent workflow failed: {str(e)}"
+            ctx.state.notes.append(error_msg)
+            ctx.state.answers.append(f"Error: {error_msg}")
+
+        return SciAgentExecute()
+
+
+@dataclass
+class SciAgentExecute(BaseNode[ResearchState]):
+    async def run(self, ctx: GraphRunContext[ResearchState]) -> Annotated[End[str], Edge(label="done")]:
+        # The SciAgent workflow is already complete, just return the result
+        if ctx.state.answers:
+            return End(ctx.state.answers[-1])
+        else:
+            return End("SciAgent analysis completed.")
+
 
 # --- Bioinformatics flow nodes ---
 @dataclass
@@ -901,9 +938,17 @@ class RAGExecute(BaseNode[ResearchState]):
 def run_graph(question: str, cfg: DictConfig) -> str:
     state = ResearchState(question=question, config=cfg)
     # Include all nodes in runtime graph - instantiate them
-    nodes = (Plan(), Search(), Analyze(), Synthesize(), PrepareChallenge(), RunChallenge(), EvaluateChallenge(),
-             DSPlan(), DSExecute(), DSAnalyze(), DSSynthesize(), PrimeParse(), PrimePlan(), PrimeExecute(), PrimeEvaluate(),
-             BioinformaticsParse(), BioinformaticsFuse(), RAGParse(), RAGExecute(), PrimaryREACTWorkflow(), EnhancedREACTWorkflow())
+    nodes = (
+        Plan(), Search(), Analyze(), Synthesize(),
+        PrepareChallenge(), RunChallenge(), EvaluateChallenge(),
+        DSPlan(), DSExecute(), DSAnalyze(), DSSynthesize(),
+        PrimeParse(), PrimePlan(), PrimeExecute(), PrimeEvaluate(),
+        BioinformaticsParse(), BioinformaticsFuse(),
+        SciAgentParse(), SciAgentExecute(),
+        RAGParse(), RAGExecute(),
+        PrimaryREACTWorkflow(), EnhancedREACTWorkflow()
+    )
+
     g = Graph(nodes=nodes, state_type=ResearchState)
     result = asyncio.run(g.run(Plan(), state=state))
     return result.output

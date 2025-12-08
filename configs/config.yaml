@@ -52,6 +52,8 @@ flows:
     enabled: false
   jina_ai:
     enabled: false
+  sciagent:
+    enabled: false 
 
 # Output configuration
 outputs:
