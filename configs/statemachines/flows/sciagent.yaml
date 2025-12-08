@@ -12,6 +12,8 @@ params:
   generate_datasets: true
   require_verifiable_sources: true
   use_deepsearch: true
+  use_prime: false
+  use_bioinformatics: false
 
 stages:
   parse:

@@ -64,6 +64,8 @@ def _get_sciagent_cfg(cfg: Optional[DictConfig]) -> Dict[str, Any]:
           generate_datasets: true
           require_verifiable_sources: true
           use_deepsearch: true
+          use_prime: false
+          use_bioinformatics: false
     """
     if cfg is None:
         return {}
@@ -107,18 +109,19 @@ def _maybe_write_dataset(trace: SciAgentTrace, sci_cfg: Dict[str, Any]) -> None:
 
 def run_sciagent_workflow(question: str, cfg: Optional[DictConfig] = None) -> str:
     """
-    SciAgent workflow with DeepSearch integration.
+    SciAgent workflow with DeepSearch + PRIME + Bioinformatics integration.
 
     For now this is a lightweight, single-function orchestration that:
       - Builds a structured reasoning trace with placeholder steps
       - Populates structured hypotheses, evidence plan, and methods plan
-      - Optionally calls the DeepSearch workflow to gather external evidence
+      - Optionally calls DeepSearch, PRIME, and Bioinformatics workflows
       - Optionally writes the trace as a dataset row
       - Returns a human-readable answer string
 
     This is intentionally simple and safe; future work can:
-      - Integrate PRIME / Bioinformatics tools
+      - Add smarter domain routing (e.g. automatic protein question detection)
       - Use Pydantic Graph for multi-node execution
+      - Feed tool-grounded results back into hypothesis scoring
     """
     sci_cfg = _get_sciagent_cfg(cfg)
 
@@ -126,6 +129,8 @@ def run_sciagent_workflow(question: str, cfg: Optional[DictConfig] = None) -> st
     max_iterations = params.get("max_iterations", 4)
     trace_reasoning = params.get("trace_reasoning", True)
     use_deepsearch = params.get("use_deepsearch", True)
+    use_prime = params.get("use_prime", False)
+    use_bioinformatics = params.get("use_bioinformatics", False)
 
     steps: List[SciAgentStep] = []
 
@@ -201,6 +206,8 @@ def run_sciagent_workflow(question: str, cfg: Optional[DictConfig] = None) -> st
             metadata={
                 "evidence_plan": [asdict(e) for e in evidence_plan],
                 "use_deepsearch_flow": use_deepsearch,
+                "use_prime_flow": use_prime,
+                "use_bioinformatics_flow": use_bioinformatics,
             },
         )
     )
@@ -209,7 +216,7 @@ def run_sciagent_workflow(question: str, cfg: Optional[DictConfig] = None) -> st
     deepsearch_answer: Optional[str] = None
     if use_deepsearch:
         try:
-            # Local import to avoid any potential circular imports at module load time
+            # Local import to avoid circular imports at module load time
             from .deepsearch_workflow import run_deepsearch_workflow
 
             deepsearch_answer = run_deepsearch_workflow(question, cfg)
@@ -233,7 +240,61 @@ def run_sciagent_workflow(question: str, cfg: Optional[DictConfig] = None) -> st
                 )
             )
 
-    # --- Step 5: Methods-style plan (for SFT/DPO later) ---
+    # --- Optional Step 5: Call PRIME workflow (protein engineering) ---
+    prime_answer: Optional[str] = None
+    if use_prime:
+        try:
+            from .prime_workflow import run_prime_workflow
+
+            prime_answer = run_prime_workflow(question, cfg)
+            steps.append(
+                SciAgentStep(
+                    name="prime_execution",
+                    description="Executed PRIME flow for protein engineering / structural reasoning.",
+                    metadata={
+                        "prime_answer": prime_answer,
+                    },
+                )
+            )
+        except Exception as e:
+            steps.append(
+                SciAgentStep(
+                    name="prime_error",
+                    description="Attempted to run PRIME workflow but it failed.",
+                    metadata={
+                        "error": str(e),
+                    },
+                )
+            )
+
+    # --- Optional Step 6: Call Bioinformatics workflow (data fusion) ---
+    bio_answer: Optional[str] = None
+    if use_bioinformatics:
+        try:
+            from .bioinformatics_workflow import run_bioinformatics_workflow
+
+            bio_answer = run_bioinformatics_workflow(question, cfg)
+            steps.append(
+                SciAgentStep(
+                    name="bioinformatics_execution",
+                    description="Executed Bioinformatics flow for multi-source data fusion and integrative reasoning.",
+                    metadata={
+                        "bioinformatics_answer": bio_answer,
+                    },
+                )
+            )
+        except Exception as e:
+            steps.append(
+                SciAgentStep(
+                    name="bioinformatics_error",
+                    description="Attempted to run Bioinformatics workflow but it failed.",
+                    metadata={
+                        "error": str(e),
+                    },
+                )
+            )
+
+    # --- Step 7: Methods-style plan (for SFT/DPO later) ---
     methods_plan = (
         "1. Formulate the research question precisely and identify key entities.\n"
         "2. Generate multiple mechanistic hypotheses with explicit rationales and prior confidence.\n"
@@ -257,33 +318,55 @@ def run_sciagent_workflow(question: str, cfg: Optional[DictConfig] = None) -> st
         )
     )
 
-    # --- Step 6: Synthesis (DeepSearch-aware text for now) ---
+    # --- Step 8: Synthesis (aggregate DeepSearch/PRIME/Bio if present) ---
+    synthesis_chunks: List[str] = []
+
     if deepsearch_answer:
+        synthesis_chunks.append(
+            "DeepSearch evidence synthesis:\n"
+            f"{deepsearch_answer}"
+        )
+
+    if prime_answer:
+        synthesis_chunks.append(
+            "PRIME (protein engineering) synthesis:\n"
+            f"{prime_answer}"
+        )
+
+    if bio_answer:
+        synthesis_chunks.append(
+            "Bioinformatics (multi-source data fusion) synthesis:\n"
+            f"{bio_answer}"
+        )
+
+    if synthesis_chunks:
         synthesized_answer = (
-            "SciAgent used the DeepSearch workflow to gather external evidence and produced the "
-            "following synthesized summary:\n\n"
-            f"{deepsearch_answer}\n\n"
-            "In addition, SciAgent constructed structured hypotheses, an evidence collection plan, "
-            "and a methods-style evaluation procedure that can be reused for dataset generation "
-            "and future tool-grounded reasoning."
+            "SciAgent orchestrated multiple domain flows (where enabled) and "
+            "combined their outputs into a unified scientific summary.\n\n"
+            + "\n\n".join(synthesis_chunks)
+            + "\n\nIn addition, SciAgent constructed structured hypotheses, an "
+              "evidence collection plan, and a methods-style evaluation procedure "
+              "that can be reused for dataset generation and future tool-grounded reasoning."
         )
     else:
         synthesized_answer = (
             "SciAgent (minimal stub) analyzed your question and constructed a generic scientific "
             "reasoning template. It generated structured hypotheses, an evidence collection plan, "
             "and a methods-style evaluation procedure. Future versions will plug this plan into "
-            "tool-grounded flows (DeepSearch, RAG, PRIME, Bioinformatics) to produce fully "
+            "tool-grounded flows (DeepSearch, PRIME, Bioinformatics) to produce fully "
             "verifiable, data-backed conclusions."
         )
 
     steps.append(
         SciAgentStep(
             name="synthesize_answer",
-            description="Synthesized a high-level answer based on the placeholder pipeline.",
+            description="Synthesized a high-level answer based on the configured flows and placeholder pipeline.",
             metadata={
                 "hypotheses_considered": len(hypotheses),
                 "trace_reasoning": trace_reasoning,
                 "used_deepsearch": bool(deepsearch_answer),
+                "used_prime": bool(prime_answer),
+                "used_bioinformatics": bool(bio_answer),
             },
         )
     )
