@@ -18,12 +18,34 @@ class SciAgentStep:
 
 
 @dataclass
+class Hypothesis:
+    """Structured representation of a single hypothesis."""
+    id: str
+    statement: str
+    rationale: str
+    prior_confidence: float  # 0.0–1.0
+
+
+@dataclass
+class EvidencePlanItem:
+    """Planned evidence source / query."""
+    id: str
+    source: str          # e.g. "PubMed", "GO", "PDB"
+    description: str
+    query: str
+    priority: int        # 1 = highest
+
+
+@dataclass
 class SciAgentTrace:
     """Full trace for one SciAgent run."""
     question: str
     created_at: str
     config_snapshot: Dict[str, Any]
     steps: List[SciAgentStep]
+    hypotheses: List[Hypothesis]
+    evidence_plan: List[EvidencePlanItem]
+    methods_plan: str
     final_answer: str
 
 
@@ -88,6 +110,7 @@ def run_sciagent_workflow(question: str, cfg: Optional[DictConfig] = None) -> st
 
     For now this is a lightweight, single-function orchestration that:
       - Builds a structured reasoning trace with placeholder steps
+      - Populates structured hypotheses, evidence plan, and methods plan
       - Optionally writes the trace as a dataset row
       - Returns a human-readable answer string
 
@@ -117,48 +140,103 @@ def run_sciagent_workflow(question: str, cfg: Optional[DictConfig] = None) -> st
         )
     )
 
-    # --- Step 2: Generate hypotheses (placeholder) ---
-    hypotheses = [
-        "H1: The observed phenomenon is regulated by multiple interacting pathways.",
-        "H2: There exists a dominant mechanism with context-dependent modifiers.",
+    # --- Step 2: Generate structured hypotheses (placeholder content) ---
+    hypotheses: List[Hypothesis] = [
+        Hypothesis(
+            id="H1",
+            statement="The observed phenomenon is regulated by multiple interacting pathways.",
+            rationale="Many biological and physical systems show emergent behavior arising from pathway interactions.",
+            prior_confidence=0.6,
+        ),
+        Hypothesis(
+            id="H2",
+            statement="A single dominant mechanism explains most of the observed variance, with context-dependent modifiers.",
+            rationale="Often one major factor explains the bulk of the effect size, while other modifiers fine-tune outcomes.",
+            prior_confidence=0.4,
+        ),
     ]
+
     steps.append(
         SciAgentStep(
             name="generate_hypotheses",
-            description="Generated a small set of candidate hypotheses.",
+            description="Generated a small set of candidate hypotheses with rationales and prior confidence.",
             metadata={
-                "hypotheses": hypotheses,
+                "hypotheses": [asdict(h) for h in hypotheses],
                 "max_iterations": max_iterations,
             },
         )
     )
 
-    # --- Step 3: Literature / evidence planning (placeholder) ---
+    # --- Step 3: Plan evidence collection (placeholder, but structured) ---
+    evidence_plan: List[EvidencePlanItem] = [
+        EvidencePlanItem(
+            id="E1",
+            source="PubMed",
+            description="Retrieve primary research articles and recent reviews relevant to the question.",
+            query=f'{question} review[pt] OR mechanistic[tiab]',
+            priority=1,
+        ),
+        EvidencePlanItem(
+            id="E2",
+            source="Preprint servers",
+            description="Search preprints for cutting-edge or not-yet-reviewed studies.",
+            query=question,
+            priority=2,
+        ),
+        EvidencePlanItem(
+            id="E3",
+            source="Databases",
+            description="Query structured databases (GO, PDB, etc.) if the question involves genes/proteins.",
+            query="entity-specific queries to GO / PDB / related resources",
+            priority=3,
+        ),
+    ]
+
     steps.append(
         SciAgentStep(
             name="plan_evidence_collection",
-            description="Outlined a plan to gather evidence via DeepSearch / RAG flows.",
+            description="Outlined a plan to gather evidence via DeepSearch / RAG and structured databases.",
             metadata={
-                "planned_sources": [
-                    "PubMed",
-                    "preprint servers",
-                    "review articles",
-                    "databases (GO, PDB, etc.)",
-                ],
+                "evidence_plan": [asdict(e) for e in evidence_plan],
                 "use_deepsearch_flow": True,
                 "use_rag_flow": True,
             },
         )
     )
 
-    # --- Step 4: Synthesis (placeholder) ---
-    synthesized_answer = (
-        "SciAgent (minimal stub) analyzed your question and constructed a "
-        "generic scientific reasoning template. The current implementation "
-        "does not yet execute full DeepSearch / PRIME / Bioinformatics flows, "
-        "but it prepares structured hypotheses and an evidence-collection plan "
-        "that future versions will use for verifiable, tool-grounded reasoning."
+    # --- Step 4: Methods-style plan (for SFT/DPO later) ---
+    methods_plan = (
+        "1. Formulate the research question precisely and identify key entities.\n"
+        "2. Generate multiple mechanistic hypotheses with explicit rationales and prior confidence.\n"
+        "3. Design an evidence collection strategy using:\n"
+        "   - PubMed for primary literature and reviews\n"
+        "   - Preprint servers for recent, not-yet-reviewed work\n"
+        "   - Structured databases (e.g., GO, PDB) when genes/proteins are involved\n"
+        "4. Retrieve and filter evidence based on study quality, recency, and relevance.\n"
+        "5. Map each piece of evidence to supporting or refuting specific hypotheses.\n"
+        "6. Reweight hypothesis confidence based on the aggregated evidence.\n"
+        "7. Synthesize a critical narrative that explains which hypothesis is best supported and why."
     )
+
+    steps.append(
+        SciAgentStep(
+            name="construct_methods_plan",
+            description="Defined a methods-style plan for how SciAgent should collect and evaluate evidence.",
+            metadata={
+                "methods_plan": methods_plan,
+            },
+        )
+    )
+
+    # --- Step 5: Synthesis (placeholder text for now) ---
+    synthesized_answer = (
+        "SciAgent (minimal stub) analyzed your question and constructed a generic scientific "
+        "reasoning template. It generated structured hypotheses, an evidence collection plan, "
+        "and a methods-style evaluation procedure. Future versions will plug this plan into "
+        "tool-grounded flows (DeepSearch, RAG, PRIME, Bioinformatics) to produce fully "
+        "verifiable, data-backed conclusions."
+    )
+
     steps.append(
         SciAgentStep(
             name="synthesize_answer",
@@ -175,6 +253,9 @@ def run_sciagent_workflow(question: str, cfg: Optional[DictConfig] = None) -> st
         created_at=datetime.utcnow().isoformat() + "Z",
         config_snapshot=sci_cfg,
         steps=steps if trace_reasoning else [],
+        hypotheses=hypotheses,
+        evidence_plan=evidence_plan,
+        methods_plan=methods_plan,
         final_answer=synthesized_answer,
     )
 
