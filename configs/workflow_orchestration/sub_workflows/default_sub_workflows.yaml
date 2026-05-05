@@ -123,7 +123,10 @@ sub_workflows:
       hypothesis_types: ["causal", "correlational", "mechanistic"]
       enable_evidence_synthesis: true
       enable_confidence_scoring: true
+      enable_critic_pass: false
       max_hypotheses: 10
+      max_evidence_chars: 12000
+      run_quality_judge: false
     output_format: hypothesis_dataset
 
   - workflow_type: hypothesis_testing
@@ -166,6 +169,3 @@ sub_workflows:
       enable_consensus_building: true
       scoring_scale: "1-10"
     output_format: evaluation_results
-
-
-

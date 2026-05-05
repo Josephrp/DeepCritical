@@ -1,0 +1,22 @@
+# Bowtie2 Docker container for sequence alignment
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    bowtie2 \
+    libtbb-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create working directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV BOWTIE2_VERSION=2.5.1
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD bowtie2 --version || exit 1
+
+# Default command
+CMD ["bowtie2", "--help"]

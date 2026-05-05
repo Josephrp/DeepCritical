@@ -3,11 +3,13 @@
 
 defaults:
   - _self_
-  - embeddings: openai
+  - embeddings: sentence_transformers
   - llm: vllm_local
   - vector_store: chroma
 
 # RAG system settings
+embedding_model_role: null
+llm_model_role: null
 chunk_size: 1000
 chunk_overlap: 200
 max_context_length: 4000
@@ -28,8 +30,3 @@ timeout: 30.0
 output_format: "detailed"  # detailed, summary, minimal
 include_sources: true
 include_scores: true
-
-
-
-
-

@@ -240,7 +240,7 @@ webhooks:
 # Repository Variables (for GitHub Actions)
 variables:
   - name: "PYTHON_VERSION"
-    value: "3.10"
+    value: "3.11"
   - name: "UV_VERSION"
     value: "latest"
   - name: "TEST_TIMEOUT"

@@ -193,8 +193,11 @@ sub_workflows:
       hypothesis_types: ["causal", "correlational", "mechanistic", "predictive", "explanatory"]
       enable_evidence_synthesis: true
       enable_confidence_scoring: true
+      enable_critic_pass: false
       enable_falsifiability_assessment: true
       max_hypotheses: 15
+      max_evidence_chars: 12000
+      run_quality_judge: false
       enable_hypothesis_ranking: true
     output_format: hypothesis_dataset
 
@@ -301,6 +304,3 @@ sub_workflows:
       enable_documentation_review: true
       enable_audit_trail_generation: true
     output_format: regulatory_compliance_results
-
-
-

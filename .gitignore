@@ -1,7 +1,13 @@
 example
 .cursor
 outputs
-docs
+notes
+.claude/
+test_artifacts/
+bandit-report.json
+.ruff_cache
+logs
+*.log
 
 # Python
 __pycache__/
@@ -46,6 +52,11 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+tests/fixtures/gatk/cache/
+
+# Genomics demo data (downloaded locally, not committed)
+examples/simple_genomics_discovery/data/
+examples/simple_genomics_discovery/output/
 
 # Environments
 .env
@@ -69,6 +80,9 @@ multirun/
 outputs/
 *.log
 
+# Type checker outputs
+type-errors*.txt
+
 # OS
 .DS_Store
 .DS_Store?
@@ -77,3 +91,6 @@ outputs/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# MkDocs site
+site/

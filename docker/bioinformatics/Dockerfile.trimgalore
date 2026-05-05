@@ -1,0 +1,31 @@
+# TrimGalore Docker container for adapter trimming
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    wget \
+    perl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    cutadapt
+
+# Download and install TrimGalore
+RUN wget -q https://github.com/FelixKrueger/TrimGalore/archive/master.tar.gz -O /tmp/trimgalore.tar.gz && \
+    tar -xzf /tmp/trimgalore.tar.gz -C /opt/ && \
+    rm /tmp/trimgalore.tar.gz && \
+    ln -s /opt/TrimGalore-master/trim_galore /usr/local/bin/trim_galore
+
+# Create working directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV TRIMGALORE_VERSION=0.6.10
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD trim_galore --version || exit 1
+
+# Default command
+CMD ["trim_galore", "--help"]

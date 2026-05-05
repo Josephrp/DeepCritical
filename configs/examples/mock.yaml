@@ -1,0 +1,21 @@
+# @package _global_
+
+defaults:
+  - config
+  - _self_
+
+# Minimal "mock" mode that keeps everything offline.
+# (Tools still exist, but workflows should degrade gracefully without external services.)
+flows:
+  rag:
+    enabled: true
+
+rag:
+  vector_store:
+    store_type: in_memory
+  embeddings:
+    # Uses local sentence-transformers fallback (no network).
+    base_url: null
+  llm:
+    # Leave unset so RAG generation returns degraded synthesis without an LLM.
+    host: null

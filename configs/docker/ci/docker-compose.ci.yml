@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  ci-runner:
+    build:
+      context: ../../
+      dockerfile: configs/docker/ci/Dockerfile.ci
+    container_name: deepcritical-ci-runner
+    volumes:
+      - ../../:/app
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker socket for containerized tests
+      - test-artifacts:/app/test_artifacts
+    environment:
+      - DOCKER_TESTS=true
+      - CI=true
+      - GITHUB_ACTIONS=true
+    networks:
+      - ci-network
+    command: ["python", "-m", "pytest", "tests/", "-v", "--tb=short", "--cov=DeepResearch", "--junitxml=test-results.xml"]
+
+  ci-database:
+    image: postgres:15-alpine
+    container_name: deepcritical-ci-db
+    environment:
+      POSTGRES_DB: deepcritical_ci
+      POSTGRES_USER: ciuser
+      POSTGRES_PASSWORD: cipass
+    ports:
+      - "5434:5432"
+    volumes:
+      - ci-db-data:/var/lib/postgresql/data
+    networks:
+      - ci-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ciuser -d deepcritical_ci"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  ci-db-data:
+  test-artifacts:
+
+networks:
+  ci-network:
+    driver: bridge

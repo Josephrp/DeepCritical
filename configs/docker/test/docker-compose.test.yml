@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  test-runner:
+    build:
+      context: ../../
+      dockerfile: configs/docker/test/Dockerfile.test
+    container_name: deepcritical-test-runner
+    volumes:
+      - ../../:/app
+      - test-artifacts:/app/test_artifacts
+    environment:
+      - DOCKER_TESTS=true
+      - PERFORMANCE_TESTS=true
+      - INTEGRATION_TESTS=true
+    networks:
+      - test-network
+    depends_on:
+      - test-database
+      - test-redis
+    command: ["python", "-m", "pytest", "tests/", "-v", "--tb=short", "--cov=DeepResearch"]
+
+  test-database:
+    image: postgres:15-alpine
+    container_name: deepcritical-test-db
+    environment:
+      POSTGRES_DB: deepcritical_test
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+    ports:
+      - "5433:5432"
+    volumes:
+      - test-db-data:/var/lib/postgresql/data
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testuser -d deepcritical_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  test-redis:
+    image: redis:7-alpine
+    container_name: deepcritical-test-redis
+    ports:
+      - "6380:6379"
+    networks:
+      - test-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  test-minio:
+    image: minio/minio:latest
+    container_name: deepcritical-test-minio
+    environment:
+      MINIO_ROOT_USER: testuser
+      MINIO_ROOT_PASSWORD: testpass123
+    ports:
+      - "9001:9000"
+      - "9002:9001"
+    volumes:
+      - test-minio-data:/data
+    networks:
+      - test-network
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  test-db-data:
+  test-minio-data:
+  test-artifacts:
+
+networks:
+  test-network:
+    driver: bridge

@@ -1,0 +1,29 @@
+# TopHat Docker container for RNA-seq splice-aware alignment
+FROM python:3.11-slim
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    bowtie2 \
+    samtools \
+    libboost-all-dev \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and install TopHat
+RUN wget -q https://ccb.jhu.edu/software/tophat/downloads/tophat-2.1.1.Linux_x86_64.tar.gz -O /tmp/tophat.tar.gz && \
+    tar -xzf /tmp/tophat.tar.gz -C /opt/ && \
+    rm /tmp/tophat.tar.gz && \
+    ln -s /opt/tophat-2.1.1.Linux_x86_64/tophat /usr/local/bin/tophat
+
+# Create working directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV TOPHAT_VERSION=2.1.1
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD tophat --version || exit 1
+
+# Default command
+CMD ["tophat", "--help"]

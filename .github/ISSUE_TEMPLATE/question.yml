@@ -89,7 +89,7 @@ body:
       description: Your environment details (if relevant)
       placeholder: |
         - OS: [e.g., Windows 10, macOS 13.0, Ubuntu 22.04]
-        - Python version: [e.g., 3.10.8]
+        - Python version: [e.g., 3.11.9]
         - DeepCritical version: [e.g., 0.1.0]
         - Installation method: [e.g., uv, pip]
         - Configuration: [e.g., app_mode=single_react, flows.prime.enabled=true]
